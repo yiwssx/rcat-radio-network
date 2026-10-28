@@ -1,17 +1,17 @@
 # RCAT Radio Network — Project Tracker
-Updated: 2026-10-28. Status: planning and safe preflight preparation, **not deployed**.
+Parent issue: [#2](https://github.com/yiwssx/rcat-radio-network/issues/2). Implementation PR: [#1](https://github.com/yiwssx/rcat-radio-network/pull/1). Updated: 2026-10-28. Status: planning and safe preflight preparation, **not deployed**.
 
 | ID | Scope | Status | Acceptance gate |
 |---|---|---|---|
-| RRN-00 | Inventory existing Docker host, resource/ports and existing service baseline | PENDING HOST AUDIT | Sanitized inventory + full private evidence + operator sign-off |
-| RRN-01 | Architecture and threat model approval | READY FOR REVIEW | Isolated network, permissions and LAN-only policy approved |
-| RRN-02 | Stage AzuraCast release, inspect generated Compose | BLOCKED by RRN-00/01 | No collision, unintended exposure or unreviewed privilege |
-| RRN-03 | Controlled AzuraCast installation on approved runtime | BLOCKED | Engine healthy, existing stacks unchanged |
-| RRN-04 | Live DJ / AutoDJ / schedule / fallback | BLOCKED | Switching and fallback tests pass |
-| RRN-05 | Listener portal, Now Playing API, mobile compatibility | BLOCKED | Cross-browser listening works |
-| RRN-06 | Monitoring, backup and isolated restore | BLOCKED | Stream observability and recovery evidence |
-| RRN-07 | Integration, security, capacity and regression testing | BLOCKED | Critical acceptance tests pass |
-| RRN-08 | LAN pilot and operational sign-off | BLOCKED | Approved pilot handover |
+| [RRN-00](https://github.com/yiwssx/rcat-radio-network/issues/3) | Inventory existing Docker host, resource/ports and existing service baseline | PENDING HOST AUDIT | Sanitized inventory + full private evidence + operator sign-off |
+| [RRN-01](https://github.com/yiwssx/rcat-radio-network/issues/4) | Architecture and threat model approval | READY FOR REVIEW | Isolated network, permissions and LAN-only policy approved |
+| [RRN-02](https://github.com/yiwssx/rcat-radio-network/issues/5) | Stage AzuraCast release, inspect generated Compose | BLOCKED by RRN-00/01 | No collision, unintended exposure or unreviewed privilege |
+| [RRN-03](https://github.com/yiwssx/rcat-radio-network/issues/6) | Controlled AzuraCast installation on approved runtime | BLOCKED | Engine healthy, existing stacks unchanged |
+| [RRN-04](https://github.com/yiwssx/rcat-radio-network/issues/7) | Live DJ / AutoDJ / schedule / fallback | BLOCKED | Switching and fallback tests pass |
+| [RRN-05](https://github.com/yiwssx/rcat-radio-network/issues/8) | Listener portal, Now Playing API, mobile compatibility | BLOCKED | Cross-browser listening works |
+| [RRN-06](https://github.com/yiwssx/rcat-radio-network/issues/9) | Monitoring, backup and isolated restore | BLOCKED | Stream observability and recovery evidence |
+| [RRN-07](https://github.com/yiwssx/rcat-radio-network/issues/10) | Integration, security, capacity and regression testing | BLOCKED | Critical acceptance tests pass |
+| [RRN-08](https://github.com/yiwssx/rcat-radio-network/issues/11) | LAN pilot and operational sign-off | BLOCKED | Approved pilot handover |
 
 ## RRN-00 checklist
 
