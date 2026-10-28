@@ -40,3 +40,14 @@ test('never exposes the loopback administration origin to listeners', () => {
   assert.ok(actual.startsWith('http://192.168.2.7:8750/'));
   assert.ok(!actual.includes(':8700'));
 });
+
+test('rejects encoded paths and arbitrary nested mounts', () => {
+  for (const raw of [
+    '/listen/rcat_radio/../other_station/radio.mp3',
+    '/listen/rcat_radio/secret%2fadmin',
+    '/listen/rcat_radio/track/metadata.json',
+    '/listen/rcat_radio/%2e%2e',
+  ]) {
+    assert.equal(resolveStreamUrl(raw, portal), null, raw);
+  }
+});
