@@ -298,6 +298,7 @@ def main():
         "status": "BLOCKED", "automatic": {}, "manual": {},
         "warning": "LAN proof of concept only; no public production readiness asserted",
     }
+    started_new = False
     try:
         before = baseline(ip)
         results["automatic"]["existing_services_before"] = before
@@ -321,6 +322,7 @@ def main():
                 if p.returncode:
                     fail("Radio-only Compose step failed. Exit code: " + str(p.returncode)
                          + ". Inspect Docker logs locally; no global cleanup attempted.")
+            started_new = True
             results["automatic"]["radio_stack_started"] = "PASS"
             local_admin=wait_http("http://127.0.0.1:8700/")
             portal=wait_http(f"http://{ip}:8750/")
@@ -332,7 +334,6 @@ def main():
             results["automatic"]["existing_services_after"] = immediate
             changes = compare_baseline(before, immediate, pre["protected_ports_observed"])
             if changes:
-                command(compose_cmd("stop", "portal", "web"), timeout=80)
                 fail("Existing services regression: " + "; ".join(changes)
                      + ". Radio-only containers stopped; radio volumes preserved.")
             create_test_audio(folder / "rrn-original-test-tone.wav")
@@ -392,6 +393,13 @@ def main():
                              else "DEPLOYED_STATION_SETUP_OR_STREAM_PENDING")
         return 0
     except (RuntimeError, subprocess.TimeoutExpired, KeyboardInterrupt) as e:
+        if started_new:
+            print("Stopping ONLY this radio pilot stack; preserving its volumes.", file=sys.stderr)
+            try:
+                command(compose_cmd("stop", "portal", "web"), timeout=90)
+                results["automatic"]["radio_only_stop_on_failure"] = "ATTEMPTED"
+            except (OSError, subprocess.TimeoutExpired):
+                results["automatic"]["radio_only_stop_on_failure"] = "FAILED_REQUIRES_OPERATOR"
         results["status"] = "BLOCKED_OR_INCOMPLETE"
         results["error_class"] = type(e).__name__
         results["error"] = str(e)[:280] if not isinstance(e, KeyboardInterrupt) else "Interrupted by operator"
