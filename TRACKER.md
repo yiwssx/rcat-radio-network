@@ -48,3 +48,14 @@ in this public repository.
   RT-03–RT-17 need actual host and human/audio evidence.
 - GitHub tests are non-deployment static tests and must not be described as end-to-end success.
 
+
+## Docker-only operator workflow — ready for real-host audit
+
+- Primary operator entrypoint: `bash scripts/radioctl.sh deploy <SERVER_LAN_IP>`
+- No Python interpreter on the host; Compose JSON audit runs in disposable
+  isolated `python:3.12-alpine` service (no Docker socket/network)
+- Interactive station creation and real audio/DJ testing still manual
+- GitHub CI tests validate Bash syntax and effective Compose; they do **not**
+  certify real-host installation or production readiness.
+- RRN-00/01/02 remain open until actual host and Compose evidence is accepted.
+- Runbook: `docs/DOCKER-ONLY.md`.
