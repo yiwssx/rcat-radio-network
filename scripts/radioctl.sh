@@ -261,8 +261,9 @@ verify() {
   chmod 700 "$temp"
   if curl -fsS --max-time 8 --max-filesize 1048576 \
       "http://$BIND_IP:8750/api/nowplaying" -o "$temp/nowplaying.json"; then
-    if grep -Eq '"shortcode"[[:space:]]*:[[:space:]]*"rcat_radio"' "$temp/nowplaying.json"; then
-      say "Now Playing API: station rcat_radio found."
+    if grep -Eq '"shortcode"[[:space:]]*:[[:space:]]*"rcat_radio"' "$temp/nowplaying.json" &&
+       grep -Eq '"is_online"[[:space:]]*:[[:space:]]*true' "$temp/nowplaying.json"; then
+      say "Now Playing API: station rcat_radio is on air."
     else
       say "Now Playing API: station rcat_radio not present yet."
       failed=1
@@ -273,15 +274,18 @@ verify() {
   fi
   for i in 1 2 3 4 5; do
     curl --silent --max-time 6 --connect-timeout 3 \
+      -D "$temp/stream-$i.headers" \
       "http://$BIND_IP:8600/radio.mp3" -o "$temp/stream-$i.bin" &
   done
   wait || true
   for i in 1 2 3 4 5; do
     bytes="$(wc -c < "$temp/stream-$i.bin" 2>/dev/null || printf 0)"
-    if [[ "$bytes" =~ ^[0-9]+$ ]] && (( bytes >= 512 )); then
-      say "Stream client $i: received $bytes bytes."
+    if [[ "$bytes" =~ ^[0-9]+$ ]] && (( bytes >= 512 )) &&
+       grep -Eq '^HTTP/[0-9.]+ 200' "$temp/stream-$i.headers" &&
+       grep -Eiq '^content-type:[[:space:]]*(audio/|application/ogg)' "$temp/stream-$i.headers"; then
+      say "Stream client $i: HTTP 200, audio MIME, $bytes bytes."
     else
-      say "Stream client $i: insufficient data."
+      say "Stream client $i: no confirmed audio HTTP response."
       failed=1
     fi
   done
