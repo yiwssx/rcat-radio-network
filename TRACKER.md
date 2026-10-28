@@ -85,3 +85,20 @@ in this public repository.
 - [ ] Confirm retention, escalation owner and restore acceptance
 
 **RRN-06 stays OPEN** until these actual operational gates have passed.
+
+
+## 2026-10-28: predeployment gate and portal-regression hardening (PR pending)
+
+- [x] Inspect merged PRs #1, #12, #13 and #14 and verify all were merged.
+- [x] Prepare explicit `--ack-shared-host` plus **private, owner-only**
+  RRN-00/01/02 approval-file gate; fail before Docker actions.
+- [x] Disable alternate legacy Python deployment path that lacked the gate.
+- [x] Restrict the portal Now Playing proxy to `/api/nowplaying/rcat_radio`.
+- [x] Align the smoke stream request with the listener-proxy default mount.
+- [x] Add CI regression checks for missing consent, legacy bypass and API scope.
+- [ ] Confirm GitHub CI succeeds and merge the change PR to main.
+- [ ] Obtain actual server baseline, documented owner approvals and full
+  RRN-02 Compose/upstream image review **before** attempting radio deployment.
+
+**No real-host deployment, 24-hour soak, DJ tests or restore evidence yet.**
+All RRN-00 through RRN-08 acceptance issues remain **OPEN**.
