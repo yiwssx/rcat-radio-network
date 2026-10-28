@@ -9,8 +9,8 @@ COMPOSE_FILE="$ROOT/deployment/compose.pilot.yaml"
 ENV_FILE="$ROOT/deployment/.env"
 APP_ENV="$ROOT/deployment/azuracast.env"
 PROJECT="rcat_radio_pilot"
-MODE="\${1:-help}"
-BIND_IP="\${2:-}"
+MODE="${1:-help}"
+BIND_IP="${2:-}"
 REPORT_DIR="$ROOT/reports"
 PORTS=(8600 8605 8606 8700 8750)
 STARTED=0
@@ -88,7 +88,7 @@ ports_free() {
   listen="$(ss -H -lntu)" || stop_with_error "Cannot inspect system listening sockets."
   published="$(docker ps --format '{{.Ports}}')" ||
     stop_with_error "Cannot inspect Docker published ports."
-  for port in "\${PORTS[@]}"; do
+  for port in "${PORTS[@]}"; do
     if printf '%s\n' "$listen" | awk -v port="$port" '
       { n=split($5,p,":"); if(p[n]==port) found=1 }
       END { exit(found ? 0 : 1) }
@@ -150,7 +150,7 @@ make_env() {
   password="$(od -An -N32 -tx1 /dev/urandom | tr -d ' \n')"
   uid="$(id -u)"
   gid="$(id -g)"
-  [[ "\${#password}" == 64 ]] || stop_with_error "Unable to generate secure DB secret."
+  [[ "${#password}" == 64 ]] || stop_with_error "Unable to generate secure DB secret."
   ( set -C
     cat > "$ENV_FILE" <<EOF
 COMPOSE_PROJECT_NAME=$PROJECT
@@ -237,6 +237,7 @@ deploy() {
     stop_only_radio
     stop_with_error "Startup health/regression failed. Only new radio services stopped."
   fi
+  mkdir -p "$REPORT_DIR"
   generate_original_test_audio
   stamp_report "RADIO_STARTED_STATION_SETUP_REQUIRED"
   say "Web Admin (workstation SSH tunnel): http://127.0.0.1:8700"
@@ -255,6 +256,7 @@ verify() {
   [[ "$admin" =~ ^[1-4][0-9][0-9]$ ]] || failed=1
   [[ "$portal" == 200 ]] || failed=1
   say "Admin HTTP=$admin Portal HTTP=$portal"
+  mkdir -p "$REPORT_DIR"
   temp="$(mktemp -d "$REPORT_DIR/verify.XXXXXXXX")"
   chmod 700 "$temp"
   if curl -fsS --max-time 8 --max-filesize 1048576 \
