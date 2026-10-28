@@ -36,3 +36,15 @@ or AzuraCast requires unreviewed privileged access.
 Do not run host-wide prune, change existing reverse proxy configuration or deploy
 before RRN-00 and RRN-01 are approved. Sensitive reports must not be published
 in this public repository.
+
+## Single-session pilot package (prepared, not run on RCAT server)
+
+- Source: `deployment/compose.pilot.yaml` (AzuraCast stable + Nginx portal).
+- Operator guide: [Run once](docs/RUN-ONCE.md).
+- Command: `python3 scripts/one_round.py --mode deploy --bind-ip <LAN_IP> --ack-shared-host`.
+- Web admin binds 127.0.0.1:8700 (SSH tunnel only); portal binds LAN:8750.
+- Docker/socket updater omitted. No installation or host firewall work performed remotely.
+- Scope: RRN-02 static artifacts **prepared**; RRN-03 installation **not yet executed**;
+  RT-03–RT-17 need actual host and human/audio evidence.
+- GitHub tests are non-deployment static tests and must not be described as end-to-end success.
+

@@ -1,0 +1,99 @@
+<!doctype html>
+<html lang="th">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>RCAT Radio Network | LAN Pilot</title>
+<style>
+:root{color-scheme:dark;font-family:system-ui,'Noto Sans Thai',sans-serif;background:#0b1422;color:#f7fafc}
+*{box-sizing:border-box}body{margin:0;min-height:100vh;background:radial-gradient(circle at 15% 12%,#143e4f,transparent 40%),#0b1422}
+main{max-width:760px;margin:8vh auto;padding:24px}
+header{display:flex;justify-content:space-between;align-items:center;gap:12px}
+small,.muted{color:#a0b2c2}h1{font-size:clamp(30px,5vw,48px);line-height:1.1;margin:8px 0 16px}
+.panel{border:1px solid #30465c;border-radius:24px;background:#122337;padding:26px;margin-top:20px;box-shadow:0 20px 60px #0005}
+.dot{width:10px;height:10px;display:inline-block;background:#ed9d47;border-radius:50%;margin-right:8px}
+.onair .dot{background:#27d4a0}
+.pill{border:1px solid #345064;border-radius:99px;padding:8px 12px;white-space:nowrap}
+#track{font-size:22px;font-weight:700;margin:16px 0 2px}
+button{border:0;background:#28d3a1;color:#042220;padding:12px 18px;border-radius:13px;font:inherit;font-weight:700;cursor:pointer}
+button:disabled{opacity:.55;cursor:not-allowed}button:focus-visible{outline:3px solid #fff}
+.controls{display:flex;align-items:center;gap:16px;flex-wrap:wrap;margin:22px 0}
+label{display:flex;align-items:center;gap:10px}
+input{accent-color:#28d3a1}
+#error{color:#ffbf96;min-height:25px}
+footer{margin-top:20px;font-size:13px;color:#a0b2c2}
+</style>
+</head>
+<body>
+<main>
+<header><strong>RCAT / RADIO NETWORK</strong><span class="pill" id="state"><span class="dot"></span>กำลังตรวจสอบสถานี</span></header>
+<div class="panel">
+<small>INTERNAL TEST • ONE STATION</small>
+<h1>เสียงสร้างสรรค์เพื่อการเรียนรู้</h1>
+<p id="track">ยังไม่มีรายการออกอากาศ</p>
+<p id="subtitle" class="muted">ข้อมูลรายการจะมาจาก AzuraCast โดยตรง</p>
+<div class="controls">
+<button id="play" type="button" disabled>▶ ฟังสด</button>
+<label>ระดับเสียง <input id="volume" type="range" min="0" max="100" value="65" aria-label="ระดับเสียง"></label>
+</div>
+<p id="error" role="status" aria-live="polite"></p>
+<audio id="audio" preload="none"></audio>
+</div>
+<footer>RCAT Radio Network • LAN Pilot • ข้อมูลรายการอัปเดตทุก 15 วินาที • เมื่อยังไม่ได้สร้างสถานี ระบบจะแสดงสถานะรอการตั้งค่า</footer>
+</main>
+<script>
+'use strict';
+const player=document.getElementById('audio');
+const play=document.getElementById('play');
+const track=document.getElementById('track');
+const sub=document.getElementById('subtitle');
+const state=document.getElementById('state');
+const error=document.getElementById('error');
+let streamUrl='';
+player.volume=.65;
+document.getElementById('volume').addEventListener('input',event=>{player.volume=Number(event.target.value)/100;});
+play.addEventListener('click',async()=>{
+ if(!streamUrl)return;
+ if(!player.paused){player.pause();play.textContent='▶ ฟังสด';return;}
+ try{
+   if(!player.src || player.src!==streamUrl){player.src=streamUrl;}
+   await player.play();
+   play.textContent='Ⅱ หยุดฟัง';
+   error.textContent='';
+ }catch(e){error.textContent='ไม่สามารถเล่นสตรีมได้ ตรวจสอบพอร์ตสัญญาณและสถานะ AutoDJ';}
+});
+player.addEventListener('error',()=>{error.textContent='สัญญาณเสียงขัดข้อง กรุณาตรวจการเชื่อมต่อ';play.textContent='▶ ฟังสด';});
+async function refresh(){
+ try{
+  const response=await fetch('/api/nowplaying',{cache:'no-store'});
+  if(!response.ok)throw new Error('API '+response.status);
+  const list=await response.json();
+  const stations=Array.isArray(list)?list:[list];
+  const station=stations.find(v=>v.station?.shortcode==='rcat_radio')||stations[0];
+  if(!station?.station)throw new Error('ยังไม่ได้สร้างสถานี');
+  const live=Boolean(station.is_online);
+  const song=station.now_playing?.song;
+  track.textContent=song?.title||'RCAT Radio';
+  sub.textContent=[song?.artist,station.live?.is_live?'Live DJ':'AutoDJ / ผังรายการ'].filter(Boolean).join(' • ');
+  state.classList.toggle('onair',live);
+  state.innerHTML='<span class="dot"></span>'+(live?'ON AIR':'OFF AIR / SETUP');
+  // The API may return loopback URLs after admin setup through an SSH tunnel.
+  // Use the station's actual stream path but resolve the host to this LAN portal.
+  const raw=station.station.listen_url||'';
+  if(raw){
+    const u=new URL(raw,window.location.href);
+    streamUrl='http://'+window.location.hostname+':8600'+u.pathname+u.search;
+    play.disabled=false;
+  }else{play.disabled=true;}
+ }catch(e){
+  state.classList.remove('onair');
+  state.innerHTML='<span class="dot"></span>WAITING';
+  track.textContent='รอการตั้งค่า AzuraCast';
+  sub.textContent=String(e.message||e);
+  play.disabled=true;
+ }
+}
+refresh();
+setInterval(refresh,15000);
+</script>
+</body></html>

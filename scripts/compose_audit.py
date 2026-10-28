@@ -5,7 +5,7 @@ import os
 import re
 import sys
 
-ALLOWED = {8700, 8743, *range(8600, 8620)}
+ALLOWED = {8700, 8743, 8750, *range(8600, 8620)}
 PROTECTED = {80, 443, 8080, 8081, 8094}
 APPROVED_IPS = {"127.0.0.1", "::1"} | {
     address.strip() for address in os.environ.get("RRN_ALLOWED_BIND_IPS", "").split(",")
