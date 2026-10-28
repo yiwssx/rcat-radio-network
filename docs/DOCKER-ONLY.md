@@ -140,3 +140,25 @@ inspect, personal media or hidden tokens in a public Issue.
 Tracker: [#2](https://github.com/yiwssx/rcat-radio-network/issues/2).
 Main work packages: [RRN-00 #3](https://github.com/yiwssx/rcat-radio-network/issues/3)
 and [RRN-02 #5](https://github.com/yiwssx/rcat-radio-network/issues/5).
+
+## Stream routing and regression checks (2026-10-28 update)
+
+The listener player fetches AzuraCast's **one-station** public Now Playing
+endpoint through Nginx and routes the documented
+`/listen/rcat_radio/<mount>` stream path through the listener portal
+on port `8750` (same origin). **AzuraCast admin remains loopback-only**.
+An arbitrary station or admin path must not be proxied through the portal.
+
+The deployment stores the original HTTP response statuses of PDF HUB and
+AnyFlip at `reports/predeploy-baseline.txt` (local mode `0600`). Later
+`verify` runs compare against that exact before-state rather than merely
+checking that ports answer. **Do not delete that baseline before running verify.**
+
+After deploying, also open the portal in Chrome and a phone browser and
+listen to the track. Five successful HTTP stream fetches do not prove the
+radio contains audible audio or that the Live DJ / AutoDJ transition works.
+
+The `verify` mode does not reapply the installation-time available-memory
+threshold, since the running AzuraCast process consumes memory. It still
+checks Docker reachability, the host bind IP, station response, stream bytes
+and existing-service baseline.
