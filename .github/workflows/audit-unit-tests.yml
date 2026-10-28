@@ -51,3 +51,45 @@ jobs:
           docker run --rm --network none --add-host web:127.0.0.1 \
             -v "$PWD/portal/nginx.conf:/etc/nginx/conf.d/default.conf:ro" \
             nginx:stable-alpine nginx -t
+
+  proxy-integration:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - name: Exercise actual Nginx routing against a harmless mock station
+        shell: bash
+        run: |
+          set -euo pipefail
+          docker network create rrn-ci
+          trap 'docker rm -f rrn-nginx-ci web >/dev/null 2>&1 || true; docker network rm rrn-ci >/dev/null 2>&1 || true' EXIT
+          docker run -d --name web --network rrn-ci \
+            -v "$PWD/tests/mock_upstream.py:/mock.py:ro" \
+            python:3.12-alpine python /mock.py
+          docker run -d --name rrn-nginx-ci --network rrn-ci \
+            -p 127.0.0.1:18750:80 \
+            -v "$PWD/portal:/usr/share/nginx/html:ro" \
+            -v "$PWD/portal/nginx.conf:/etc/nginx/conf.d/default.conf:ro" \
+            nginx:stable-alpine
+          for i in {1..20}; do
+            if curl -fsS --max-time 2 http://127.0.0.1:18750/healthz >/dev/null; then break; fi
+            sleep 1
+          done
+          curl -fsS http://127.0.0.1:18750/api/nowplaying/rcat_radio \
+            | python -c 'import json,sys; assert json.load(sys.stdin)["station"]["shortcode"] == "rcat_radio"'
+          curl -fsS http://127.0.0.1:18750/listen/rcat_radio/radio.mp3 -o /dev/null
+          test "$(curl -sS -o /dev/null -w '%{http_code}' http://127.0.0.1:18750/api/nowplaying/other_station)" = 403
+          test "$(curl -sS -o /dev/null -w '%{http_code}' http://127.0.0.1:18750/admin)" = 404
+          test "$(curl -sS -o /dev/null -w '%{http_code}' http://127.0.0.1:18750/login)" = 404
+
+  monitor-container:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build isolated ffmpeg monitor and check CLI entrypoint
+        run: |
+          set -euo pipefail
+          docker build -f deployment/Dockerfile.monitor -t rrn-monitor:ci .
+          docker run --rm --network none --read-only --cap-drop ALL \
+            --security-opt no-new-privileges rrn-monitor:ci --help
