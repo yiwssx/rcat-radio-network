@@ -60,3 +60,10 @@ executing it on the shared Docker server. The earlier
 `scripts/one_round.py` runner remains available as a legacy option
 but is **not required** for the primary operator workflow. GitHub CI is a
 static check, not evidence the station has been installed.
+
+## Operational recovery and monitoring
+
+The [Backup & Restore runbook](docs/BACKUP-RESTORE.md) defines the
+non-destructive, off-host backup process and **isolated** restoration
+acceptance tests. A guide is not proof that backups, alerts or restores
+are operating on the RCAT server; see RRN-06.

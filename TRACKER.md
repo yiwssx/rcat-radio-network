@@ -59,3 +59,29 @@ in this public repository.
   certify real-host installation or production readiness.
 - RRN-00/01/02 remain open until actual host and Compose evidence is accepted.
 - Runbook: `docs/DOCKER-ONLY.md`.
+
+## RRN-05/07 follow-up: player and live regression hardening
+
+- Changed player to consume exactly `/api/nowplaying/rcat_radio`,
+  preventing another station from masquerading as the on-air RCAT station.
+- Browser stream uses an allowlisted same-origin URL through Nginx
+  (`/listen/rcat_radio/`) rather than reusing a possibly incorrect mount
+  path on Icecast port 8600.
+- Installation-time RAM gate is no longer applied when verifying
+  an already running station.
+- Actual pre-install PDF HUB/AnyFlip HTTP statuses persist privately
+  and must match later verification.
+- Nginx syntax and Node URL resolver tests run in GitHub CI.
+- **No live host verification has been completed.** RRN-00 through 08
+  must remain open until host-specific acceptance evidence is available.
+
+## RRN-06: Operational recovery prepared
+
+- [x] Draft safe backup and isolated restore runbook (`docs/BACKUP-RESTORE.md`)
+- [x] Describe radio-only incident stop and verification of PDF HUB/AnyFlip
+- [ ] Verify off-host AzuraCast backup is actually generated
+- [ ] Verify isolated restore and capture evidence (RT-14)
+- [ ] Enable and test silence/stream-down monitoring and alert delivery
+- [ ] Confirm retention, escalation owner and restore acceptance
+
+**RRN-06 stays OPEN** until these actual operational gates have passed.
