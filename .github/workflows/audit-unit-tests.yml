@@ -21,6 +21,10 @@ jobs:
           python-version: "3.12"
       - run: python -m unittest discover -s tests -v
       - run: python -m py_compile scripts/*.py
+      - name: Syntax-check Docker-only operator command
+        run: |
+          bash -n scripts/radioctl.sh
+          bash scripts/radioctl.sh --help
 
   compose-static:
     runs-on: ubuntu-latest
@@ -34,5 +38,5 @@ jobs:
           cp deployment/.env.example deployment/.env
           sed -i 's/^RRN_BIND_IP=.*/RRN_BIND_IP=127.0.0.1/' deployment/.env
           cp deployment/azuracast.env.example deployment/azuracast.env
-          docker compose -f deployment/compose.pilot.yaml config --format json |
-            python3 scripts/compose_audit.py
+          docker compose -p rcat_radio_pilot -f deployment/compose.pilot.yaml config --format json |
+            docker compose -p rcat_radio_pilot -f deployment/compose.pilot.yaml --profile audit run --rm -T --no-deps audit
