@@ -334,6 +334,7 @@ verify() {
   wait || true
   local code mime
   for i in 1 2 3 4 5; do
+    code="" mime="" bytes=0
     read -r code mime bytes < "$temp/stream-$i.status" || true
     if [[ "$code" == "200" && "$mime" =~ ^(audio/|application/ogg) ]] &&
        [[ "$bytes" =~ ^[0-9]+$ ]] && (( bytes >= 512 )); then
