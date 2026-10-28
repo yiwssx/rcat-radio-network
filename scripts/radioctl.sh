@@ -12,6 +12,7 @@ PROJECT="rcat_radio_pilot"
 MODE="${1:-help}"
 BIND_IP="${2:-}"
 REPORT_DIR="$ROOT/reports"
+BASELINE_FILE="$REPORT_DIR/predeploy-baseline.txt"
 PORTS=(8600 8605 8606 8700 8750)
 STARTED=0
 
@@ -102,7 +103,7 @@ ports_free() {
   say "Candidate host ports are not currently observed in use."
 }
 http_code() {
-  curl -s -o /dev/null -w '%{http_code}' --max-time 7 --connect-timeout 3 "$1" || true
+  curl --noproxy '*' -s -o /dev/null -w '%{http_code}' --max-time 7 --connect-timeout 3 "$1" || true
 }
 before_pdf=""
 before_any=""
@@ -128,8 +129,8 @@ check_host() {
   docker compose version >/dev/null 2>&1 ||
     stop_with_error "Docker Compose plugin is unavailable."
   verify_ip
-  resources
   if [[ "$MODE" == "check" || "$MODE" == "deploy" ]]; then
+    resources
     check_no_existing_radio
     ports_free
     baseline
@@ -175,6 +176,31 @@ EOF
   chmod 600 "$ENV_FILE" "$APP_ENV"
   say "Created local private radio settings (credentials not displayed)."
 }
+persist_baseline() {
+  mkdir -p "$REPORT_DIR"
+  chmod 700 "$REPORT_DIR"
+  if [[ -f "$BASELINE_FILE" ]]; then
+    local oldpdf oldany
+    oldpdf="$(awk -F= '$1=="pdf_hub"{print $2}' "$BASELINE_FILE")"
+    oldany="$(awk -F= '$1=="anyflip"{print $2}' "$BASELINE_FILE")"
+    [[ "$oldpdf" == "$before_pdf" && "$oldany" == "$before_any" ]] ||
+      stop_with_error "Existing service status differs from recorded pre-deployment baseline."
+    return
+  fi
+  ( set -C
+    printf 'pdf_hub=%s\nanyflip=%s\n' "$before_pdf" "$before_any" > "$BASELINE_FILE"
+  ) || stop_with_error "Cannot persist pre-deployment service baseline."
+  chmod 600 "$BASELINE_FILE"
+}
+compare_persisted_baseline() {
+  [[ -f "$BASELINE_FILE" ]] || return 1
+  local pdf any
+  pdf="$(awk -F= '$1=="pdf_hub"{print $2}' "$BASELINE_FILE")"
+  any="$(awk -F= '$1=="anyflip"{print $2}' "$BASELINE_FILE")"
+  [[ -n "$pdf" && -n "$any" ]] || return 1
+  [[ "$(http_code "http://$BIND_IP:8081/")" == "$pdf" ]] &&
+    [[ "$(http_code "http://$BIND_IP:8094/healthz")" == "$any" ]]
+}
 audit_compose_in_container() {
   say "Reviewing the fully rendered Docker Compose with the isolated audit container."
   # Pipe into a disposable container; no Docker socket or host Python involved.
@@ -218,6 +244,7 @@ stamp_report() {
 }
 deploy() {
   check_host
+  persist_baseline
   make_env
   audit_compose_in_container || stop_with_error "Compose static audit failed. No radio container deployed."
   say "Pulling only AzuraCast and portal images."
@@ -260,7 +287,7 @@ verify() {
   temp="$(mktemp -d "$REPORT_DIR/verify.XXXXXXXX")"
   chmod 700 "$temp"
   if curl -fsS --max-time 8 --max-filesize 1048576 \
-      "http://$BIND_IP:8750/api/nowplaying" -o "$temp/nowplaying.json"; then
+      "http://$BIND_IP:8750/api/nowplaying/rcat_radio" -o "$temp/nowplaying.json"; then
     if grep -Eq '"shortcode"[[:space:]]*:[[:space:]]*"rcat_radio"' "$temp/nowplaying.json" &&
        grep -Eq '"is_online"[[:space:]]*:[[:space:]]*true' "$temp/nowplaying.json"; then
       say "Now Playing API: station rcat_radio is on air."
@@ -289,10 +316,8 @@ verify() {
       failed=1
     fi
   done
-  before_pdf="$(http_code "http://$BIND_IP:8081/")"
-  before_any="$(http_code "http://$BIND_IP:8094/healthz")"
-  if [[ ! "$before_pdf" =~ ^[1-4][0-9][0-9]$ || "$before_any" != 200 ]]; then
-    say "WARNING: Existing PDF HUB or AnyFlip HTTP smoke is not healthy."
+  if ! compare_persisted_baseline; then
+    say "WARNING: Existing PDF HUB/AnyFlip differ from the saved pre-deployment baseline."
     failed=1
   fi
   if (( failed )); then
