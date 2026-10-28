@@ -7,10 +7,8 @@ services:
   web:
     image: ghcr.io/azuracast/azuracast:${AZURACAST_VERSION:-stable}
     env_file:
-      - path: ./.env
-        required: true
-      - path: ./azuracast.env
-        required: true
+      - ./.env
+      - ./azuracast.env
     ports:
       - "127.0.0.1:8700:8700" # Administration ONLY through SSH tunnel
       - "${RRN_BIND_IP:?Set approved LAN address}:8600:8600" # Icecast test station
