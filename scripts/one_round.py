@@ -399,7 +399,7 @@ def main():
         results["status"] = ("SMOKE_PASS_MANUAL_TESTS_PENDING"
                              if results["automatic"]["stream_smoke_5_clients"] == "PASS"
                              else "DEPLOYED_STATION_SETUP_OR_STREAM_PENDING")
-        return 0
+        return 0 if results["automatic"]["stream_smoke_5_clients"] == "PASS" else 3
     except (RuntimeError, subprocess.TimeoutExpired, KeyboardInterrupt) as e:
         if started_new:
             print("Stopping ONLY this radio pilot stack; preserving its volumes.", file=sys.stderr)
