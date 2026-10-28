@@ -318,6 +318,8 @@ def main():
                          compose_cmd("run", "--rm", "--no-deps", "web", "--", "azuracast_install"),
                          compose_cmd("up", "-d", "web", "portal")]:
                 print("Running approved radio project command:", task[-1])
+                if "up" in task:
+                    started_new = True  # compose up may partially start before failure
                 p = command(task, timeout=1200)
                 if p.returncode:
                     fail("Radio-only Compose step failed. Exit code: " + str(p.returncode)
