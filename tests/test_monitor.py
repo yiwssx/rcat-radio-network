@@ -38,14 +38,14 @@ class MonitorTests(unittest.TestCase):
         self.assertTrue(station["is_online"])
 
     def test_pcm_rms_detects_silence_and_audible_tone(self):
-        silent = b"\\x00\\x00" * 8000
+        silent = bytes(16000)
         self.assertEqual(monitor.decoded_level_dbfs(silent), -120)
         wave = b"".join(struct.pack("<h", round(4000 * math.sin(i / 15)))
                         for i in range(8000))
         self.assertGreater(monitor.decoded_level_dbfs(wave), -30)
 
     def test_pcm_malformed(self):
-        for content in [b"", b"\\x00", b"\\x00\\x00" * 20]:
+        for content in [b"", bytes(1), bytes(40)]:
             with self.assertRaises(ValueError):
                 monitor.decoded_level_dbfs(content)
 
