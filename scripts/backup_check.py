@@ -32,6 +32,8 @@ def digest(path):
 
 def crc_if_zip(path):
     if not zipfile.is_zipfile(path):
+        if path.suffix.lower() == ".zip":
+            raise ValueError("Invalid ZIP backup archive")
         return "NOT_ZIP_ARCHIVE"
     with zipfile.ZipFile(path) as archive:
         bad = archive.testzip()  # Validate without ever extracting.
