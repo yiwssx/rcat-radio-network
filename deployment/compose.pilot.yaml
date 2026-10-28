@@ -1,0 +1,65 @@
+# Self-contained LAN pilot. Do not run AzuraCast's interactive docker.sh install
+# on the shared host; its generated Compose has broad default port mappings
+# and an updater that mounts the Docker socket.
+name: rcat_radio_pilot
+
+services:
+  web:
+    image: ghcr.io/azuracast/azuracast:${AZURACAST_VERSION:-stable}
+    env_file:
+      - path: ./.env
+        required: true
+      - path: ./azuracast.env
+        required: true
+    ports:
+      - "127.0.0.1:8700:8700" # Administration ONLY through SSH tunnel
+      - "${RRN_BIND_IP:?Set approved LAN address}:8600:8600" # Icecast test station
+      - "${RRN_BIND_IP:?Set approved LAN address}:8605:8605" # DJ input (if used)
+      - "${RRN_BIND_IP:?Set approved LAN address}:8606:8606" # alternate DJ input
+    volumes:
+      - station_data:/var/azuracast/stations
+      - backups:/var/azuracast/backups
+      - db_data:/var/lib/mysql
+      - www_uploads:/var/azuracast/storage/uploads
+      - shoutcast2_install:/var/azuracast/storage/shoutcast2
+      - stereo_tool_install:/var/azuracast/storage/stereo_tool
+      - rsas_install:/var/azuracast/storage/rsas
+      - geolite_install:/var/azuracast/storage/geoip
+      - sftpgo_data:/var/azuracast/storage/sftpgo
+      - acme:/var/azuracast/storage/acme
+    restart: unless-stopped
+    ulimits:
+      nofile:
+        soft: 65536
+        hard: 65536
+    logging:
+      options:
+        max-size: "1m"
+        max-file: "5"
+
+  portal:
+    image: nginx:stable-alpine
+    ports:
+      - "${RRN_BIND_IP:?Set approved LAN address}:8750:80"
+    volumes:
+      - ../portal/index.html:/usr/share/nginx/html/index.html:ro
+      - ../portal/nginx.conf:/etc/nginx/conf.d/default.conf:ro
+    depends_on:
+      - web
+    restart: unless-stopped
+    logging:
+      options:
+        max-size: "1m"
+        max-file: "3"
+
+volumes:
+  station_data: {}
+  backups: {}
+  db_data: {}
+  www_uploads: {}
+  shoutcast2_install: {}
+  stereo_tool_install: {}
+  rsas_install: {}
+  geolite_install: {}
+  sftpgo_data: {}
+  acme: {}
