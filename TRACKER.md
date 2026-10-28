@@ -103,7 +103,7 @@ in this public repository.
 **No real-host deployment, 24-hour soak, DJ tests or restore evidence yet.**
 All RRN-00 through RRN-08 acceptance issues remain **OPEN**.
 
-## Code-completion batch — 2026-10-28
+## Code-completion batch — 2026-10-28 (PR #16 merged; CI PASS)
 
 See [docs/CODE-READY.md](docs/CODE-READY.md). This batch prepares:
 - [x] Opt-in read-only audio decoding / silence and disconnection monitor
@@ -114,6 +114,7 @@ See [docs/CODE-READY.md](docs/CODE-READY.md). This batch prepares:
 - [x] Nginx API allowlist and same-origin media CSP hardening
 - [x] CI mock-backed proxy integration and optional monitor image build checks
 - [x] Offline tests for the new code paths
+- [x] [PR #16](https://github.com/yiwssx/rcat-radio-network/pull/16) merged to `main` (commit `ba2839c`); all 4 CI jobs PASSED
 - [ ] Real host deployment/configuration and upstream-version review (owner)
 - [ ] Real streaming/Live DJ/AutoDJ/silence/multi-browser tests (owner)
 - [ ] Off-host backup and isolated restore evidence (owner)
