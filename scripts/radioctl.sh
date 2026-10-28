@@ -364,7 +364,7 @@ case "$MODE" in
     stamp_report "PREFLIGHT_PASS_MANUAL_APPROVAL_REQUIRED"
     say "Read-only preflight passed. No container started."
     ;;
-  deploy) deploy ;;
+  deploy) deploy "$@" ;;
   verify) verify ;;
   status|logs|stop) operational ;;
   *) help_text; exit 2 ;;
