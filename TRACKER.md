@@ -87,7 +87,7 @@ in this public repository.
 **RRN-06 stays OPEN** until these actual operational gates have passed.
 
 
-## 2026-10-28: predeployment gate and portal-regression hardening (PR pending)
+## 2026-10-28: predeployment gate and portal-regression hardening (PR #15 merged)
 
 - [x] Inspect merged PRs #1, #12, #13 and #14 and verify all were merged.
 - [x] Prepare explicit `--ack-shared-host` plus **private, owner-only**
@@ -96,7 +96,7 @@ in this public repository.
 - [x] Restrict the portal Now Playing proxy to `/api/nowplaying/rcat_radio`.
 - [x] Align the smoke stream request with the listener-proxy default mount.
 - [x] Add CI regression checks for missing consent, legacy bypass and API scope.
-- [ ] Confirm GitHub CI succeeds and merge the change PR to main.
+- [x] GitHub Actions successful (**unit-tests** and **compose-static**); PR [#15](https://github.com/yiwssx/rcat-radio-network/pull/15) merged to `main` (commit `ba1b556b`).
 - [ ] Obtain actual server baseline, documented owner approvals and full
   RRN-02 Compose/upstream image review **before** attempting radio deployment.
 
