@@ -34,6 +34,16 @@ class BackupIntegrityTests(unittest.TestCase):
             with self.assertRaisesRegex(ValueError, "checksum"):
                 backup_check.verify(archive, manifest)
 
+    def test_invalid_zip_does_not_receive_integrity_manifest(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            archive = root / "damaged.zip"
+            manifest = root / "manifest.json"
+            archive.write_bytes(b"not a ZIP archive")
+            with self.assertRaisesRegex(ValueError, "Invalid ZIP"):
+                backup_check.create(archive, manifest)
+            self.assertFalse(manifest.exists())
+
     def test_empty_file_rejected(self):
         with tempfile.TemporaryDirectory() as tmp:
             archive = Path(tmp) / "empty.zip"
