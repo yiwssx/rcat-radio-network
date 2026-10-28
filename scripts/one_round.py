@@ -293,6 +293,11 @@ def main():
     parser.add_argument("--no-prompt", action="store_true",
                         help="Do not prompt for the manual station setup checkpoint")
     args = parser.parse_args()
+    # Legacy single-session runner cannot enforce the operator's signed RRN-00/01/02
+    # approval record. Keep read-only check/verify available, but route ALL new
+    # deployments through the maintained, approval-gated Docker-only controller.
+    if args.mode == "deploy":
+        fail("Legacy deploy is disabled. Run scripts/radioctl.sh after approved RRN-00/01/02 gates.")
     ip = args.bind_ip
     if not valid_bind(ip) or ip not in local_ipv4s():
         fail("Bind IP is not a local private IPv4 address on this machine")
