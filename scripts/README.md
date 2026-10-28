@@ -22,6 +22,11 @@ Stage AzuraCast Compose separately and only then run:
 docker compose config --format json | python3 /path/to/rcat-radio-network/scripts/compose_audit.py
 ```
 
+To permit an explicitly reviewed LAN address, run the checker with
+`RRN_ALLOWED_BIND_IPS=YOUR_APPROVED_LAN_IP`. Without this setting, only
+loopback addresses are accepted. This environment variable only changes the
+checker allowlist and **does not** configure Docker or the firewall.
+
 Never upload the raw Compose or Docker inspect JSON to public GitHub issues.
 The Compose review prints only high-level findings.
 
