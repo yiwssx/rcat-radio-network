@@ -327,7 +327,7 @@ verify() {
   # Infinite radio streams routinely hit --max-time: size_download is still useful.
   for i in 1 2 3 4 5; do
     curl --silent --max-time 6 --connect-timeout 3 --output /dev/null \
-      --write-out '%{http_code} %{content_type} %{size_download}\\n' \
+      --write-out '%{http_code} %{content_type} %{size_download}\n' \
       "http://$BIND_IP:8750/listen/rcat_radio/radio.mp3" \
       > "$temp/stream-$i.status" &
   done
