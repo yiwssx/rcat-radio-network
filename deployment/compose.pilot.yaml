@@ -96,7 +96,6 @@ services:
     cap_drop: ["ALL"]
     security_opt:
       - no-new-privileges:true
-    network_mode: "default"
     volumes:
       - ../scripts/acceptance.py:/opt/rrn/acceptance.py:ro
     entrypoint: ["python", "/opt/rrn/acceptance.py"]
