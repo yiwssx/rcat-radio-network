@@ -86,7 +86,7 @@ def sample(threshold=-50.0):
                     "level_dbfs": round(level, 1)}
         return {"healthy": True, "reason": "playing",
                 "level_dbfs": round(level, 1),
-                "live_dj": bool(station.get("live", {}).get("is_live"))}
+                "live_dj": bool((station.get("live") or {}).get("is_live"))}
     except (HTTPError, URLError, TimeoutError, OSError, ValueError, json.JSONDecodeError) as error:
         detail = str(error)
         allowed = {
