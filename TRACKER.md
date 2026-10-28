@@ -74,3 +74,14 @@ in this public repository.
 - Nginx syntax and Node URL resolver tests run in GitHub CI.
 - **No live host verification has been completed.** RRN-00 through 08
   must remain open until host-specific acceptance evidence is available.
+
+## RRN-06: Operational recovery prepared
+
+- [x] Draft safe backup and isolated restore runbook (`docs/BACKUP-RESTORE.md`)
+- [x] Describe radio-only incident stop and verification of PDF HUB/AnyFlip
+- [ ] Verify off-host AzuraCast backup is actually generated
+- [ ] Verify isolated restore and capture evidence (RT-14)
+- [ ] Enable and test silence/stream-down monitoring and alert delivery
+- [ ] Confirm retention, escalation owner and restore acceptance
+
+**RRN-06 stays OPEN** until these actual operational gates have passed.
