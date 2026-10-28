@@ -12,7 +12,7 @@ class OneRoundPilotTests(unittest.TestCase):
                 self.assertFalse(one_round.valid_bind(value))
 
     def test_bind_accepts_private_and_loopback(self):
-        for value in ("10.10.1.100","172.16.8.8","192.168.1.9","127.0.0.1"):
+        for value in ("10.123.45.67","172.16.8.8","192.168.1.9","127.0.0.1"):
             self.assertTrue(one_round.valid_bind(value))
 
     def test_baseline_regression(self):
