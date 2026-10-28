@@ -18,6 +18,9 @@ class AuditTests(unittest.TestCase):
     def test_public_binding(self):
         cfg={"services":{"radio":{"ports":[{"published":"8700","target":80}]}}}
         self.assertTrue(compose_audit.check(cfg))
+    def test_unapproved_specific_bind(self):
+        cfg={"services":{"radio":{"ports":[{"host_ip":"203.0.113.4","published":"8700","target":80}]}}}
+        self.assertTrue(any("unapproved host binding" in x for x in compose_audit.check(cfg)))
     def test_privileged(self):
         self.assertTrue(compose_audit.check({"services":{"radio":{"privileged":True}}}))
     def test_allowed_local_port(self):
