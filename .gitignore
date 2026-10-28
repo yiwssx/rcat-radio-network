@@ -1,0 +1,11 @@
+.env
+*.env
+!.env.example
+reports/**
+!reports/.gitkeep
+**/secrets/**
+*.log
+*.bak
+*.pyc
+__pycache__/
+*.zip
