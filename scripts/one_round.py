@@ -56,7 +56,7 @@ def local_ipv4s():
 def valid_bind(ip):
     try:
         obj = ipaddress.ip_address(ip)
-        return obj.version == 4 and (obj.is_loopback or any(obj in ipaddress.ip_network(net)\n            for net in ("10.0.0.0/8", "172.16.0.0/12", "192.168.0.0/16")))
+        return obj.version == 4 and (obj.is_loopback or any(obj in ipaddress.ip_network(n) for n in ("10.0.0.0/8", "172.16.0.0/12", "192.168.0.0/16")))
     except ValueError:
         return False
 
