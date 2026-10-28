@@ -1,0 +1,7 @@
+# Isolated read-only broadcast monitor. Never mounts Docker socket or secrets.
+FROM python:3.12-alpine
+RUN apk add --no-cache ffmpeg
+ENV PYTHONDONTWRITEBYTECODE=1 PYTHONUNBUFFERED=1
+COPY scripts/monitor.py /opt/rrn/monitor.py
+USER 65532:65532
+ENTRYPOINT ["python", "/opt/rrn/monitor.py"]
