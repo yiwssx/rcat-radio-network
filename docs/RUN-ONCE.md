@@ -1,4 +1,10 @@
-# RCAT Radio — One-session LAN pilot test
+# RCAT Radio — One-session LAN pilot test (legacy Python runner)
+
+> **Updated operator workflow:** The preferred deployment path now uses
+> `scripts/radioctl.sh` with Docker Compose and **does not require Python
+> on Ubuntu**. See [DOCKER-ONLY.md](DOCKER-ONLY.md). The Python-based
+> instructions below are retained for reference only.
+>
 
 ## Purpose and boundaries
 
