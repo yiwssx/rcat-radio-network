@@ -124,6 +124,12 @@ def setup_private_environment(ip):
     # Refuse stale/broken half-installation; do not overwrite DB passwords.
     if dest.exists() != app.exists():
         fail("Only one environment file exists; inspect manually, do not overwrite secrets.")
+    if not dest.exists():
+        v = command(["docker", "volume", "ls", "--format", "{{.Name}}"], timeout=20)
+        if v.returncode != 0:
+            fail("Unable to inspect Docker volumes before creating database credentials")
+        if any(name.startswith(PROJECT + "_") for name in v.stdout.splitlines()):
+            fail("Existing radio volumes detected without credentials; restore original secrets")
     if dest.exists():
         recorded = {}
         for line in dest.read_text(encoding="utf-8").splitlines():
