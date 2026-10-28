@@ -32,8 +32,9 @@ footer{margin-top:20px;font-size:13px;color:#a0b2c2}
 <h1>เสียงสร้างสรรค์เพื่อการเรียนรู้</h1>
 <p id="track">ยังไม่มีรายการออกอากาศ</p>
 <p id="subtitle" class="muted">ข้อมูลรายการจะมาจาก AzuraCast โดยตรง</p>
+<p id="audience" class="muted" aria-live="off"></p>
 <div class="controls">
-<button id="play" type="button" disabled>▶ ฟังสด</button>
+<button id="play" type="button" aria-pressed="false" aria-label="เล่นหรือหยุดสถานีวิทยุ RCAT" disabled>▶ ฟังสด</button>
 <label>ระดับเสียง <input id="volume" type="range" min="0" max="100" value="65" aria-label="ระดับเสียง"></label>
 </div>
 <p id="error" role="status" aria-live="polite"></p>
