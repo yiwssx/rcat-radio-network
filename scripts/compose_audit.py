@@ -1,11 +1,16 @@
 #!/usr/bin/env python3
 """Review rendered Docker Compose JSON from stdin; does not use Docker API."""
 import json
+import os
 import re
 import sys
 
 ALLOWED = {8700, 8743, *range(8600, 8620)}
 PROTECTED = {80, 443, 8080, 8081, 8094}
+APPROVED_IPS = {"127.0.0.1", "::1"} | {
+    address.strip() for address in os.environ.get("RRN_ALLOWED_BIND_IPS", "").split(",")
+    if address.strip()
+}
 
 def published(entry):
     if isinstance(entry, dict):
@@ -46,6 +51,8 @@ def check(config):
                 faults.append(f"{name}: unapproved host port(s)")
             if ip in (None, "", "0.0.0.0", "::", "*"):
                 faults.append(f"{name}: published port bound to all interfaces")
+            elif ip not in APPROVED_IPS:
+                faults.append(f"{name}: unapproved host binding IP")
     if not config.get("services"):
         faults.append("No Compose services provided")
     return faults
