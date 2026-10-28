@@ -13,6 +13,7 @@ MODE="${1:-help}"
 BIND_IP="${2:-}"
 REPORT_DIR="$ROOT/reports"
 BASELINE_FILE="$REPORT_DIR/predeploy-baseline.txt"
+APPROVAL_FILE="$REPORT_DIR/rrn-deploy-approval.txt"
 PORTS=(8600 8605 8606 8700 8750)
 STARTED=0
 
@@ -32,13 +33,14 @@ help_text() {
 RCAT Radio Network — Docker-only operator workflow (no host Python)
 Usage:
   bash scripts/radioctl.sh check  <SERVER_RFC1918_IPV4>
-  bash scripts/radioctl.sh deploy <SERVER_RFC1918_IPV4>
+  bash scripts/radioctl.sh deploy <SERVER_RFC1918_IPV4> --ack-shared-host
   bash scripts/radioctl.sh verify <SERVER_RFC1918_IPV4>
   bash scripts/radioctl.sh status
   bash scripts/radioctl.sh logs
   bash scripts/radioctl.sh stop
 
-Deploy runs a fail-closed host preflight, creates private env files,
+Deploy requires a private signed-off RRN-00/01/02 gate file and explicit
+--ack-shared-host, then runs a fail-closed host preflight and creates env files,
 audits rendered Compose inside a temporary Python container with NO
 Docker socket, then starts only the RCAT radio project.
 
@@ -135,6 +137,25 @@ check_host() {
     ports_free
     baseline
   fi
+}
+require_deployment_approval() {
+  [[ "${3:-}" == "--ack-shared-host" ]] ||
+    stop_with_error "Deployment needs --ack-shared-host AFTER RRN-00/01/02 human approval. Run check first."
+  [[ -f "$APPROVAL_FILE" && ! -L "$APPROVAL_FILE" ]] ||
+    stop_with_error "Missing private approval file: reports/rrn-deploy-approval.txt; see docs/DOCKER-ONLY.md."
+  local perms
+  perms="$(stat -c '%a' "$APPROVAL_FILE")" ||
+    stop_with_error "Cannot inspect local deployment approval permissions."
+  [[ "$perms" == "600" || "$perms" == "400" ]] ||
+    stop_with_error "Approval file must have owner-only permissions (chmod 600)."
+  local record
+  for record in \
+    "RRN00=APPROVED" "RRN01=APPROVED" "RRN02=APPROVED" \
+    "SHARED_HOST_CHANGE=APPROVED" "RRN_BIND_IP=$BIND_IP"; do
+    grep -Fqx "$record" "$APPROVAL_FILE" ||
+      stop_with_error "Approval file is incomplete or targets a different server. No deployment started."
+  done
+  say "Operator sign-off file present; technical preflight still required."
 }
 make_env() {
   if [[ -e "$ENV_FILE" || -e "$APP_ENV" ]]; then
@@ -243,6 +264,7 @@ stamp_report() {
   chmod 600 "$REPORT_DIR/last-result.txt"
 }
 deploy() {
+  require_deployment_approval "$@"
   check_host
   persist_baseline
   make_env
@@ -302,7 +324,7 @@ verify() {
   for i in 1 2 3 4 5; do
     curl --silent --max-time 6 --connect-timeout 3 \
       -D "$temp/stream-$i.headers" \
-      "http://$BIND_IP:8600/radio.mp3" -o "$temp/stream-$i.bin" &
+      "http://$BIND_IP:8750/listen/rcat_radio/radio.mp3" -o "$temp/stream-$i.bin" &
   done
   wait || true
   for i in 1 2 3 4 5; do
@@ -342,7 +364,7 @@ case "$MODE" in
     stamp_report "PREFLIGHT_PASS_MANUAL_APPROVAL_REQUIRED"
     say "Read-only preflight passed. No container started."
     ;;
-  deploy) deploy ;;
+  deploy) deploy "$@" ;;
   verify) verify ;;
   status|logs|stop) operational ;;
   *) help_text; exit 2 ;;

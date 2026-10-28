@@ -29,17 +29,17 @@ See `TRACKER.md` and `docs/` for the work plan. Read-only audit utilities are un
 
 ## One-session LAN pilot (available for controlled testing)
 
-Use [RUN-ONCE](docs/RUN-ONCE.md) for a single gated host test session. The runner can
-perform a preflight, deploy **only** an isolated radio stack, verify existing-service
+Use [RUN-ONCE](docs/RUN-ONCE.md) for a single gated host test session. The maintained Docker-only runner can
+perform a preflight and, only after signed-off gates, deploy **only** an isolated radio stack, verify existing-service
 HTTP baselines, and provide a one-time human setup checkpoint before streaming tests.
 
 ```bash
-python3 scripts/one_round.py --mode deploy --bind-ip YOUR_SERVER_PRIVATE_IPV4 --ack-shared-host
+# Legacy deploy mode is disabled. Use the Docker-only gated workflow below.
 ```
 
 Do not run this on the shared host without reviewing the guide and choosing the correct
-host private IPv4. The command does **not** modify firewall/Reverse Proxy or launch
-AzuraCast automatically on GitHub; it runs only on the machine where you execute it.
+host private IPv4. The legacy deployment command above is **disabled**. The reviewed Docker-only
+command does **not** change firewall/Reverse Proxy and does not run on GitHub.
 Admin listens on loopback only; use the documented SSH tunnel. A passed GitHub CI
 is **not** proof the live broadcast or production host has been tested.
 
@@ -52,7 +52,10 @@ container without host Docker socket access.
 ```bash
 git clone https://github.com/yiwssx/rcat-radio-network.git
 cd rcat-radio-network
-bash scripts/radioctl.sh deploy 10.10.1.100
+bash scripts/radioctl.sh check 10.10.1.100
+# After RRN-00/01/02 sign-off, prepare the private approval file
+# as documented in docs/DOCKER-ONLY.md, then:
+bash scripts/radioctl.sh deploy 10.10.1.100 --ack-shared-host
 ```
 
 Read [the complete Docker-only runbook](docs/DOCKER-ONLY.md) before

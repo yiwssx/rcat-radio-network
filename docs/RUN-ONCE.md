@@ -6,6 +6,12 @@
 > instructions below are retained for reference only.
 >
 
+> **SECURITY UPDATE (2026-10-28):** The legacy Python runner no longer
+> accepts `--mode deploy`. Historical deployment commands below are NOT
+> executable procedures. Run `bash scripts/radioctl.sh check <SERVER_LAN_IP>`
+> first, complete RRN-00/01/02 approvals, and use the approval-gated
+> Docker-only procedure in [DOCKER-ONLY.md](DOCKER-ONLY.md).
+>
 ## Purpose and boundaries
 
 One test session covers actual server preflight, existing PDF HUB/AnyFlip HTTP

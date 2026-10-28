@@ -25,11 +25,51 @@ it does not publish admin access across the LAN.
 cd ~
 git clone https://github.com/yiwssx/rcat-radio-network.git
 cd rcat-radio-network
-bash scripts/radioctl.sh deploy 10.10.1.100
+bash scripts/radioctl.sh check 10.10.1.100
 ```
 
 If the Git repository is already present, use `git pull --ff-only` rather
 than cloning it again. The runner does **not** install Python on the host.
+
+## Mandatory change approval — RRN-00 / RRN-01 / RRN-02
+
+The `check` command is **read-only** and does not mean the three blocking
+Tracker issues are accepted. **Do not deploy yet** until the authorized owner
+reviews the actual host inventory and existing PDF HUB/AnyFlip workflows,
+network/firewall/IPv6 exposure, AzuraCast release and full rendered Compose,
+backup/rollback, and signs off RRN-00, RRN-01 and RRN-02.
+
+After documented authorization, create the following private local file
+`reports/rrn-deploy-approval.txt` on the *actual server*. The values below
+are a **format example**, not pre-granted approval. Use only after the evidence
+and operator decisions really exist, and replace the IP with the host's
+configured RFC1918 address.
+
+```text
+RRN00=APPROVED
+RRN01=APPROVED
+RRN02=APPROVED
+SHARED_HOST_CHANGE=APPROVED
+RRN_BIND_IP=10.10.1.100
+```
+
+Keep supporting evidence and the signatory/change reference in a protected
+local record, not the public GitHub repository. The approval file must be a
+regular file (not a symlink), mode `0600` or `0400`, in a protected
+`reports/` directory. **The script only validates the recorded assertions,
+not their truth.** Incomplete records and missing explicit CLI consent fail
+before any Docker operation.
+
+Only *after* that review, authorize one controlled deployment:
+
+```bash
+chmod 600 reports/rrn-deploy-approval.txt
+bash scripts/radioctl.sh deploy 10.10.1.100 --ack-shared-host
+```
+
+If any gate fails, leave the station uninstalled and document the blocker.
+The old `scripts/one_round.py --mode deploy` path is disabled so it cannot
+bypass the reviewed operator workflow.
 
 ### Automatic gates before `docker compose up`
 
@@ -60,7 +100,7 @@ than cloning it again. The runner does **not** install Python on the host.
 |---|---|
 | AzuraCast Admin | `http://127.0.0.1:8700` on your PC via SSH tunnel |
 | RCAT Radio Player | `http://10.10.1.100:8750` from approved LAN |
-| Radio Stream | `http://10.10.1.100:8600/radio.mp3` after station setup |
+| Radio Stream | `http://10.10.1.100:8750/listen/rcat_radio/radio.mp3` via listener proxy (default mount) |
 
 In the AzuraCast Admin UI, create the first user and **one station** with
 shortcode `rcat_radio`, Icecast port `8600`, enabled AutoDJ playlist and
@@ -77,7 +117,7 @@ bash scripts/radioctl.sh status
 ```
 
 The verify command checks admin/portal HTTP responses, the
-`rcat_radio` Now Playing metadata, five concurrent local stream connections
+`rcat_radio` Now Playing metadata, five concurrent proxy stream connections for the documented default mount
 (received data only), and the PDF HUB/AnyFlip HTTP status. It writes
 `reports/last-result.txt`. A successful local stream smoke is **not proof**
 of accurate audio playback, 24-hour endurance, real DJ source priority,
@@ -143,8 +183,8 @@ and [RRN-02 #5](https://github.com/yiwssx/rcat-radio-network/issues/5).
 
 ## Stream routing and regression checks (2026-10-28 update)
 
-The listener player fetches AzuraCast's **one-station** public Now Playing
-endpoint through Nginx and routes the documented
+The listener player fetches ONLY AzuraCast's **one-station** public Now Playing
+endpoint `/api/nowplaying/rcat_radio` through Nginx and routes the documented
 `/listen/rcat_radio/<mount>` stream path through the listener portal
 on port `8750` (same origin). **AzuraCast admin remains loopback-only**.
 An arbitrary station or admin path must not be proxied through the portal.
