@@ -23,3 +23,21 @@
 Record for each test: date, version, expected vs actual, evidence and
 sanitized logs. Initial resource goals: CPU under 75% sustained, host RAM
 under 80% in target peak, disk at least 20% available; adjust with baseline.
+
+## Available test utilities and their limits
+
+- CI: Python unit tests, Node URL tests, Bash syntax, rendered Compose review,
+  mock station Nginx proxy routes and ffmpeg-monitor image build.
+- Offline backup manifest: `scripts/backup_check.py` validates file integrity
+  only. Actual RT-14 restoration requires a separately isolated target.
+- Live monitor: `monitor` Compose profile decodes short audio windows and
+  reports silence/disconnection after configurable consecutive failures.
+  Monitor service must be enabled and its webhook tested by the operator.
+- Load sampling: `acceptance` Compose profile can poll with 5, 20 or 50
+  simultaneous short listener requests, and optionally repeat for 24 hours.
+  This is NOT a continuous 24-hour full-connection soak and does not measure
+  playback on iOS or human-audible quality.
+
+Record host CPU, RAM, disk/egress, packet loss and interference with PDF HUB
+and AnyFlip during real load. A pass in any synthetic CI job is **not** a
+substitute for RT-01–RT-17 owner-performed field evidence.

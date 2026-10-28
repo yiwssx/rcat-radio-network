@@ -67,6 +67,40 @@ services:
     entrypoint: ["python", "/audit/compose_audit.py"]
     restart: "no"
 
+  # Operational tools are opt-in; 'compose up -d web portal' never starts them.
+  monitor:
+    profiles: ["monitor"]
+    build:
+      context: ..
+      dockerfile: deployment/Dockerfile.monitor
+    depends_on:
+      - portal
+    environment:
+      RRN_ALERT_WEBHOOK_URL: ${RRN_ALERT_WEBHOOK_URL:-}
+    read_only: true
+    cap_drop: ["ALL"]
+    security_opt:
+      - no-new-privileges:true
+    tmpfs:
+      - /tmp:rw,noexec,nosuid,size=16m
+    restart: unless-stopped
+    logging:
+      options:
+        max-size: "2m"
+        max-file: "5"
+
+  acceptance:
+    image: python:3.12-alpine
+    profiles: ["acceptance"]
+    read_only: true
+    cap_drop: ["ALL"]
+    security_opt:
+      - no-new-privileges:true
+    volumes:
+      - ../scripts/acceptance.py:/opt/rrn/acceptance.py:ro
+    entrypoint: ["python", "/opt/rrn/acceptance.py"]
+    restart: "no"
+
 volumes:
   station_data: {}
   backups: {}

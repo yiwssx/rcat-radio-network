@@ -1,5 +1,5 @@
 # RCAT Radio Network — Project Tracker
-Parent issue: [#2](https://github.com/yiwssx/rcat-radio-network/issues/2). Implementation PR: [#1](https://github.com/yiwssx/rcat-radio-network/pull/1). Updated: 2026-10-28. Status: planning and safe preflight preparation, **not deployed**.
+Parent issue: [#2](https://github.com/yiwssx/rcat-radio-network/issues/2). Implementation PR: [#1](https://github.com/yiwssx/rcat-radio-network/pull/1). Updated: 2026-10-28. Status: repository code prepared for CI validation; **not deployed**.
 
 | ID | Scope | Status | Acceptance gate |
 |---|---|---|---|
@@ -41,7 +41,7 @@ in this public repository.
 
 - Source: `deployment/compose.pilot.yaml` (AzuraCast stable + Nginx portal).
 - Operator guide: [Run once](docs/RUN-ONCE.md).
-- Command: `python3 scripts/one_round.py --mode deploy --bind-ip <LAN_IP> --ack-shared-host`.
+- Deprecated: Python-based `--mode deploy` is disabled. Use the reviewed Docker-only workflow after written approvals.
 - Web admin binds 127.0.0.1:8700 (SSH tunnel only); portal binds LAN:8750.
 - Docker/socket updater omitted. No installation or host firewall work performed remotely.
 - Scope: RRN-02 static artifacts **prepared**; RRN-03 installation **not yet executed**;
@@ -51,7 +51,7 @@ in this public repository.
 
 ## Docker-only operator workflow — ready for real-host audit
 
-- Primary operator entrypoint: `bash scripts/radioctl.sh deploy <SERVER_LAN_IP>`
+- Primary operator entrypoint after approvals: `bash scripts/radioctl.sh deploy <SERVER_LAN_IP> --ack-shared-host`
 - No Python interpreter on the host; Compose JSON audit runs in disposable
   isolated `python:3.12-alpine` service (no Docker socket/network)
 - Interactive station creation and real audio/DJ testing still manual
@@ -102,3 +102,22 @@ in this public repository.
 
 **No real-host deployment, 24-hour soak, DJ tests or restore evidence yet.**
 All RRN-00 through RRN-08 acceptance issues remain **OPEN**.
+
+## Code-completion batch — 2026-10-28
+
+See [docs/CODE-READY.md](docs/CODE-READY.md). This batch prepares:
+- [x] Opt-in read-only audio decoding / silence and disconnection monitor
+- [x] Optional HTTPS webhook alerting, disabled unless owner configures it
+- [x] 5/20/50 bounded client HTTP load and timed soak sampling utility
+- [x] Offline backup checksum / ZIP CRC manifest verifier (no extraction)
+- [x] Accessible player playback recovery and listener metadata
+- [x] Nginx API allowlist and same-origin media CSP hardening
+- [x] CI mock-backed proxy integration and optional monitor image build checks
+- [x] Offline tests for the new code paths
+- [ ] Real host deployment/configuration and upstream-version review (owner)
+- [ ] Real streaming/Live DJ/AutoDJ/silence/multi-browser tests (owner)
+- [ ] Off-host backup and isolated restore evidence (owner)
+- [ ] Network, PDF HUB/AnyFlip functional regression and signed acceptance (owner)
+
+**Code implementation does not equal operational acceptance.** RRN-00…08
+remain open until actual host evidence and the dependency gates are met.

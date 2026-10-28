@@ -70,3 +70,18 @@ The [Backup & Restore runbook](docs/BACKUP-RESTORE.md) defines the
 non-destructive, off-host backup process and **isolated** restoration
 acceptance tests. A guide is not proof that backups, alerts or restores
 are operating on the RCAT server; see RRN-06.
+
+## Repository code delivery (deployment deferred)
+
+Source-side components and automated tests are prepared for a supervised LAN
+pilot: responsive listener portal, one-station Nginx API/stream allowlist,
+fail-closed Docker-only controller, opt-in decoded-audio monitor, bounded
+load/soak probe, backup-integrity manifest checker, and mock integration CI.
+
+**This is not a claim that the RCAT host or actual station is working.**
+AzuraCast administration, broadcasting schedules, real mobile playback,
+alerts, off-host backup/isolated restore, host network and RT-01–17 test
+evidence remain the operator's responsibility. Leave acceptance issues OPEN.
+
+See [CODE-READY.md](docs/CODE-READY.md) for code/test coverage and safe
+operator commands; [DOCKER-ONLY.md](docs/DOCKER-ONLY.md) for deployment gates.

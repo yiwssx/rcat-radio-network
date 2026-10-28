@@ -11,7 +11,8 @@ export function resolveStreamUrl(raw, portalOrigin) {
     if (!['http:', 'https:'].includes(page.protocol)) return null;
     if (!['http:', 'https:'].includes(source.protocol)) return null;
     if (!source.pathname.startsWith('/listen/rcat_radio/')) return null;
-    if (source.pathname === '/listen/rcat_radio/') return null;
+    // Reject encoded segments and traversal-like or arbitrary upstream paths.
+    if (!/^\/listen\/rcat_radio\/[A-Za-z0-9._-]+$/.test(source.pathname)) return null;
     if (source.username || source.password || source.hash) return null;
     return page.origin + source.pathname + source.search;
   } catch {

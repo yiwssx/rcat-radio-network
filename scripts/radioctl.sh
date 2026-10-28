@@ -308,6 +308,8 @@ verify() {
   mkdir -p "$REPORT_DIR"
   temp="$(mktemp -d "$REPORT_DIR/verify.XXXXXXXX")"
   chmod 700 "$temp"
+  # Remove transient Now Playing metadata and probe results even if verification fails.
+  trap 'rm -rf -- "$temp"' EXIT
   if curl -fsS --max-time 8 --max-filesize 1048576 \
       "http://$BIND_IP:8750/api/nowplaying/rcat_radio" -o "$temp/nowplaying.json"; then
     if grep -Eq '"shortcode"[[:space:]]*:[[:space:]]*"rcat_radio"' "$temp/nowplaying.json" &&
@@ -321,18 +323,22 @@ verify() {
     say "Now Playing API is not available."
     failed=1
   fi
+  # Consume and discard stream bytes; keep only small metadata results locally.
+  # Infinite radio streams routinely hit --max-time: size_download is still useful.
   for i in 1 2 3 4 5; do
-    curl --silent --max-time 6 --connect-timeout 3 \
-      -D "$temp/stream-$i.headers" \
-      "http://$BIND_IP:8750/listen/rcat_radio/radio.mp3" -o "$temp/stream-$i.bin" &
+    curl --silent --max-time 6 --connect-timeout 3 --output /dev/null \
+      --write-out '%{http_code} %{content_type} %{size_download}\n' \
+      "http://$BIND_IP:8750/listen/rcat_radio/radio.mp3" \
+      > "$temp/stream-$i.status" &
   done
   wait || true
+  local code mime
   for i in 1 2 3 4 5; do
-    bytes="$(wc -c < "$temp/stream-$i.bin" 2>/dev/null || printf 0)"
-    if [[ "$bytes" =~ ^[0-9]+$ ]] && (( bytes >= 512 )) &&
-       grep -Eq '^HTTP/[0-9.]+ 200' "$temp/stream-$i.headers" &&
-       grep -Eiq '^content-type:[[:space:]]*(audio/|application/ogg)' "$temp/stream-$i.headers"; then
-      say "Stream client $i: HTTP 200, audio MIME, $bytes bytes."
+    code="" mime="" bytes=0
+    read -r code mime bytes < "$temp/stream-$i.status" || true
+    if [[ "$code" == "200" && "$mime" =~ ^(audio/|application/ogg) ]] &&
+       [[ "$bytes" =~ ^[0-9]+$ ]] && (( bytes >= 512 )); then
+      say "Stream client $i: HTTP 200, audio MIME, $bytes discarded bytes."
     else
       say "Stream client $i: no confirmed audio HTTP response."
       failed=1
