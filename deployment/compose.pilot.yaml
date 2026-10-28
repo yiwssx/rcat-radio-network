@@ -50,6 +50,21 @@ services:
         max-size: "1m"
         max-file: "3"
 
+  # Disposable validator. It receives rendered Compose on stdin, but NEVER
+  # has Docker socket access. Python exists only inside this image.
+  audit:
+    image: python:3.12-alpine
+    profiles: ["audit"]
+    network_mode: "none"
+    read_only: true
+    cap_drop: ["ALL"]
+    security_opt:
+      - no-new-privileges:true
+    volumes:
+      - ../scripts/compose_audit.py:/audit/compose_audit.py:ro
+    entrypoint: ["python", "/audit/compose_audit.py"]
+    restart: "no"
+
 volumes:
   station_data: {}
   backups: {}

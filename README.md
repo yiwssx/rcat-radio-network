@@ -42,3 +42,21 @@ host private IPv4. The command does **not** modify firewall/Reverse Proxy or lau
 AzuraCast automatically on GitHub; it runs only on the machine where you execute it.
 Admin listens on loopback only; use the documented SSH tunnel. A passed GitHub CI
 is **not** proof the live broadcast or production host has been tested.
+
+## Recommended: Docker-only single-session LAN test
+
+**No Python on Ubuntu Host.** Use the maintained `scripts/radioctl.sh`
+wrapper around Docker Compose. Compose static audit runs in a disposable
+container without host Docker socket access.
+
+```bash
+git clone https://github.com/yiwssx/rcat-radio-network.git
+cd rcat-radio-network
+bash scripts/radioctl.sh deploy 10.10.1.100
+```
+
+Read [the complete Docker-only runbook](docs/DOCKER-ONLY.md) before
+executing it on the shared Docker server. The earlier
+`scripts/one_round.py` runner remains available as a legacy option
+but is **not required** for the primary operator workflow. GitHub CI is a
+static check, not evidence the station has been installed.
