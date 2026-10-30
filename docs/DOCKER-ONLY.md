@@ -152,6 +152,36 @@ docker compose -p rcat_radio_pilot \
 Docker Engine auto-upgrade, global firewall changes or new public port
 forwarding on the shared production host.
 
+## Recovering an interrupted AzuraCast initialization
+
+The installer uses `docker compose run --rm --no-deps web -- azuracast_install`.
+After that temporary container exits, `docker ps -a` may show no radio
+containers even though the database and station volumes are still present.
+A preflight-only `reports/last-result.txt` is not evidence of successful installation.
+
+If initialization stalls or fails on a shared host:
+
+1. Confirm no radio deploy processes or running radio containers remain.
+2. Keep `deployment/.env`, `deployment/azuracast.env`, and all
+   `rcat_radio_pilot_*` Docker volumes. **Never run `down -v` or Docker prune.**
+3. Back up the radio volumes before any permission or identity change.
+4. Verify that `AZURACAST_PUID` and `AZURACAST_PGID` are the non-root
+   operator's numeric UID/GID (for example `id -u`, `id -g`). The initial
+   implementation incorrectly recorded UID/GID `0` when invoked through
+   `sudo`; the runner now rejects such saved environments rather than
+   silently proceeding. Existing values require an operator-reviewed,
+   backed-up correction; **never regenerate database secrets**.
+5. Retry only after resolving the underlying failure. The updated runner
+   saves the full private initialization transcript as
+   `reports/azuracast-install-YYYYMMDDTHHMMSSZ.log` (mode 0600) and
+   stamps `reports/last-result.txt` at installation start and on failure.
+   Installer logs may contain secrets; do not publish them unredacted.
+
+Do not assume the UID/GID defect alone caused an `uptime_wait` stall:
+the AzuraCast startup also checks dependent services. Inspect the saved
+installer log and any supervisor errors to identify the actual cause.
+Radio-only troubleshooting must preserve the PDF Hub and AnyFlip stacks.
+
 ## Important limitations / operator review
 
 - This repository does not have remote shell access to your RCAT server.

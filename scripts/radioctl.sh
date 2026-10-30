@@ -126,7 +126,7 @@ regression() {
     return 1
 }
 check_host() {
-  for cmd in docker ip ss awk df nproc curl od tr grep; do require "$cmd"; done
+  for cmd in docker ip ss awk df nproc curl od tr grep tee; do require "$cmd"; done
   docker info >/dev/null 2>&1 || stop_with_error "Docker Engine is unavailable or permission denied."
   docker compose version >/dev/null 2>&1 ||
     stop_with_error "Docker Compose plugin is unavailable."
@@ -165,13 +165,21 @@ make_env() {
       stop_with_error "Existing environment is bound to a different LAN IP."
     grep -Fqx "COMPOSE_PROJECT_NAME=$PROJECT" "$ENV_FILE" ||
       stop_with_error "Unexpected Compose project in existing environment."
+    if grep -Eq '^AZURACAST_P(U|G)ID=0$' "$ENV_FILE"; then
+      stop_with_error "Existing radio environment has root PUID/PGID (0). Back up radio volumes and correct to a non-root operator UID/GID before retrying. Retain DB secrets."
+    fi
     say "Using existing radio environment and saved database credentials."
     return 0
   fi
   local password uid gid
   password="$(od -An -N32 -tx1 /dev/urandom | tr -d ' \n')"
-  uid="$(id -u)"
-  gid="$(id -g)"
+  # sudo changes id -u/id -g to root; use the actual operator identity.
+  uid="${SUDO_UID:-$(id -u)}"
+  gid="${SUDO_GID:-$(id -g)}"
+  [[ "$uid" =~ ^[0-9]+$ && "$gid" =~ ^[0-9]+$ ]] ||
+    stop_with_error "Invalid AzuraCast UID/GID."
+  (( uid > 0 && gid > 0 )) ||
+    stop_with_error "AzuraCast requires a non-root UID/GID; run sudo from a non-root operator account."
   [[ "${#password}" == 64 ]] || stop_with_error "Unable to generate secure DB secret."
   ( set -C
     cat > "$ENV_FILE" <<EOF
@@ -272,8 +280,15 @@ deploy() {
   say "Pulling only AzuraCast and portal images."
   compose pull web portal || stop_with_error "Unable to pull radio images."
   say "Initializing AzuraCast in the radio project; no existing stacks are modified."
-  compose run --rm --no-deps web -- azuracast_install ||
-    stop_with_error "AzuraCast initialization failed; volumes and secrets retained. Do not overwrite credentials."
+  # Preserve a private transcript: the --rm installer container disappears on exit.
+  local install_log="$REPORT_DIR/azuracast-install-$(date -u +%Y%m%dT%H%M%SZ).log"
+  stamp_report "AZURACAST_INITIALIZATION_STARTED"
+  ( umask 077; touch "$install_log" ) || stop_with_error "Cannot create private AzuraCast installer log."
+  chmod 600 "$install_log"
+  if ! compose run --rm --no-deps web -- azuracast_install 2>&1 | tee "$install_log"; then
+    stamp_report "AZURACAST_INITIALIZATION_FAILED"
+    stop_with_error "AzuraCast initialization failed; review private log $install_log. Volumes and credentials retained."
+  fi
   say "Starting radio services."
   if ! compose up -d web portal; then
     stop_only_radio
