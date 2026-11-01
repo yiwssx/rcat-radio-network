@@ -323,8 +323,11 @@ verify() {
   mkdir -p "$REPORT_DIR"
   temp="$(mktemp -d "$REPORT_DIR/verify.XXXXXXXX")"
   chmod 700 "$temp"
-  # Remove transient Now Playing metadata and probe results even if verification fails.
-  trap 'rm -rf -- "$temp"' EXIT
+  # EXIT traps run after verify() returns, when local variables are out of scope.
+  # Capture a shell-escaped path now so set -u cannot fail on local "temp".
+  local cleanup_command
+  printf -v cleanup_command 'rm -rf -- %q' "$temp"
+  trap "$cleanup_command" EXIT
   if curl -fsS --max-time 8 --max-filesize 1048576 \
       "http://$BIND_IP:8750/api/nowplaying/rcat_radio" -o "$temp/nowplaying.json"; then
     if grep -Eq '"shortcode"[[:space:]]*:[[:space:]]*"rcat_radio"' "$temp/nowplaying.json" &&
