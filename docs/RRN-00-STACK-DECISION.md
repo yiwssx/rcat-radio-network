@@ -1,78 +1,72 @@
-# RRN-00 — SHOUTcast DNAS + Ready-Made AutoDJ/Control Panel Selection
+# RRN-00 — Zero-Recurring-Fee SHOUTcast and AutoDJ Stack Selection
 
-**Research date:** 2026-11-11  
-**Decision state:** PREFERRED CANDIDATE — NOT APPROVED FOR PURCHASE OR DEPLOYMENT  
-**Parent:** [RRN-00 Issue #2](https://github.com/yiwssx/rcat-radio-network/issues/2)  
-**Project:** [RCAT Radio Network](https://github.com/yiwssx/rcat-radio-network)
+**Revised:** November 11, 2026  
+**Owner decision:** No paid software licenses, no paid radio hosting, and no new monthly subscription.  
+**Decision status:** FREE STACK SELECTED IN PRINCIPLE; VERSION-COMPATIBILITY CHECK PENDING  
+**Tracker:** [Issue #2 — RRN-00](https://github.com/yiwssx/rcat-radio-network/issues/2)
 
-## Executive decision
+> This decision **supersedes** the November 11 proposal to subscribe to YesStreaming at USD 16.99/month. That proposal is rejected by the project owner on cost grounds and must not be treated as the current recommendation. No purchase or deployment has been authorized.
 
-**Preferred option:** a vendor-hosted **SHOUTcast DNAS v2 + Centova Cast v3 AutoDJ** service, with **YesStreaming** as the current candidate.
+## Decision
 
-**Reference product:** YesStreaming **US SHOUTcast V2 128 kbps / 500 simultaneous listeners / 15 GB AutoDJ**, advertised at **USD 16.99/month** on the vendor's product catalog (price subject to checkout confirmation, taxes, and changes).
+**Preferred no-new-fee stack:**
 
-**Why:** The project's shared Ubuntu server was previously reported as **Ubuntu 26.04.1 LTS, x86_64** (November 9 operator evidence), while the evaluated self-hosted panels do not list that exact Ubuntu release as supported. A shared-host installation could introduce incompatible system packages, unsupported root-level installer changes, or conflicts with the existing PDF HUB and AnyFlip applications. Vendor-hosted streaming keeps the broadcast stack separate and does not require any SHOUTcast/control-panel installation on that server.
+1. **SHOUTcast Basic (DNAS)** — vendor-provided Linux streaming server under a free/freemium license; plan around **MP3 at 128 kbps** and review the current licensing, registration, advertising, and directory terms before public launch.
+2. **LibreTime v4.5.0** — open-source web-based media library, playlists, radio automation and Live DJ inputs, using its **official Docker Compose distribution** and its documented `stream.outputs.shoutcast` configuration.
+3. **BUTT or Mixxx** — free conventional Live DJ broadcast applications, already covered by LibreTime's user guide.
+4. **Existing RCAT Ubuntu host** — no new hosting bill; isolate the station's containers, data, credentials, ports, and ingress from PDF HUB and AnyFlip.
 
-**Critical caveat:** This recommendation changes the original local-host deployment assumption and introduces a recurring external-service cost. **Owner approval is mandatory before final product selection, ordering, account setup, DNS changes, or implementation.** RRN-00 remains OPEN.
+**Cost target:** **USD 0/month in incremental software license and external radio-hosting fees**. This does not eliminate electricity, the existing server's internet connection, administration, bandwidth, backups, or rights to broadcast copyrighted audio.
 
-## Requirements and evidence boundary
+**Do not deploy yet.** The documentation supports LibreTime's ability to configure a SHOUTcast output, but a successful connection and **automatic Live DJ → AutoDJ recovery using the exact chosen DNAS 2 build have not been demonstrated**. This is the only integration behavior that must be checked before considering the software selection technically confirmed. There is a March 2026 LibreTime community report of difficulties connecting v4.5.0 to SHOUTcast v2.6.1.777; a report is not proof the combination is broken, but it prevents declaring compatibility proven without a targeted reproduction.
 
-The project's V1 requirement is **one online station** using off-the-shelf software, with:
-- SHOUTcast DNAS v2 as the stream server;
-- control-panel uploads and straightforward AutoDJ playlists;
-- standard encoder-based Live DJ (BUTT/Mixxx) with automatic return to AutoDJ on disconnect;
-- a secure listener player/HTTPS, separate administration access, and minimal backup/operations procedures;
-- no bespoke React/Fastify application, browser DJ studio, custom streaming engine, or multi-station platform.
+## Evidence and official references
 
-The historical host evidence is **not** a live inventory or current resource/port verification. It establishes an OS compatibility concern, not an installation failure. The earlier operator also confirmed removal of the legacy AzuraCast stack and HTTP 200 responses from PDF HUB and AnyFlip after removal. Do not repeat these unrelated checks until a specific new change warrants them.
+- SHOUTcast's [Basic product page](https://www.shoutcast.com/pricing/basic) offers the self-hosted Linux server for free. [Its server license terms](https://www.shoutcast.com/legal/agreements/dnas) describe free/freemium use and MP3 128 kbps restrictions; the published legal text has an older revision date, so confirm current account conditions when obtaining the server.
+- LibreTime's [official repository](https://github.com/libretime/libretime) is open-source (AGPL-3.0).
+- LibreTime's [stable 4.x configuration guide](https://libretime.org/docs/admin-manual/configuration/) explicitly documents a `stream.outputs.shoutcast` output, host, port, credentials, MP3 and AAC encoding. This supports source compatibility **in documented configuration**, not an end-to-end proven v4.5.0 deployment.
+- LibreTime's [Docker installation guide](https://libretime.org/docs/stable-3.x/admin-manual/install/install-using-docker/) provides a v4.5.0 Compose distribution; [official releases](https://github.com/libretime/libretime/releases) list v4.5.0 as the latest tagged release as checked on this research date.
+- LibreTime's [Live broadcasting manual](https://libretime.org/docs/user-manual/live-broadcast/) documents BUTT/Mixxx input configuration and live-source behavior, including the possible need to toggle the live source.
+- [LibreTime community report, March 2026](https://discourse.libretime.org/t/broadcast-to-shoutcast-with-libretime-4-5-0/1970) documents reported problems with v4.5.0 and SHOUTcast servers. **Treat as a targeted compatibility risk, not vendor-confirmed incompatibility.**
+- [Surcast](https://radio-sur.github.io/) is a free all-in-one web radio option, but currently advertises **Icecast**, not SHOUTcast DNAS. It is only a possible fallback if the SHOUTcast-engine requirement is explicitly relaxed.
 
-## Comparison of three shortlisted options
+## At-most-three-option comparison
 
-| Criterion | MediaCP + SHOUTcast (self-host) | Centova Cast + SHOUTcast (self-host) | YesStreaming SHOUTcast v2 + Centova Cast (vendor-hosted) |
-|---|---|---|---|
-| Vendor-supported OS / placement | Vendor lists Debian 12/13, Ubuntu 22.04/24.04 and other Linux variants; **Ubuntu 26.04 is not listed**. Vendor recommends a dedicated server, Debian 13 for new installations. | Vendor lists CentOS/RHEL, AlmaLinux/Rocky, and Debian Stable; **Ubuntu is not listed**. | Runs on the provider's infrastructure; the RCAT host OS does not constrain the streaming stack. |
-| SHOUTcast compatibility | Vendor explicitly supports SHOUTcast 1.9.8 and 2.x. | Vendor lists SHOUTcast v1.9 and v2.x. | Provider explicitly describes **SHOUTcast DNAS v2** managed with Centova Cast v3. |
-| AutoDJ music uploads and playlists | Supported by MediaCP media library and Liquidsoap AutoDJ. | Supported by Centova Cast media library and AutoDJ. | Provider explicitly advertises music uploads and AutoDJ playlists; 15 GB included in the reference plan. |
-| Live DJ / return to AutoDJ | Separate DJ logins and priority are documented; AutoDJ-on-air events include resumption after a Live DJ disconnects. | SHOUTcast v2 DJ/AutoDJ support exists; compatibility of a given installation still requires configuration verification. | Provider explicitly advertises automatic switching between Live and AutoDJ when the live feed disconnects. |
-| Player / TLS | Built-in HTML5 player and HTTPS proxy advertised. | Panel and stream integration possible; HTTPS exposure is an operator responsibility. | Provider advertises secure streaming links and Centova panel. Confirm the exact custom-domain/player workflow before purchase. |
-| Host installation impact | Medium-to-high: root-level services and ports 80/443/2020, FTP and streaming ports; may conflict on the shared host. | Medium-to-high: vendor OS mismatch and privileged system installation; not supported on the existing Ubuntu release. | Low impact on the RCAT Ubuntu host; a future static player/domain change may still require approval. |
-| Publicly advertised cost | **USD 12/month** for a single-station MediaCP panel license; own server, bandwidth, and any operational costs extra. | **USD 11/month** listed for a 10-station Centova Cast software package; hosting not included. | **USD 16.99/month** for the stated US SHOUTcast v2 128 kbps / 500-listener / 15 GB AutoDJ plan; confirm fees in checkout. |
-| RRN-00 outcome | **Not selected** for the current Ubuntu 26.04 shared host. | **Not selected** for the current Ubuntu 26.04 shared host. | **Preferred, conditional on owner approval and current vendor confirmation.** |
+| Option | Software/hosting fees | Web music uploads and playlists | SHOUTcast DNAS | Live DJ / AutoDJ fallback | Operational cost and verdict |
+|---|---|---|---|---|---|
+| **SHOUTcast Basic + LibreTime v4.5.0 (Docker)** | **USD 0 incremental license/hosting** on existing host | Yes, via LibreTime | Official LibreTime configuration documents SHOUTcast output; **DNAS v2 connection not yet proven** | LibreTime supports live input; exact automatic recovery path to DNAS output **requires a targeted check** | **Preferred free candidate**, but a multi-service stack (Postgres, RabbitMQ, Liquidsoap, web API, etc.), not a single lightweight daemon |
+| SHOUTcast Basic + standalone Liquidsoap | **USD 0 incremental license/hosting** on existing host | **No ready-made web control panel** in this pairing | Liquidsoap can serve as an encoder/source in principle; exact source configuration not checked | Requires manual integration/routing; no verified ready-made handoff | Reject for V1: insufficient web management, risks creating a custom project |
+| Surcast + its bundled Icecast | **USD 0 incremental license/hosting** on existing host | Advertised as present | **No: Icecast rather than SHOUTcast** | Live workflow and fallback specifics not fully validated for this use | Only revisit if owner later relaxes the SHOUTcast DNAS requirement |
 
-The 500-listener cap is a starter plan limit, **not a forecast of maximum station demand**. Upgrade options exist in the vendor catalog, but their final prices and migration terms must be confirmed before relying on them.
+**AzuraCast is excluded by prior explicit owner decision.** Do not reopen it as the default free choice.
 
-## Vendor documentation and primary sources
+## Host-safety and minimal implementation constraints
 
-1. MediaCP official system requirements, supported OS list, dedicated-server guidance, and port requirements: https://www.mediacp.net/doc/admin-server-manual/install/system-requirements/
-2. MediaCP official panel pricing (single station, USD 12/month): https://www.mediacp.net/pricing/
-3. MediaCP official SHOUTcast/AutoDJ/HTML5 player capabilities: https://www.mediacp.net/mediacp/shoutcast-control-panel/
-4. MediaCP Live DJ connections: https://www.mediacp.net/doc/user-manual/audio/live-dj-connections/
-5. MediaCP AutoDJ event descriptions, including resume after Live DJ disconnects: https://www.mediacp.net/doc/user-manual/audio/audio-stream-events/
-6. Centova Cast official supported OS: https://centova.com/en/cast/requirements
-7. Centova Cast official license packages and pricing (software only): https://centova.com/en/cast/packages
-8. YesStreaming official technology description (SHOUTcast DNAS v2 with Centova Cast v3, playlist fallback): https://www.yesstreaming.com/get-started
-9. YesStreaming official SHOUTcast V2 128 kbps / 500-listener / 15 GB AutoDJ product listing: https://my.yesstreaming.com/store/usa-server-shoutcast-v2-plan
-10. YesStreaming support FAQ confirming SHOUTcast DNAS v2: https://my.yesstreaming.com/knowledgebase/71/Can-I-Stream-Live-with-a-Shoutcast-V1-Source.html
-11. YesStreaming main hosting features, HTTPS and fallback: https://www.yesstreaming.com/shoutcast-hosting
-12. SHOUTcast official pricing (basic self-host server software is free; additional AutoDJ/panel or hosting is separate): https://www.shoutcast.com/pricing
+The RCAT operator previously reported Ubuntu **26.04.1 LTS** on the shared server. Since the selected LibreTime installation method is container-based, check the pinned images' actual architecture, kernel requirements, port mappings, and volume paths rather than claiming that a native LibreTime installer supports Ubuntu 26.04. In particular:
 
-**Research limitation:** Provider feature/pricing pages are vendor claims, not independent uptime, billing, security, or performance audits. The selected subscription and exact billing terms were not validated in a checkout session, and no trial account was created. The specific underlying DNAS build and vendor patch cadence were not independently inspected.
+- Confirm the actual host architecture and free capacity before installation; previous inventory is historical, not a live inspection.
+- Inspect LibreTime's default Compose for PostgreSQL, RabbitMQ, Liquidsoap, web, and any bundled Icecast service. Do not accidentally expose default 80/443 or conflict with existing shared services.
+- Keep SHOUTcast DNAS and LibreTime configurations and data isolated. Do **not** assume an arbitrary third-party SHOUTcast Docker image is officially supported; validate the official DNAS binary distribution/license first.
+- Store credentials outside Git. Bind administration privately and use an explicitly approved TLS/reverse-proxy setup.
+- The music library starts empty. Use only authorized sample audio for a single audibility and failover check; do not repeat unrelated tests already evidenced.
+- No host-level installer, daemon change, DNS/proxy/firewall modification, deployment, or data deletion is authorized by this decision record.
 
-## RRN-00 owner decision required
+## Targeted feasibility check before completing RRN-00
 
-Confirm **one** of the following:
-1. **Approve managed hosting in principle:** a recurring externally hosted SHOUTcast v2 + AutoDJ plan, with YesStreaming as the candidate and a starting vendor-advertised price of **USD 16.99/month** (plus any applicable taxes/fees). This is not authorization to pay or deploy; final order specifics and use of the public domain remain separate approvals.
-2. **Require self-hosting:** keep the broadcast engine on institution-controlled infrastructure, but use a separately isolated **vendor-supported** OS/server or obtain explicit vendor support for Ubuntu 26.04 before installing a control panel. Costs and resource requirements will need a new decision record.
-3. **No recurring cost:** record a blocker and do not assert that SHOUTcast DNAS alone provides the required web AutoDJ/control panel.
+1. Validate a reproducible, supported SHOUTcast Basic DNAS v2 Linux binary distribution and actual freemium obligations (account, 128 kbps MP3, advertisements/directory terms).
+2. Review LibreTime v4.5.0's shipped `docker-compose.yml`/configuration for isolated use on the shared host, including disabling or isolating unnecessary default Icecast output/services without breaking required dependencies.
+3. Confirm that LibreTime can publish a playlist to the selected DNAS source using documented configuration.
+4. Confirm one Live DJ input and one normal disconnect/fallback. If default behavior requires manual source toggling, describe that limitation accurately; do **not** build a custom gateway to conceal it.
+5. If the exact product combination is not feasible without unsupported patching, keep RRN-00 blocked and recommend the simplest **free** supported alternative; do not silently switch to a paid product or reintroduce AzuraCast.
 
-Further vendor confirmations if option 1 is approved: actual panel/version and SHOUTcast v2 availability on the selected plan, operator/DJ roles, ability to export station media/configuration, HTTPS player URL and custom-domain support, payment/renewal terms, external data retention, and Thailand playback latency.
+This is a **single narrowly scoped feasibility check**, not a full production acceptance suite. Execution needs separate approval for server-side deployment.
 
-## Acceptance status
+## Status and issue ownership
 
-- [x] Compared a maximum of three options, including official sources and stated license costs.
-- [x] Documented vendor-stated SHOUTcast DNAS, AutoDJ, and Live DJ-to-AutoDJ fallback functionality.
-- [x] Recorded host OS mismatch, installation limitations, and an alternative with reduced shared-host risk.
-- [ ] Owner approves the hosting model and any recurring financial commitment.
-- [ ] Final vendor/product/plan and required compatibility are confirmed; then close RRN-00 and adapt downstream implementation issues if the hosting model changes.
+- **Resolved:** Free-only cost requirement; paid-hosting candidate rejected; a documented free stack candidate identified.
+- **Still open:** Actual supported SHOUTcast DNAS v2 binary/version, the LibreTime v4.5.0 integration path, and confirmed Live DJ fallback. Track these under **RRN-00 (#2)** and host layout under **RRN-01 (#3)**; do not create a new issue.
+- **No work performed on RCAT Production:** This record updates selection and documentation only.
 
-**Guardrail:** No software deployed, no subscriptions ordered, and no DNS, reverse-proxy, firewall, or Production configuration changed as part of this research.
+## License and rights reminder
+
+SHOUTcast Basic is **free/freemium**, not open-source software. LibreTime is AGPL-licensed open source. Neither license grants music-copyright broadcasting rights; verify rights before public audio transmission.
