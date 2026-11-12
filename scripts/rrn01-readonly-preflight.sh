@@ -15,8 +15,20 @@ else pending "OS information unavailable"; fi
 printf 'Architecture: %s\n' "$(uname -m 2>/dev/null || printf unknown)"
 if command -v docker >/dev/null 2>&1; then
   printf 'Docker client: '; docker --version 2>/dev/null || true
-  if docker compose version >/dev/null 2>&1; then
-    printf 'Docker Compose: '; docker compose version --short 2>/dev/null || true
+  if compose_version="$(docker compose version --short 2>/dev/null)"; then
+    printf 'Docker Compose: %s\n' "$compose_version"
+    semver="${compose_version#v}"
+    semver="${semver%%[-+]*}"
+    if [[ "$semver" =~ ^([0-9]+)\.([0-9]+)\.([0-9]+)$ ]]; then
+      major="${BASH_REMATCH[1]}"
+      minor="${BASH_REMATCH[2]}"
+      if (( 10#$major > 2 || (10#$major == 2 && 10#$minor >= 24) )); then
+        ok "Compose CLI supports !override (v2.24.4+ threshold still requires patch check below)"
+        if (( 10#$major == 2 && 10#$minor == 24 )) && (( 10#${BASH_REMATCH[3]} < 4 )); then
+          printf 'BLOCKED: Compose CLI version must be >=2.24.4 for !override\n'
+        fi
+      else printf 'BLOCKED: Compose CLI version must be >=2.24.4 for !override\n'; fi
+    else pending "Unrecognized Compose version; verify !override support before use"; fi
   else pending "Docker Compose not accessible"; fi
 else pending "Docker CLI not installed or not in PATH"; fi
 
@@ -33,22 +45,23 @@ fi
 
 section "Candidate radio-only port conflicts"
 if command -v ss >/dev/null 2>&1; then
-  # Intentionally exclude process names, command lines and other service ports.
-  listeners="$(ss -H -ltn 2>/dev/null || true)"
-  for port in 8600 8605 8700; do
-    matches="$(printf '%s\n' "$listeners" | awk -v p=":$port" '$4 ~ (p "$") {print $4}')"
-    if [ -n "$matches" ]; then
-      printf 'CONFLICT: port %s has listener(s); select a different radio-only port\n' "$port"
-    else
-      printf 'FREE_OBSERVED: no TCP listener on %s at this instant\n' "$port"
-    fi
-  done
-else pending "ss unavailable; port ownership not verified"; fi
+  # A failed ss must NEVER be interpreted as confirmation that ports are free.
+  if listeners="$(ss -H -ltn 2>/dev/null)"; then
+    for port in 8600 8605 8700; do
+      matches="$(printf '%s\n' "$listeners" | awk -v p=":$port" '$4 ~ (p "$") {print $4}')"
+      if [ -n "$matches" ]; then
+        printf 'CONFLICT: port %s has listener(s); select a different radio-only port\n' "$port"
+      else
+        printf 'FREE_OBSERVED: no TCP listener on %s at this instant\n' "$port"
+      fi
+    done
+  else pending "ss failed; port occupancy UNKNOWN, not free"; fi
+else pending "ss unavailable; port occupancy UNKNOWN, not free"; fi
 # An available TCP port is NOT a firewall/ingress/access-control confirmation.
 
 section "Proposed radio-only path ownership"
 for path in /opt/rcat-radio-network /etc/rcat-radio-network /var/backups/rcat-radio-network; do
-  if [ -e "$path" ]; then
+  if [ -e "$path" ] || [ -L "$path" ]; then
     # No file listing or secret content. Do not make directory changes.
     if command -v stat >/dev/null 2>&1; then
       stat -c '%n: exists, owner=%U group=%G mode=%a' "$path" 2>/dev/null || pending "Cannot inspect $path"
