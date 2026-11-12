@@ -159,3 +159,13 @@ When a separately approved isolated test environment and official package are av
 | End-to-end audible output and fallback against that DNAS build | **Not executed; requires authorized isolated test** |
 
 **Decision:** Retain RRN-00 as **OPEN — STATIC COMPATIBILITY REVIEW PASSED; RUNTIME PROOF BLOCKED**. Do not start RRN-02 deployment. All updates remain English-only and no production system is changed.
+
+## Non-production preparation update — November 12, 2026
+
+Created [the LibreTime 4.5.0 feasibility Compose override](../blob/main/testing/compose.feasibility.override.yml) using the official `!override` syntax available in Docker Compose **2.24.4 and later**. The upstream Compose must be supplied separately in an isolated test directory; the override is **not** an independently runnable deployment.
+
+It pins LibreTime images to `4.5.0`, replaces rather than appends the upstream port lists (LibreTime Web at `127.0.0.1:8700`, one DJ input at `127.0.0.1:8605`, bundled Icecast without a published host port), and rejects missing private database/message-broker/Icecast password environment variables. The upstream LibreTime `config.yml` must also be privately generated and validated; **its default passwords cannot be used**. The config may still contain an Icecast output enabled by default, which requires a deliberate decision before testing DNAS. The separate SHOUTcast binary and internal source route remain unresolved.
+
+This is a **guardrail configuration**, not an actual rendered Compose model, a successful DNAS connection, or approval to deploy on `rcatiotserver`. Docker Compose is not available in the current local working environment, and no current RCAT host inspection has been performed. When a permitted test environment exists, validate the merged model and verify that no base host ports survive the merge before starting anything.
+
+**External blocker remains:** SHOUTcast Basic's official Linux DNAS download is member-gated at https://directory.shoutcast.com/BroadcastNow. No verified executable/version or licensed source route was obtained. Do not use unofficial copies. RRN-00 is still **BLOCKED ON ONE ACTUAL TEST** and must not be closed until AutoDJ → Live DJ → AutoDJ audibility through that DNAS build has been demonstrated.
