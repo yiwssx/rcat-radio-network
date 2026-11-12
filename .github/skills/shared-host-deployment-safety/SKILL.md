@@ -1,42 +1,36 @@
 ---
 name: shared-host-deployment-safety
-description: Safely plan, review, or execute SHOUTcast and AutoDJ deployment changes on RCAT's shared Ubuntu Docker host. Use when inspecting ports, installer requirements, compose files, secrets, volumes, reverse proxies, rollback, or commands that could affect PDF HUB and AnyFlip.
+description: Safely plan, review, and control Icecast and LibreTime deployments on RCAT's shared Ubuntu Docker host without disrupting PDF HUB, AnyFlip, ingress, credentials, or other existing services.
 ---
 
 # RCAT Shared-Host Deployment Safety
 
-## Operating context
+## Deployment context
 
-The Ubuntu host runs other active applications, including PDF HUB and AnyFlip. A radio installation must remain a **separate service boundary** and must not change unrelated service configuration or data.
+The accepted one-station stack is **LibreTime 4.5.0 with bundled Icecast 2.4.4**, using radio-only Docker Compose resources. PDF HUB and AnyFlip are active, unrelated applications and must remain untouched.
 
-The legacy AzuraCast project was removed by an operator on November 10, 2026; the operator observed that radio containers and ports were gone and that the existing PDF HUB and AnyFlip HTTP health endpoints returned 200. This is historical evidence, not proof of current host state.
+The old AzuraCast pilot was removed with operator-confirmed checks in November 2026. Prior unused ports and HTTP 200 results are **historical evidence**, not live resource availability.
 
-## Mandatory sequence
+## Mandatory order
 
-1. Read RRN-00 (#2) and RRN-01 (#3). Confirm the chosen panel is supported on the **exact host OS** before planning an install.
-2. Inspect only the host facts required for the change: installed version, ports, disk/RAM headroom, running stacks, and proxy ownership. Reuse valid evidence rather than rerun unrelated acceptance suites.
-3. List every host-wide installer action, dependency, service, and port, especially 80/443, before approval. Treat a vendor's "fresh server" requirement as a potential deployment blocker.
-4. Prefer isolated service names, configuration paths, data paths, credentials, and networks. Do not assume an existing control panel can safely be placed in Docker if the vendor does not support that method.
-5. Keep secrets out of Git, logs, issue bodies, and rendered Compose output. Provide redacted diagnostics.
-6. For proposed changes, specify expected impact, backup/rollback steps, and the exact radio-only resources involved.
-7. Require **separate explicit approval** before live deployment, downtime, data deletion, DNS, firewall, or reverse-proxy changes.
+1. Read [RRN-00 accepted stack](https://github.com/yiwssx/rcat-radio-network/issues/2) and [RRN-01 shared host boundaries](https://github.com/yiwssx/rcat-radio-network/issues/3); reuse previous evidence.
+2. Verify the current host architecture, disk/memory capacity, service/port ownership, path ownership and **Docker Compose >= 2.24.4** in one read-only preflight immediately before a separately approved runtime change.
+3. Use a separate Compose project and private credentials. LibreTime's bundled `icecast` service connects internally at `icecast:8000`; the Show DJ source is `liquidsoap:8002`, not the Main source on 8001.
+4. Upstream binds host ports 8000, 8001, 8002 and 8080. Replace these mappings by explicit loopback radio-only ports in `testing/compose.feasibility.override.yml`. Docker Compose `ports: !override` is necessary to **replace** rather than merge published ports.
+5. Keep Postgres/RabbitMQ and admin/internal endpoints unpublished. A public Icecast listener URL requires separately approved HTTPS ingress.
+6. Validate a secret-redacted merged Compose model and stop if port bindings are incorrect; do not mistake a static override for a successfully rendered/running stack.
+7. Obtain explicit approval before installing/running containers, migrations, changing firewall/DNS, starting public audio, or modifying any shared proxy.
 
-## Destructive-operation guardrails
+## Destructive-operation restrictions
 
-- Never run host-wide commands such as `docker system prune`, `docker volume prune`, or unfiltered container deletion to "clean up" radio.
-- Never use `docker compose down -v` or delete volumes without an exact resource inventory and explicit approval of the resulting data loss.
-- Avoid restarting Docker Engine, modifying shared reverse proxies, or upgrading system dependencies merely to fit a control panel.
-- Use scoped radio-only actions and preserve unrelated containers, named volumes, networks, and ingress paths.
-- Do not claim a deployment or removal succeeded without actual host evidence.
+- Never execute unscoped `docker system prune`, `docker volume prune`, `docker compose down -v`, engine upgrades or restarts to clean up the radio.
+- Never remove PDF HUB/AnyFlip containers, networks, volumes, reverse proxy configuration or their secrets.
+- Keep three LibreTime data volumes for rollback. Restore only radio-owned configuration and backed-up data if needed.
+- If a selected port is occupied, choose another candidate rather than evicting the owner.
+- Re-run only specific checks that a new change could invalidate. A healthy HTTP endpoint alone does not prove audible streaming.
 
 ## Acceptance boundary
 
-Verify only the affected radio function and minimal PDF HUB/AnyFlip regressions once. Avoid repeat testing of previously verified unrelated functions unless new evidence suggests a regression.
+Issue #3 ends with the one-time host preflight evidence; #4/#5/#6 cover actual installation, playable Icecast output, AutoDJ and Live DJ fallback respectively. Do not demand unrelated performance or soak tests.
 
-## Source guidance
-
-- Docker Compose documentation: https://docs.docker.com/compose/
-- Docker-maintained agent skills, consulted for safety patterns: https://github.com/docker/skills/tree/main/skills/docker-compose-patterns and https://github.com/docker/skills/tree/main/skills/docker-destructive-guardrails
-- GitHub issue #3 (RRN-01) holds the project-specific deployment boundaries.
-
-This is an instruction-only skill. It contains no deployment script and does not authorize server changes.
+All GitHub content is English-only. This skill installs nothing and authorizes no server action.
