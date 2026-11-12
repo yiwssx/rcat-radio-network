@@ -22,12 +22,10 @@ if command -v docker >/dev/null 2>&1; then
     if [[ "$semver" =~ ^([0-9]+)\.([0-9]+)\.([0-9]+)$ ]]; then
       major="${BASH_REMATCH[1]}"
       minor="${BASH_REMATCH[2]}"
-      if (( 10#$major > 2 || (10#$major == 2 && 10#$minor >= 24) )); then
-        ok "Compose CLI supports !override (v2.24.4+ threshold still requires patch check below)"
-        if (( 10#$major == 2 && 10#$minor == 24 )) && (( 10#${BASH_REMATCH[3]} < 4 )); then
-          printf 'BLOCKED: Compose CLI version must be >=2.24.4 for !override\n'
-        fi
-      else printf 'BLOCKED: Compose CLI version must be >=2.24.4 for !override\n'; fi
+      patch="${BASH_REMATCH[3]}"
+      if (( 10#$major > 2 || (10#$major == 2 && (10#$minor > 24 || (10#$minor == 24 && 10#$patch >= 4))) )); then
+        ok "Docker Compose v2.24.4+ meets the !override syntax requirement"
+      else printf 'BLOCKED: Docker Compose must be >= 2.24.4 for !override\n'; fi
     else pending "Unrecognized Compose version; verify !override support before use"; fi
   else pending "Docker Compose not accessible"; fi
 else pending "Docker CLI not installed or not in PATH"; fi
