@@ -1,117 +1,89 @@
-# RRN-01 — Shared-Host Deployment Boundaries
+# RRN-01 — Icecast + LibreTime Shared-Host Boundaries
 
-**Status:** Deployment boundary design completed; live host preflight pending.  
-**Date:** 2026-11-12  
-**Scope:** Planning and documentation only. No host access, deployment, DNS change, firewall change, or Production modification.  
-**Related issues:** [RRN-00 #2](https://github.com/yiwssx/rcat-radio-network/issues/2), [RRN-01 #3](https://github.com/yiwssx/rcat-radio-network/issues/3), [RRN-02 #4](https://github.com/yiwssx/rcat-radio-network/issues/4)
+**Updated:** November 12, 2026  
+**Status:** DESIGN COMPLETE — LIVE HOST PREFLIGHT PENDING  
+**Stack:** [RRN-00 accepted Icecast + LibreTime decision](./RRN-00-STACK-DECISION.md)  
+**Scope:** Planning only; no server, Production, DNS, proxy or firewall changes.
 
-## 1. Decision and constraints
+## Historical evidence — reuse, do not repeat
 
-Reserve a **radio-only Docker Compose project** on the existing RCAT Ubuntu host. Use a minimally changed, **version-pinned LibreTime 4.5.0 upstream Compose distribution** if RRN-00 confirms the precise SHOUTcast DNAS v2 integration and permits the required DNAS binary use. The closed-source SHOUTcast binary may require a separate host service or independently packaged container; **its deployment mechanism and private source route are NOT approved or finalized** until official binary and license details are known.
+- Operator previously removed obsolete `rcat_radio_pilot` (two Docker containers, one network, ten named volumes) and saw ports `8600/8605/8606/8700/8750` free at that time.
+- Existing PDF HUB and AnyFlip returned HTTP 200 after that removal.
+- Previous operator inventory recorded Ubuntu 26.04.1 LTS / x86_64 and LAN interface `10.10.1.100`.
+- **None of these observations proves current port/resource availability.** No current live host inspection has been performed.
 
-- Incremental control-panel/software-license and external radio-hosting subscription target: **USD 0/month**.
-- Exactly one station; LibreTime media uploads/playlists + standard Live DJ, SHOUTcast DNAS output and a listener player.
-- Never recreate AzuraCast. Do not develop a custom radio backend/control panel or a custom stream gateway.
-- Do not run a native control-panel installer as root, change the host OS, or upgrade/restart the shared Docker Engine to make the radio stack work.
-- The existing PDF HUB, AnyFlip production/staging, tunnels, and any PDF HUB drill containers are **out of scope**. Do not change, restart, delete, or clean them.
-- A technical plan is not permission to deploy. RRN-00 remains blocked on a focused integration check and official DNAS package acquisition.
+Do not repeat successful removal checks or unrelated service tests merely to produce additional evidence.
 
-## 2. Existing evidence and confidence
+## Selected architecture and trust boundaries
 
-| Fact | Source | Treatment |
-|---|---|---|
-| RCAT shared host previously reported Ubuntu 26.04.1 LTS / x86_64, LAN IP `10.10.1.100` | Historical operator inventory | **Historical only**; verify once immediately before deployment |
-| Legacy `rcat_radio_pilot` Docker project removed (2 containers, 1 network, 10 named volumes) | Operator-provided output, November 2026 | **Accepted**; do not redo teardown |
-| Radio ports 8600, 8605, 8606, 8700, 8750 showed no listener after removal | Operator-provided `ss` output | **Previously available, not reserved**; recheck only proposed ports at the preflight gate |
-| PDF HUB HTTP 200 and AnyFlip `/healthz` HTTP 200 after removal | Operator-provided `curl` output | **Accepted baseline**, no repeat unless a radio change may affect them |
-| Current host port ownership, memory, disk headroom, firewall and proxy routing | No live host connector/inspection in this planning turn | **Unknown**; must not assert that the proposed runtime is safe to start yet |
+Use the **official LibreTime 4.5.0** upstream Compose with its **bundled Icecast 2.4.4**. The upstream ten services are `postgres`, `rabbitmq`, `playout`, `liquidsoap`, `analyzer`, `worker`, `api`, `legacy`, `nginx`, and `icecast`.
 
-No inference about available RAM, storage space, open firewall ports or spare CPU may be made from healthy container status alone.
+- **Compose project name:** `rcat_radio_network`, separate from retired `rcat_radio_pilot`, PDF HUB, AnyFlip and deployment-control systems.
+- **Proposed deployment checkout:** `/opt/rcat-radio-network/`.
+- **Proposed private credentials and generated config:** `/etc/rcat-radio-network/`, permission-restricted and outside public Git.
+- **Data:** three LibreTime Compose named volumes (`postgres_data`, `libretime_storage`, `libretime_playout`) prefixed with the isolated radio Compose project. Preserve data on stop or rollback.
+- **Proposed backup location:** `/var/backups/rcat-radio-network/`; exact backup/retention mechanism belongs to RRN-06.
+- **Networking:** LibreTime connects to bundled Icecast over the radio-only Compose network using service name `icecast`, internal port `8000`, from the official enabled Icecast output in `docker/config.template.yml`.
+- **No separate DNAS process, proprietary binary, extra stream gateway or custom panel.** SHOUTcast research was superseded by owner approval of Icecast.
 
-## 3. LibreTime 4.5.0 upstream deployment footprint
+All locations and bindings are proposals, not resources verified on the server today.
 
-[Official tagged Compose file](https://github.com/libretime/libretime/blob/4.5.0/docker-compose.yml): **10 upstream services** — `postgres`, `rabbitmq`, `playout`, `liquidsoap`, `analyzer`, `worker`, `api`, `legacy`, `nginx`, `icecast`. Official Compose data volumes: `postgres_data`, `libretime_storage`, and `libretime_playout`.
+## Port ownership and exposure plan
 
-The unmodified upstream host bindings are **8080:8080** for the web service, **8001:8001** and **8002:8002** for Liquidsoap live inputs, and **8000:8000** for bundled Icecast. All of these are unacceptable as default host-wide bindings on RCAT's shared server. The default Compose file also contains sample credentials, and the images use `LIBRETIME_VERSION:-latest` unless explicitly pinned.
+The unchanged upstream Compose publishes `8000:8000` (Icecast), `8001:8001` and `8002:8002` (Liquidsoap sources), and `8080:8080` (LibreTime UI). **Do not start it unchanged on a shared host.**
 
-**Important:** The upstream `icecast` service is not automatically redundant just because the intended external output is SHOUTcast. Confirm LibreTime's internal services and configuration dependencies before disabling it. Do not remove service dependencies speculatively or claim the SHOUTcast output works until RRN-00 is proven.
-
-## 4. Proposed radio-only namespace and filesystem ownership
-
-| Resource | Proposed location / identifier | Policy |
-|---|---|---|
-| Compose project | `rcat_radio_network` | Distinct from retired `rcat_radio_pilot`, `pdf-hub`, and AnyFlip projects; only radio-owned resources are in scope |
-| Deployment checkout and approved Compose overrides | `/opt/rcat-radio-network/` | Proposed; **do not assume this path is currently empty**; check ownership and any existing deployment-control conventions first |
-| Runtime secrets and generated LibreTime `config.yml` | `/etc/rcat-radio-network/` | Host-private directory (mode 0700); secret files 0600 where practical; mount read-only into consumers; never commit actual credentials |
-| Persistent DB/media/playout | Radio-only Compose volumes `postgres_data`, `libretime_storage`, `libretime_playout` | Expect project-prefixed volume names when Compose creates them; preserve on stop and rollback |
-| DNAS config, logs and license/account material | Radio-specific paths under `/etc/rcat-radio-network/` and `/var/log/rcat-radio-network/` | Final location depends on official DNAS packaging; no proprietary binaries or account secrets in Git |
-| Radio backups | `/var/backups/rcat-radio-network/` | Back up media, DB, playlists and configuration/credentials securely before any destructive migration; choose an approved backup retention location before launch |
-| Docker network(s) | `rcat_radio_network_default` or explicit radio-only network | DB/RabbitMQ/services private to radio; no attachment to PDF HUB/AnyFlip networks except through a separately approved, narrowly defined ingress |
-
-These are **design decisions, not directories or volumes already created**. Use supported vendor mounting conventions and current host policy when implementing.
-
-## 5. Proposed port and access boundary
-
-The following **candidate mappings** reuse old radio-only ports observed as released after AzuraCast removal. They are not confirmed free today.
-
-| Interface | Candidate host binding | Upstream destination | Exposure |
+| Role | Candidate host binding | Internal Compose destination | Policy |
 |---|---|---|---|
-| LibreTime admin/web | `127.0.0.1:8700` | LibreTime nginx `:8080` | Host loopback only; authenticated private access, with later approved HTTPS ingress if needed |
-| Standard Live DJ source | `10.10.1.100:8605` | LibreTime Liquidsoap `:8001` | LAN only with credential checks and source-IP restrictions; exact interface must be confirmed |
-| Secondary Live DJ source | **Not published by default**; `10.10.1.100:8606` only if required | LibreTime Liquidsoap `:8002` | Avoid opening unused entry points |
-| SHOUTcast listener endpoint | `127.0.0.1:8600` **candidate only** | DNAS service, final private-network route TBD | Keep private for feasibility; public HTTPS access requires separately approved ingress |
-| Bundled LibreTime Icecast | **No host published port by default** | Internal `:8000`, only if LibreTime needs it | Never expose unused upstream `:8000` to the host |
-| LibreTime Postgres/RabbitMQ/API/worker | **No host published ports** | Internal Compose network | No unrelated service can connect directly |
+| LibreTime administrator UI | `127.0.0.1:8700` | `nginx:8080` | Loopback-only until separately approved private HTTPS access |
+| Single Live DJ **Show Source** | `127.0.0.1:8605` | `liquidsoap:8002` | Loopback-only for feasibility; authorized remote DJs require an approved secure route |
+| Icecast listener / test stream | `127.0.0.1:8600` | `icecast:8000` | Loopback-only until a separately approved listener-facing HTTPS ingress |
+| Other LibreTime source (`main`) | **Unpublished** | `liquidsoap:8001` | Do not expose a second input unnecessarily |
+| PostgreSQL / RabbitMQ / worker / API | **Unpublished** | Radio-only private network | Never bind databases/brokers to the host |
+| Public HTTP(S) | **Not authorized in RRN-01** | Existing approved RCAT reverse proxy | Do not bind new radio services to host ports 80/443 |
 
-**Route feasibility caveat:** `localhost` in a Docker container refers to that container, not the host. If DNAS is a separate host service on `127.0.0.1:8600`, LibreTime cannot connect to it merely by using `localhost`. Do not assume a working route; RRN-00 must choose a supported networking method and demonstrate a source connection. A dedicated radio-only container/network route is acceptable **only if DNAS licensing and packaging permit it**. Avoid host networking and open bind addresses merely to bypass this issue.
+**Important mapping correction:** LibreTime's official Liquidsoap defaults are `main:8001` and `show:8002`. The single DJ route in this plan intentionally targets **Show Source on internal port 8002**. Earlier drafts targeting 8001 for the Show Source are superseded. Host port 8605 is only a candidate.
 
-**Future public deployment:** Prefer the existing institution-approved ingress at `radio.rcat.ac.th`, subject to domain authorization, TLS validation, source/listener separation, and current proxy capacity. No new listener is allowed to claim host ports 80/443 or alter existing DNS/proxy/firewall settings as part of RRN-01. The public player must never expose admin/source credentials.
+Do not expose source passwords or administrator endpoints in the Icecast listener URL or public player. Do not claim that a container's `localhost` points to the host: LibreTime's internal Icecast connection should use the Compose service DNS name `icecast`.
 
-## 6. One-time preflight gate, immediately before any runtime change
+## Safe Compose implementation
 
-The following is a **read-only verification procedure**, to be performed once as part of a separately approved deployment/test action. Do not ask the owner to rerun earlier successful removal tests.
+- Pin **LibreTime images to `4.5.0`**, keep bundled **Icecast `2.4.4`** initially. No automatic major upgrades.
+- Use `testing/compose.feasibility.override.yml` only alongside the official upstream Compose and a **private, fully configured** LibreTime file.
+- Upstream published port lists must be **replaced**, not merged. Docker Compose `!override` requires **Compose v2.24.4+**; verify current host Compose capability during preflight. Do not claim a rendered model was validated without actually running that check.
+- Reject default example passwords. PostgreSQL, RabbitMQ, Icecast source/admin/relay, LibreTime API and session secrets must be unique and managed outside Git. Use permission-restricted files and avoid dumping substituted secrets to GitHub or logs.
+- Do not remove a service merely because it appears unused: the upstream composition is the supported baseline.
+- Avoid Docker Engine restarts/upgrades, host-wide package installers, global container/network/volume pruning and unrelated proxy edits.
 
-1. Verify the exact host OS and architecture, current disk/memory headroom, Docker/Compose availability, and ownership of the proposed `/opt`, `/etc` and backup locations.
-2. Inspect active listeners on **only the candidate radio ports** (8600/8605/8606/8700), current interface/IP, and conflicts with existing Compose services. If any port is occupied, select a different radio-only port instead of modifying the incumbent service.
-3. Render the proposed radio-only Compose config **without printing interpolated secrets** and check project name, version pin, bound interfaces, mounts, exposed ports and non-radio resource references.
-4. Confirm that SHOUTcast DNAS has a legal official download/distribution method and that the selected LibreTime-to-DNAS network path is possible without changes to unrelated services.
-5. If the targeted compatibility experiment is explicitly authorized, run it in an isolated, non-public radio scope with a single authorized test audio file. Do not launch the public player or change ingress during the experiment.
+## Single read-only preflight before authorized installation
 
-No resource creation, package installation, Docker Engine restart, or data migration is part of this read-only preflight. Stop before deployment if the prerequisites are not met.
+1. Confirm current host OS/CPU architecture, disk/memory headroom, active Docker/Compose version, and intended path ownership.
+2. Check **only** proposed host ports `8600`, `8605`, and `8700`, plus any specifically requested DJ/ingress changes. Select another radio-only port if occupied; never evict the incumbent service.
+3. Render and inspect the merged radio-only Compose model **without exposing secrets**; confirm exactly three loopback mappings, no host ports 8000/8001/8002/8080, and the private Icecast source target `icecast:8000`.
+4. Confirm no connection to PDF HUB or AnyFlip Docker networks, volumes, paths, shared reverse proxy or app credentials.
+5. Obtain explicit runtime authorization before pulling images, creating containers, migrating DBs, starting streams, editing public ingress or modifying firewall settings.
 
-## 7. Stop conditions and rollback
+**No need to perform this preflight repeatedly.** Run once directly before the approved action; repeat only the specific fact that changes.
 
-**Stop immediately** when: an essential host port is occupied; unreviewed root-level installer/80/443 requirement appears; resource headroom is inadequate; the official DNAS license/download is unavailable; the required network route is unsupported; secrets would be committed/logged; or an unrelated PDF HUB/AnyFlip service would need changes.
+## Stop and rollback
 
-**Radio-only rollback, after a separately authorized installation:**
-1. End the radio test or release and stop **only** the `rcat_radio_network` Compose services and any explicitly approved radio-owned DNAS unit. Do not stop the Docker daemon or non-radio containers.
-2. Restore previous radio-only configuration from its recorded version. Preserve the three radio data volumes; **do not** execute `docker compose down -v` or host-wide prune.
-3. For incompatible DB or media schema changes, use the approved pre-change backup rather than assuming that a container-image downgrade automatically reverses migrations.
-4. If a future ingress change was approved, restore **only the radio-specific ingress configuration** using its known-good version. Never overwrite the shared proxy's other vhosts.
-5. Confirm radio has stopped or recovered and perform **one** proportionate health check of PDF HUB and AnyFlip if the executed change could have affected them. Reuse existing evidence otherwise.
+Stop if host resources or ports conflict; any secret is unsafe; the upstream or override config introduces unintended host exposure; shared infrastructure would be altered; or the owner has not approved runtime installation.
 
-## 8. Scope completion and dependency gate
+After an approved installation, stop **only** project `rcat_radio_network`, leaving all three data volumes intact. Never use `docker compose down -v` or host-wide `docker system prune`. Restore radio-only config or backup if necessary; do not assume downgrading an image reverses DB migrations. Revert **only** any explicitly approved radio ingress changes, preserving the rest of the shared proxy. Perform one minimal PDF HUB/AnyFlip regression check after a radio change **only when** there is a plausible interaction.
 
-**RRN-01 design deliverables complete:**
-- [x] Separate namespace, proposed directories, data/secret/backup boundaries and ownership rules defined.
-- [x] Vendor Compose services/default port mappings inspected, with proposed scoped mappings and exposure rules.
-- [x] Host-wide installer, shared service and destructive-operation restrictions documented.
-- [x] Explicit stop conditions and radio-only rollback documented.
-- [x] Existing operator evidence accepted without unnecessary retesting.
+## Completion status
 
-**Not yet verified / runtime gate (do not call completed):**
-- [ ] Current host ports, IP, memory, disk headroom and destination-path ownership: verify once before deployment, not in GitHub-only planning.
-- [ ] DNAS v2 official binary/terms and LibreTime source route: RRN-00 integration blocker.
-- [ ] Runtime network/health behavior: requires separately authorized, isolated test.
+- [x] Document upstream services and exact bundled Icecast dependency.
+- [x] Define radio-only project, paths, credentials, volumes, backups and rollback.
+- [x] Define loopback-only port candidates, correct **Show Source** routing, and public ingress boundary.
+- [x] Exclude untrusted legacy software and destructive shared-host operations.
+- [ ] Confirm current host resources/ports/paths/Compose version **once** before runtime execution.
+- [ ] Render and validate approved merged Compose configuration in a suitable environment.
 
-**Disposition:** Design-ready, **host-preflight pending**. Keep RRN-01 open until the host-boundary availability gate has actual evidence, or explicitly transfer the gate to RRN-02 without presenting it as verified.
+**RRN-01 remains OPEN until its actual preflight evidence is collected.** Implementation is RRN-02 and still requires separate approval. No server was accessed or modified in this document update.
 
 ## Sources
 
-- LibreTime 4.5.0 official Compose: https://github.com/libretime/libretime/blob/4.5.0/docker-compose.yml
-- LibreTime Docker config template: https://github.com/libretime/libretime/blob/4.5.0/docker/config.template.yml
-- LibreTime official Docker installation guide: https://libretime.org/docs/stable-3.x/admin-manual/install/install-using-docker/
-- Docker Compose documentation: https://docs.docker.com/compose/
-- Project stack decision: [RRN-00](./RRN-00-STACK-DECISION.md)
-
-**No live system was accessed or modified during this RRN-01 work.**
+- [Official LibreTime 4.5.0 Compose](https://github.com/libretime/libretime/blob/4.5.0/docker-compose.yml)
+- [Official LibreTime config template](https://github.com/libretime/libretime/blob/4.5.0/docker/config.template.yml)
+- [Docker Compose merge and override rules](https://docs.docker.com/reference/compose-file/merge/)
+- [RRN-00 accepted stack](./RRN-00-STACK-DECISION.md)
