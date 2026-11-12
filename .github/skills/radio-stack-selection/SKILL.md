@@ -1,43 +1,38 @@
 ---
 name: radio-stack-selection
-description: Evaluate and select a commercially supported or ready-made SHOUTcast DNAS plus AutoDJ/control panel stack for RCAT Radio Network. Use for product compatibility, pricing, license, operating-system support, Live DJ fallback, and vendor documentation checks before installation.
+description: Maintain the owner-approved zero-fee Icecast 2.4.4 plus LibreTime 4.5.0 stack decision for RCAT Radio Network. Use for scope, license, upstream compatibility, deployment prerequisites, and requests to reconsider a streaming engine or control panel.
 ---
 
 # RCAT Radio Stack Selection
 
-## Objective
+## Accepted decision
 
-Choose the **smallest maintainable off-the-shelf solution** for one internet radio station. Prefer vendor-supported installation and built-in features. Do not propose a custom radio backend, frontend, stream gateway, or replacement control panel.
+**RRN-00 #2 is completed for product selection:** use **LibreTime 4.5.0 + the Icecast 2.4.4 image bundled in its official Compose file**. Use a standard free encoder (BUTT or Mixxx) for Live DJ. Incremental software-license and radio-hosting subscription fees must remain **USD 0**.
 
-## Authoritative inputs
+Prior SHOUTcast selection, legacy builds, managed hosting, media panels and AzuraCast are **superseded**. Do not reinstate them or change to Icecast 2.5.x without an explicit new owner decision.
 
-- Master tracker: GitHub issue #1.
-- Product choice and compatibility: GitHub issue #2 (RRN-00).
-- Shared-host deployment requirements: GitHub issue #3 (RRN-01).
-- Official SHOUTcast materials: https://www.shoutcast.com/
-- MediaCP system requirements: https://www.mediacp.net/doc/admin-server-manual/install/system-requirements/
-- MediaCP SHOUTcast 2 integration: https://www.mediacp.net/doc/admin-server-manual/install/activate-media-plugins/shoutcast-2/
-- Centova Cast system requirements: https://centova.com/en/cast/requirements
+## Source of truth
 
-Always retrieve current official vendor documentation when making a product recommendation. Vendor requirements and prices can change; this skill is not a claim of installed compatibility.
+- [Master tracker #1](https://github.com/yiwssx/rcat-radio-network/issues/1)
+- [Selection record](https://github.com/yiwssx/rcat-radio-network/blob/main/docs/RRN-00-STACK-DECISION.md)
+- [Host boundaries](https://github.com/yiwssx/rcat-radio-network/blob/main/docs/RRN-01-HOST-BOUNDARIES.md)
+- [Official LibreTime 4.5.0 Compose](https://github.com/libretime/libretime/blob/4.5.0/docker-compose.yml)
+- [Official LibreTime 4.5.0 config](https://github.com/libretime/libretime/blob/4.5.0/docker/config.template.yml)
+- [Official Icecast homepage](https://icecast.org/)
 
-## Decision workflow
+## Work sequence
 
-1. Confirm the **actual** host operating-system release, architecture, resources, occupied ports, and the ability to run the product alongside existing services. Do not infer compatibility from generic claims of "Linux support".
-2. Separate the components: SHOUTcast DNAS provides stream serving; AutoDJ and music upload/playlist management require an additional compatible product or provider.
-3. Compare **at most three** options using a compact table with: official OS support, SHOUTcast DNAS version support, AutoDJ uploads/playlists, Live DJ and automatic fallback, install footprint, licensing, and monthly/annual cost.
-4. Check whether the vendor requires an otherwise clean server, host-level services, ports 80/443, special kernel features, privileged installers, or an unsupported Ubuntu release.
-5. Require vendor evidence for automatic Live DJ-to-AutoDJ switching. Mark unverified behaviors as unverified, not supported.
-6. Prefer the least complex **supported** solution. If a panel conflicts with the shared host, propose a separately hosted ready-made solution instead of forcing an unsupported installation.
-7. Record the decision, sources, costs, caveats, and any approvals required in RRN-00. Do not create extra architecture workstreams.
+1. Reuse existing research; do not reopen RRN-00 simply to add an unnecessary licensing or SHOUTcast compatibility study.
+2. Complete **RRN-01** current-host resource/port/Compose-version check **once** immediately before an approved runtime change.
+3. Use the existing pinned LibreTime deployment and internal output to **`icecast:8000`**; never add a second streaming process.
+4. Only **RRN-02/03/04** can establish observed playback, playlist and Live DJ fallback success. Documentation is not a runtime test.
+5. Keep web/admin/input ports private until listener/public HTTPS and access paths are separately authorized.
+6. Avoid creating custom applications, a dedicated backend, unnecessary monitoring, extra tests or new Issues when an existing work item suffices.
 
-## Non-negotiable boundaries
+## Guardrails
 
-- One station; web music uploads, simple playlist management, standard encoder-based Live DJ, and a basic listener player.
-- No FM transmitter, custom React/Fastify platform, browser DJ studio, or elaborate analytics.
-- No product purchases, account creation, server deployments, or public DNS changes without explicit authorization.
-- Keep all repository material in English.
-
-## Output
-
-A brief evidence-backed recommendation with an approved-or-blocked decision. Do not mark RRN-00 complete until compatibility and any licensing decisions have been resolved.
+- One station; web uploads, playlists, AutoDJ, authenticated Live DJ, and simple listener access.
+- Keep source credentials, application secrets and recordings with private access; never in Git.
+- Do not impact PDF HUB or AnyFlip; no Docker Engine restarts, global pruning, host OS upgrades, DNS/ingress changes or Production launch without explicit approval.
+- No account signups, purchases, public launch or software deployment as a consequence of reading this skill.
+- All GitHub content remains English-only.
