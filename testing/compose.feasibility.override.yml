@@ -1,19 +1,23 @@
-# RRN-00: NON-PRODUCTION LibreTime 4.5.0 feasibility override.
-# Documentation and preparation only. This file is NOT a deployment authorization.
+# RRN-00 / RRN-01: Icecast + LibreTime 4.5.0 NON-PRODUCTION feasibility profile.
+# This is a guarded CONFIGURATION ONLY, not an installation or deployment.
 #
-# Use ONLY with the official LibreTime 4.5.0 docker-compose.yml, a separately
-# prepared private config.yml, and Docker Compose >= 2.24.4 (!override required).
-# Verify the rendered Compose model and host resource/port ownership first.
-# No SHOUTcast DNAS binary is included or downloaded by this project.
+# Use together with upstream libretime/libretime tag 4.5.0 docker-compose.yml,
+# a privately generated config.yml, and a private environment file.
+# Docker Compose >= 2.24.4 is required for !override.
+# Verify host ports, resource headroom, Compose version and a secret-redacted
+# rendered model before any explicitly authorized installation.
 #
-# Upstream has ports 8000/8001/8002/8080. The !override tag is necessary:
-# a plain ports list would MERGE with upstream ports, leaking old mappings.
+# The official LibreTime 4.5.0 Compose bundles Icecast 2.4.4; this profile
+# does NOT require SHOUTcast, proprietary binaries or another streaming server.
 #
-# This profile binds LibreTime web and ONE DJ source to host loopback only.
-# The bundled Icecast service remains reachable on its private Compose network
-# but has no published host port. Do not delete it without dependency evidence.
-# A valid, official SHOUTcast DNAS package and a supported private source route
-# remain required to perform the RRN-00 actual audio compatibility test.
+# IMPORTANT: Compose normally MERGES port lists. !override REPLACES upstream
+# mappings and prevents accidentally publishing ports 8000, 8001, 8002, 8080.
+# All three exposed ports in this feasibility profile bind to 127.0.0.1 only.
+#
+# LibreTime's single SHOW source listens on internal liquidsoap:8002, whereas
+# the MAIN source listens on 8001. Do not map a Show DJ to port 8001.
+# Icecast's INTERNAL connection uses service DNS "icecast", port 8000.
+# A public stream, remote DJ ingress, TLS and DNS are separate approval steps.
 
 name: rcat_radio_feasibility
 
@@ -32,7 +36,7 @@ services:
   liquidsoap:
     image: ghcr.io/libretime/libretime-playout:4.5.0
     ports: !override
-      - "127.0.0.1:8605:8001"
+      - "127.0.0.1:8605:8002"
 
   analyzer:
     image: ghcr.io/libretime/libretime-analyzer:4.5.0
@@ -52,7 +56,9 @@ services:
       - "127.0.0.1:8700:8080"
 
   icecast:
-    ports: !override []
+    image: ghcr.io/libretime/icecast:2.4.4
+    ports: !override
+      - "127.0.0.1:8600:8000"
     environment:
       ICECAST_SOURCE_PASSWORD: ${ICECAST_SOURCE_PASSWORD:?Set private ICECAST_SOURCE_PASSWORD before rendering}
       ICECAST_ADMIN_PASSWORD: ${ICECAST_ADMIN_PASSWORD:?Set private ICECAST_ADMIN_PASSWORD before rendering}
