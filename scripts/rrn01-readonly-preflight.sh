@@ -15,7 +15,9 @@ section "Host identity and supported tooling"
 if [ -r /etc/os-release ]; then
   (. /etc/os-release; printf 'OS: %s\n' "${PRETTY_NAME:-unknown}")
 else pending "OS information unavailable"; fi
-printf 'Architecture: %s\n' "$(uname -m 2>/dev/null || printf unknown)"
+if arch="$(uname -m 2>/dev/null)" && [ -n "$arch" ]; then
+  printf 'Architecture: %s\n' "$arch"
+else pending "Host architecture unavailable"; fi
 # Verify only the historic radio LAN address, not the host's full interface inventory.
 if command -v ip >/dev/null 2>&1; then
   if ipv4="$(ip -o -4 addr show 2>/dev/null)"; then
@@ -43,7 +45,9 @@ else pending "Docker CLI not installed or not in PATH"; fi
 
 section "Current storage and memory (read-only)"
 if command -v df >/dev/null 2>&1; then
-  df -hP / /opt /etc /var/backups 2>/dev/null | awk 'NR==1 || !seen[$1]++'
+  if disk_report="$(df -hP / /opt /etc /var/backups 2>/dev/null)"; then
+    printf '%s\n' "$disk_report" | awk 'NR==1 || !seen[$1]++'
+  else pending "Disk capacity report incomplete for required paths"; fi
 else pending "df unavailable"; fi
 if [ -r /proc/meminfo ]; then
   awk '/^(MemTotal|MemAvailable|SwapTotal|SwapFree):/ {print}' /proc/meminfo
@@ -79,6 +83,7 @@ for path in /opt/rcat-radio-network /etc/rcat-radio-network /var/backups/rcat-ra
 done
 
 section "Read-only verdict"
+printf '%s\n' 'This script checks only this host at this instant; it does not reserve ports or resources.'
 printf '%s\n' 'This script does not verify Docker Compose merged config, service health, Icecast audio, TLS, or runtime installation.'
 printf '%s\n' 'It does not authorize any deployment, installation, file write, restart or Production change.'
 printf '%s\n' 'If a port is occupied or capacity is insufficient, STOP; do not evict another service.'
