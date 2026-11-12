@@ -101,11 +101,21 @@ def validate(data):
                     f"Unexpected host bind mount in {name}"
                 )
     require(ports == EXPECTED_PORTS, "Host port mapping differs from three loopback-only bindings")
-    require(set(data.get("networks", {})) == {"default"}, "Unexpected external/shared network")
+    networks = data.get("networks", {})
+    require(set(networks) == {"default"}, "Unexpected external/shared network")
     require(
-        set(data.get("volumes", {})) == EXPECTED_VOLUMES,
-        "Unexpected or missing radio data volumes"
+        networks["default"].get("name") == PROJECT + "_default"
+        and not networks["default"].get("external", False),
+        "Radio network is not isolated by project name"
     )
+    volumes = data.get("volumes", {})
+    require(set(volumes) == EXPECTED_VOLUMES, "Unexpected or missing radio data volumes")
+    for name in EXPECTED_VOLUMES:
+        require(
+            volumes[name].get("name") == PROJECT + "_" + name
+            and not volumes[name].get("external", False),
+            f"Radio data volume {name} is not project-scoped"
+        )
 
 
 def main():
