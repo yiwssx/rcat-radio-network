@@ -113,3 +113,49 @@ Therefore the **LibreTime source-level auto-fallback feature is supported by off
 | LibreTime v4.5.0 to exact DNAS 2 live stream + AutoDJ return | **Not tested** | Run **one** isolated compatibility test after access and explicit deployment/test approval |
 
 **RRN-00 status: BLOCKED FOR AN INTEGRATION PASS, NOT COMPLETE.** Do not convert documentation verification into an acceptance sign-off. No changes to existing RCAT Production systems are authorized by this document.
+
+## Protocol-level compatibility review — November 12, 2026
+
+**Result: STATIC COMPATIBILITY SUPPORTED; END-TO-END RUNTIME NOT VERIFIED.** This section narrows the remaining gate; it does not claim a successful stream test.
+
+### Confirmed from the pinned LibreTime 4.5.0 implementation
+
+1. The [LibreTime 4.5.0 Liquidsoap output template](https://github.com/libretime/libretime/blob/4.5.0/playout/libretime_playout/liquidsoap/templates/outputs.liq.j2) renders a real `output.shoutcast(...)` operator, with `host`, `port`, `user`, `password`, and an `%mp3` encoder. It does **not** use an Icecast mount path for that output.
+2. The [pinned LibreTime output models](https://github.com/libretime/libretime/blob/4.5.0/shared/libretime_shared/config/_models.py) allow a single SHOUTcast output with MP3 and a configurable 128 kbps bitrate. They expose no explicit `icy_id`/SHOUTcast SID field.
+3. The [upstream generated-output snapshot](https://github.com/libretime/libretime/blob/4.5.0/playout/tests/liquidsoap/__snapshots__/entrypoint_test.ambr) contains a SHOUTcast output generation example. This is **source-level/unit-test evidence**, not evidence of audio accepted by DNAS v2.
+4. [Liquidsoap's SHOUTcast documentation](https://www.liquidsoap.info/doc-dev/icecast) explicitly supports SHOUTcast v2, with `icy_id=1` as the default stream ID. RCAT requires one station, so target **DNAS SID 1 only**, avoid unnecessary SID/password decoration, and do not claim that LibreTime can select a different SID via its current config model.
+5. The [SHOUTcast DNAS source-connection reference](https://sc-mirror.shoutca.st/docs/DNAS_Server_Source_Support.html) documents the default first stream and legacy password suffix `:#<sid>` for **SHOUTcast v1-protocol clients**. This is not a universal requirement; never automatically append `:#1` when using the native Liquidsoap operator. The actual DNAS server console provides the appropriate source connection details.
+6. SHOUTcast Basic is **MP3 128 kbps**, not the 256 kbps shown in LibreTime's sample configuration; change the intended radio configuration to **MP3 stereo at 128 kbps** before any compatibility test. Use fresh non-default source credentials.
+7. [LibreTime's stable Stream Settings manual](https://libretime.org/docs/user-manual/settings/) specifies both **Auto Switch On** and **Auto Switch Off**, with scheduled playback as the fallback when authenticated Live DJ disconnects. Both must be enabled in the actual runtime validation.
+
+**Static conclusion:** The selected protocols, output operator, SID=1 default, MP3 encoder, and Live DJ recovery design align. No custom source gateway, unsupported `description` configuration key, or multi-stream support is needed for this V1 station. This removes a **design uncertainty only**; it does not remove the actual integration-test gate.
+
+### Remaining single runtime gate — smallest credible proof
+
+**Prerequisite:** Access to an **official, legally acquired SHOUTcast Basic DNAS v2 Linux package** for the RCAT station. SHOUTcast explicitly requires member login/registration before downloading, so the package, precise version, build provenance, and entitlement remain unavailable via this GitHub-only workflow. Do not source closed binaries from unofficial mirrors or commit them.
+
+When a separately approved isolated test environment and official package are available:
+
+1. **Setup:** Confirm DNAS v2 is using SID 1, MP3 128 kbps, a dedicated radio-only network route, and a source password stored outside Git. Confirm LibreTime 4.5.0 is pinned and its intended SHOUTcast output enabled without exposing default bundled Icecast or unrelated host ports.
+2. **AutoDJ playback:** Load **one authorized short audio file** into LibreTime, schedule/play it, then confirm DNAS identifies an active source and the actual listener URL delivers audible MP3 (not just HTTP 200).
+3. **Live handoff:** Connect **one** standard encoder to LibreTime's authenticated Live DJ input, verify that the listener hears the Live DJ source without sending the DJ straight to DNAS.
+4. **Return:** Disconnect that encoder and confirm scheduled AutoDJ resumes on the same listener stream with **Auto Switch On and Auto Switch Off enabled**. Record whether this was automatic or required manual UI intervention.
+5. **Report:** Save only redacted DNAS/LibreTime connection status, MP3 bitrate, relevant timestamps, listener playback outcome, and a succinct PASS/FAIL statement in Issue #2. Stop all temporary radio services if the test is authorized to end. Do not create a separate issue or repeatedly retest unrelated PDF HUB/AnyFlip functionality.
+
+**Pass:** All three audible phases (AutoDJ → Live DJ → AutoDJ) work over the DNAS v2 listener endpoint, within the zero-recurring-fee and safe-host scope.
+
+**Fail / blocked:** DNAS binary/entitlement cannot be legally obtained; SHOUTcast rejects LibreTime's source; SID/auth/network requirements cannot be met within the documented interface; the actual AutoDJ handoff requires unsupported modifications; or any change would interfere with shared RCAT services. Record the specific observed reason, do not claim success, and do not proceed to RRN-02.
+
+**Important dependency:** A private network path to DNAS is mandatory. A container's `localhost` is not the host's `127.0.0.1`; RRN-01's current candidate DNAS loopback bind is **not yet a proven reachable arrangement** from LibreTime. Finalize the route only with a supported DNAS packaging decision and an isolated test.
+
+### Evidence classification
+
+| Evidence | Status |
+|---|---|
+| 4.5.0 `output.shoutcast` source operator and encoded MP3 128 support | **Verified by pinned upstream source** |
+| DNAS v2 SID=1 default and Liquidsoap `icy_id` behavior | **Verified by protocol/operator documentation** |
+| LibreTime's Live DJ → scheduled AutoDJ switch controls | **Verified in LibreTime documentation** |
+| Official SHOUTcast Basic DNAS v2 binary and build/version | **Blocked: official member-gated download not accessed** |
+| End-to-end audible output and fallback against that DNAS build | **Not executed; requires authorized isolated test** |
+
+**Decision:** Retain RRN-00 as **OPEN — STATIC COMPATIBILITY REVIEW PASSED; RUNTIME PROOF BLOCKED**. Do not start RRN-02 deployment. All updates remain English-only and no production system is changed.
