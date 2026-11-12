@@ -4,9 +4,12 @@
 # Run on the intended RCAT host only when a live preflight is necessary.
 set -uo pipefail
 
+RRN01_BLOCKERS=0
+RRN01_UNKNOWN=0
 section() { printf '\n=== %s ===\n' "$1"; }
 ok() { printf 'PASS: %s\n' "$1"; }
-pending() { printf 'PENDING: %s\n' "$1"; }
+pending() { printf 'UNKNOWN: %s\n' "$1"; RRN01_UNKNOWN=$((RRN01_UNKNOWN + 1)); }
+blocked() { printf 'BLOCKED: %s\n' "$1"; RRN01_BLOCKERS=$((RRN01_BLOCKERS + 1)); }
 
 section "Host identity and supported tooling"
 if [ -r /etc/os-release ]; then
@@ -33,7 +36,7 @@ if command -v docker >/dev/null 2>&1; then
       patch="${BASH_REMATCH[3]}"
       if (( 10#$major > 2 || (10#$major == 2 && (10#$minor > 24 || (10#$minor == 24 && 10#$patch >= 4))) )); then
         ok "Docker Compose v2.24.4+ meets the !override syntax requirement"
-      else printf 'BLOCKED: Docker Compose must be >= 2.24.4 for !override\n'; fi
+      else blocked "Docker Compose must be >= 2.24.4 for !override"; fi
     else pending "Unrecognized Compose version; verify !override support before use"; fi
   else pending "Docker Compose not accessible"; fi
 else pending "Docker CLI not installed or not in PATH"; fi
@@ -56,7 +59,7 @@ if command -v ss >/dev/null 2>&1; then
     for port in 8600 8605 8700; do
       matches="$(printf '%s\n' "$listeners" | awk -v p=":$port" '$4 ~ (p "$") {print $4}')"
       if [ -n "$matches" ]; then
-        printf 'CONFLICT: port %s has listener(s); select a different radio-only port\n' "$port"
+        blocked "Port $port already has a listener; select another radio-only port without changing the existing owner"
       else
         printf 'FREE_OBSERVED: no TCP listener on %s at this instant\n' "$port"
       fi
@@ -71,7 +74,7 @@ for path in /opt/rcat-radio-network /etc/rcat-radio-network /var/backups/rcat-ra
     # No file listing or secret content. Do not make directory changes.
     if command -v stat >/dev/null 2>&1; then
       stat -c '%n: exists, owner=%U group=%G mode=%a' "$path" 2>/dev/null || pending "Cannot inspect $path"
-    fi
+    else pending "stat unavailable; cannot inspect $path"; fi
   else printf 'NOT_CREATED: %s\n' "$path"; fi
 done
 
@@ -79,3 +82,13 @@ section "Read-only verdict"
 printf '%s\n' 'This script does not verify Docker Compose merged config, service health, Icecast audio, TLS, or runtime installation.'
 printf '%s\n' 'It does not authorize any deployment, installation, file write, restart or Production change.'
 printf '%s\n' 'If a port is occupied or capacity is insufficient, STOP; do not evict another service.'
+if (( RRN01_BLOCKERS > 0 )); then
+  printf 'RRN01_HOST_READONLY_STATUS=BLOCKED blockers=%s unknown=%s\n' "$RRN01_BLOCKERS" "$RRN01_UNKNOWN"
+  exit 2
+elif (( RRN01_UNKNOWN > 0 )); then
+  printf 'RRN01_HOST_READONLY_STATUS=INCOMPLETE blockers=0 unknown=%s\n' "$RRN01_UNKNOWN"
+  exit 3
+else
+  printf '%s\n' 'RRN01_HOST_READONLY_STATUS=PROVISIONAL_PASS (merged Compose and deployment approval still pending)'
+  exit 0
+fi
