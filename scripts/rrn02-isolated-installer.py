@@ -61,8 +61,21 @@ def check(ok, message):
 
 
 def command(args, timeout=180, cwd=None):
+    # Do not inherit shell COMPOSE_*, POSTGRES_*, RABBITMQ_*, ICECAST_*,
+    # or LIBRETIME_* variables: they can override our private env-file.
+    # Restrict Docker to the host-local default context (never a remote engine).
+    safe_env = {
+        "PATH": os.environ.get(
+            "PATH", "/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
+        ),
+        "HOME": "/root",
+        "DOCKER_CONTEXT": "default",
+    }
     try:
-        x = subprocess.run(args, cwd=cwd, text=True, capture_output=True, timeout=timeout)
+        x = subprocess.run(
+            args, cwd=cwd, text=True, capture_output=True,
+            timeout=timeout, env=safe_env,
+        )
     except (OSError, subprocess.TimeoutExpired) as e:
         raise Blocked("Radio-only command unavailable or timed out") from e
     # Compose output can contain resolved secrets. Never print its stdout/stderr.
