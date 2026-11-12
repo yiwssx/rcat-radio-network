@@ -1,210 +1,75 @@
-# RRN-00 — Zero-Recurring-Fee SHOUTcast and AutoDJ Stack Selection
+# RRN-00 — Accepted Stack: Icecast + LibreTime
 
-**Revised:** November 11, 2026  
-**Owner decision:** No paid software licenses, no paid radio hosting, and no new monthly subscription.  
-**Decision status:** FREE STACK SELECTED IN PRINCIPLE; VERSION-COMPATIBILITY CHECK PENDING  
-**Tracker:** [Issue #2 — RRN-00](https://github.com/yiwssx/rcat-radio-network/issues/2)
-
-> This decision **supersedes** the November 11 proposal to subscribe to YesStreaming at USD 16.99/month. That proposal is rejected by the project owner on cost grounds and must not be treated as the current recommendation. No purchase or deployment has been authorized.
+**Decision date:** November 12, 2026  
+**Decision status:** ACCEPTED FOR PLANNING — NOT DEPLOYED OR RUNTIME-VERIFIED  
+**Decision owner:** RCAT project owner (explicit approval in conversation)  
+**Tracker:** [RRN-00 #2](https://github.com/yiwssx/rcat-radio-network/issues/2)
 
 ## Decision
 
-**Preferred no-new-fee stack:**
+Use **LibreTime 4.5.0 with its bundled Icecast 2.4.4**, plus a free standard Live DJ encoder (BUTT or Mixxx), for **one RCAT online radio station** on existing RCAT infrastructure, subject to the existing shared-host safety gate.
 
-1. **SHOUTcast Basic (DNAS)** — vendor-provided Linux streaming server under a free/freemium license; plan around **MP3 at 128 kbps** and review the current licensing, registration, advertising, and directory terms before public launch.
-2. **LibreTime v4.5.0** — open-source web-based media library, playlists, radio automation and Live DJ inputs, using its **official Docker Compose distribution** and its documented `stream.outputs.shoutcast` configuration.
-3. **BUTT or Mixxx** — free conventional Live DJ broadcast applications, already covered by LibreTime's user guide.
-4. **Existing RCAT Ubuntu host** — no new hosting bill; isolate the station's containers, data, credentials, ports, and ingress from PDF HUB and AnyFlip.
+- **Icecast 2.4.4:** already included in the pinned LibreTime 4.5.0 upstream Docker Compose. Retain this bundled version initially; **do not silently upgrade to Icecast 2.5.0** without compatibility and change justification.
+- **LibreTime 4.5.0:** ready-made web application for uploading media, scheduling/programming playlists, AutoDJ playout, and handling live input. Use its official release files, not custom streaming/control-panel code.
+- **BUTT or Mixxx:** standard free Live DJ encoder connected to **LibreTime's input**, not directly to Icecast, so LibreTime can handle switching and resume AutoDJ.
+- **No incremental software license or hosted-radio subscription fees.** The existing host's energy, bandwidth, administration, storage, and public broadcast/music rights are separate obligations.
 
-**Cost target:** **USD 0/month in incremental software license and external radio-hosting fees**. This does not eliminate electricity, the existing server's internet connection, administration, bandwidth, backups, or rights to broadcast copyrighted audio.
+The chosen solution deliberately accepts LibreTime's **ten-service** Compose footprint to obtain its existing web-based media and scheduling features. Icecast itself is lightweight; LibreTime's other services remain part of the packaged system.
 
-**Do not deploy yet.** The documentation supports LibreTime's ability to configure a SHOUTcast output, but a successful connection and **automatic Live DJ → AutoDJ recovery using the exact chosen DNAS 2 build have not been demonstrated**. This is the only integration behavior that must be checked before considering the software selection technically confirmed. There is a March 2026 LibreTime community report of difficulties connecting v4.5.0 to SHOUTcast v2.6.1.777; a report is not proof the combination is broken, but it prevents declaring compatibility proven without a targeted reproduction.
+## Why this replaces SHOUTcast
 
-## Evidence and official references
+The earlier candidates (paid hosted panel, SHOUTcast Basic Freemium, and legacy SHOUTcast DNAS builds) were researched and documented in earlier Git history. The owner has now expressly approved changing the streaming engine to **Icecast**.
 
-- SHOUTcast's [Basic product page](https://www.shoutcast.com/pricing/basic) offers the self-hosted Linux server for free. [Its server license terms](https://www.shoutcast.com/legal/agreements/dnas) describe free/freemium use and MP3 128 kbps restrictions; the published legal text has an older revision date, so confirm current account conditions when obtaining the server.
-- LibreTime's [official repository](https://github.com/libretime/libretime) is open-source (AGPL-3.0).
-- LibreTime's [stable 4.x configuration guide](https://libretime.org/docs/admin-manual/configuration/) explicitly documents a `stream.outputs.shoutcast` output, host, port, credentials, MP3 and AAC encoding. This supports source compatibility **in documented configuration**, not an end-to-end proven v4.5.0 deployment.
-- LibreTime's [Docker installation guide](https://libretime.org/docs/stable-3.x/admin-manual/install/install-using-docker/) provides a v4.5.0 Compose distribution; [official releases](https://github.com/libretime/libretime/releases) list v4.5.0 as the latest tagged release as checked on this research date.
-- LibreTime's [Live broadcasting manual](https://libretime.org/docs/user-manual/live-broadcast/) documents BUTT/Mixxx input configuration and live-source behavior, including the possible need to toggle the live source.
-- [LibreTime community report, March 2026](https://discourse.libretime.org/t/broadcast-to-shoutcast-with-libretime-4-5-0/1970) documents reported problems with v4.5.0 and SHOUTcast servers. **Treat as a targeted compatibility risk, not vendor-confirmed incompatibility.**
-- [Surcast](https://radio-sur.github.io/) is a free all-in-one web radio option, but currently advertises **Icecast**, not SHOUTcast DNAS. It is only a possible fallback if the SHOUTcast-engine requirement is explicitly relaxed.
+SHOUTcast Basic requires registration, is proprietary, and its official pricing page states mandatory pre-roll advertising. Legacy pre-2.5 DNAS versions are unsupported. An extra DNAS binary and an unproven LibreTime-to-DNAS integration would add little value to a single free station. **These SHOUTcast procurement, licensing, legacy-version and v2 compatibility gates are superseded, not silently counted as passing.**
 
-## At-most-three-option comparison
+Do not download proprietary DNAS, purchase SHOUTcast/MediaCP/Centova, or reintroduce AzuraCast without a new owner decision.
 
-| Option | Software/hosting fees | Web music uploads and playlists | SHOUTcast DNAS | Live DJ / AutoDJ fallback | Operational cost and verdict |
-|---|---|---|---|---|---|
-| **SHOUTcast Basic + LibreTime v4.5.0 (Docker)** | **USD 0 incremental license/hosting** on existing host | Yes, via LibreTime | Official LibreTime configuration documents SHOUTcast output; **DNAS v2 connection not yet proven** | LibreTime supports live input; exact automatic recovery path to DNAS output **requires a targeted check** | **Preferred free candidate**, but a multi-service stack (Postgres, RabbitMQ, Liquidsoap, web API, etc.), not a single lightweight daemon |
-| SHOUTcast Basic + standalone Liquidsoap | **USD 0 incremental license/hosting** on existing host | **No ready-made web control panel** in this pairing | Liquidsoap can serve as an encoder/source in principle; exact source configuration not checked | Requires manual integration/routing; no verified ready-made handoff | Reject for V1: insufficient web management, risks creating a custom project |
-| Surcast + its bundled Icecast | **USD 0 incremental license/hosting** on existing host | Advertised as present | **No: Icecast rather than SHOUTcast** | Live workflow and fallback specifics not fully validated for this use | Only revisit if owner later relaxes the SHOUTcast DNAS requirement |
+## Official upstream compatibility evidence
 
-**AzuraCast is excluded by prior explicit owner decision.** Do not reopen it as the default free choice.
+1. The [LibreTime 4.5.0 Compose file](https://github.com/libretime/libretime/blob/4.5.0/docker-compose.yml) explicitly includes `icecast: ghcr.io/libretime/icecast:2.4.4`, plus PostgreSQL, RabbitMQ, Liquidsoap, playout, API, legacy, worker, analyzer, and nginx.
+2. The [LibreTime 4.5.0 configuration template](https://github.com/libretime/libretime/blob/4.5.0/docker/config.template.yml) has a **bundled Icecast output enabled by default**, using internal service host `icecast` on port `8000`.
+3. The [official LibreTime Docker installation guide](https://libretime.org/docs/admin-manual/install/install-using-docker/) describes the packaged installation with pinned version `4.5.0`.
+4. The [LibreTime streaming documentation](https://libretime.org/docs/admin-manual/stream-configuration/) expressly supports Icecast output and MP3 (and other compatible formats).
+5. The [LibreTime Stream Settings manual](https://libretime.org/docs/user-manual/settings/) documents **Auto Switch On** and **Auto Switch Off** for a live input's connection/disconnection. This establishes **documented product capability**, not observed runtime behavior in RCAT.
+6. [Icecast's official site](https://icecast.org/) confirms its GPL-based open-source licensing; it separately advertises Icecast 2.5.0, which is **not** the bundled 2.4.4 image in LibreTime 4.5.0.
 
-## Host-safety and minimal implementation constraints
+## Interface and deployment plan
 
-The RCAT operator previously reported Ubuntu **26.04.1 LTS** on the shared server. Since the selected LibreTime installation method is container-based, check the pinned images' actual architecture, kernel requirements, port mappings, and volume paths rather than claiming that a native LibreTime installer supports Ubuntu 26.04. In particular:
-
-- Confirm the actual host architecture and free capacity before installation; previous inventory is historical, not a live inspection.
-- Inspect LibreTime's default Compose for PostgreSQL, RabbitMQ, Liquidsoap, web, and any bundled Icecast service. Do not accidentally expose default 80/443 or conflict with existing shared services.
-- Keep SHOUTcast DNAS and LibreTime configurations and data isolated. Do **not** assume an arbitrary third-party SHOUTcast Docker image is officially supported; validate the official DNAS binary distribution/license first.
-- Store credentials outside Git. Bind administration privately and use an explicitly approved TLS/reverse-proxy setup.
-- The music library starts empty. Use only authorized sample audio for a single audibility and failover check; do not repeat unrelated tests already evidenced.
-- No host-level installer, daemon change, DNS/proxy/firewall modification, deployment, or data deletion is authorized by this decision record.
-
-## Targeted feasibility check before completing RRN-00
-
-1. Validate a reproducible, supported SHOUTcast Basic DNAS v2 Linux binary distribution and actual freemium obligations (account, 128 kbps MP3, advertisements/directory terms).
-2. Review LibreTime v4.5.0's shipped `docker-compose.yml`/configuration for isolated use on the shared host, including disabling or isolating unnecessary default Icecast output/services without breaking required dependencies.
-3. Confirm that LibreTime can publish a playlist to the selected DNAS source using documented configuration.
-4. Confirm one Live DJ input and one normal disconnect/fallback. If default behavior requires manual source toggling, describe that limitation accurately; do **not** build a custom gateway to conceal it.
-5. If the exact product combination is not feasible without unsupported patching, keep RRN-00 blocked and recommend the simplest **free** supported alternative; do not silently switch to a paid product or reintroduce AzuraCast.
-
-This is a **single narrowly scoped feasibility check**, not a full production acceptance suite. Execution needs separate approval for server-side deployment.
-
-## Status and issue ownership
-
-- **Resolved:** Free-only cost requirement; paid-hosting candidate rejected; a documented free stack candidate identified.
-- **Still open:** Actual supported SHOUTcast DNAS v2 binary/version, the LibreTime v4.5.0 integration path, and confirmed Live DJ fallback. Track these under **RRN-00 (#2)** and host layout under **RRN-01 (#3)**; do not create a new issue.
-- **No work performed on RCAT Production:** This record updates selection and documentation only.
-
-## License and rights reminder
-
-SHOUTcast Basic is **free/freemium**, not open-source software. LibreTime is AGPL-licensed open source. Neither license grants music-copyright broadcasting rights; verify rights before public audio transmission.
-
-## Evidence update — November 11, 2026 (documentation and release files inspected)
-
-### SHOUTcast DNAS Basic licensing and acquisition
-
-- The [official Basic page](https://www.shoutcast.com/pricing/basic) lists the self-hosted Linux server as free. Its [license agreement](https://www.shoutcast.com/legal/agreements/dnas) limits the freemium streaming format to **MP3 at 128 kbps**.
-- The [official SHOUTcast download portal](https://directory.shoutcast.com/BroadcastNow) explicitly requires a **SHOUTcast member login/registration** to access DNAS downloads; the actual distributable package, current version, download checksum, and package redistributability have **not** been verified. Do not add closed-source DNAS binaries to this public repository or download from an unofficial mirror.
-- The Basic product page states that **pre-roll advertising is mandatory**. It separately advertises native SSL support, while the legal agreement lists a custom SSL certificate among premium features. Exact Basic-plan HTTPS behavior therefore requires confirmation. In particular, a free license does not necessarily imply an ad-free listener experience.
-- This is a zero **subscription** target, not an ad-free or unlimited-feature guarantee.
-
-### LibreTime 4.5.0 — upstream release files (not a running test)
-
-The upstream pinned **tag is `4.5.0` (not `v4.5.0`)**. The official [4.5.0 Compose file](https://github.com/libretime/libretime/blob/4.5.0/docker-compose.yml) defines **ten services**: `postgres`, `rabbitmq`, `playout`, `liquidsoap`, `analyzer`, `worker`, `api`, `legacy`, `nginx`, and `icecast`; SHOUTcast DNAS would be an additional runtime component.
-
-The upstream Compose defaults publish:
-- `nginx` on **8080/tcp**;
-- `liquidsoap` live inputs on **8001/tcp** and **8002/tcp**;
-- bundled `icecast` on **8000/tcp**.
-
-The [upstream config template](https://github.com/libretime/libretime/blob/4.5.0/docker/config.template.yml) ships **enabled default Icecast output**. It must be deliberately reconfigured for SHOUTcast; never start the upstream Compose on the shared RCAT host unreviewed. The 4.5.0 template contains example/default credentials which must be replaced and kept out of Git. This is a substantial multi-service deployment rather than a lightweight one-process SHOUTcast control panel.
-
-The [official LibreTime Docker installation guide](https://libretime.org/docs/stable-3.x/admin-manual/install/install-using-docker/) references `4.5.0` and an initial database migration. These instructions describe installation but have **not** been run on the RCAT server.
-
-### Live DJ switching — documented setting, not yet integration-proven
-
-The official [LibreTime Stream Settings manual](https://libretime.org/docs/user-manual/settings/) documents:
-- **Auto Switch On:** automatically selects an authenticated Live DJ input when it connects.
-- **Auto Switch Off:** resumes scheduled playback when the input disconnects.
-- A configurable transition fade and separate Source Stream credentials.
-
-Therefore the **LibreTime source-level auto-fallback feature is supported by official documentation**. The outstanding test is narrower: confirm that the combined LibreTime 4.5.0 / actual free SHOUTcast DNAS v2 configuration sends valid audio continuously before, during, and after a Live DJ connection. A [March 2026 community case](https://discourse.libretime.org/t/broadcast-to-shoutcast-with-libretime-4-5-0/1970) reports a v4.5.0 to SHOUTcast issue, with no confirmed resolution in the published discussion. Avoid treating the report as a general product defect; equally, do not call the combination tested.
-
-### Concise remaining gate (not a new project)
-
-| Check | Evidence level | Remaining action |
+| Function | Planned component | Boundary |
 |---|---|---|
-| SHOUTcast Basic legal 128 kbps MP3 restriction, account requirement, mandatory pre-roll | Official product/legal statements: **verified** | Obtain owner's acceptance of these free-plan terms |
-| LibreTime upstream release tag, service list, and default published ports | Official 4.5.0 source: **verified** | Apply radio-only network isolation under existing RRN-01 |
-| Auto Switch On/Off functionality | Official LibreTime manual: **verified in documentation** | Enable both in the eventual single focused live test |
-| Exact DNAS 2 Linux package build and right to use/distribute | **Not verified** (account-gated download) | Access through official SHOUTcast registration; do not put software in Git |
-| LibreTime v4.5.0 to exact DNAS 2 live stream + AutoDJ return | **Not tested** | Run **one** isolated compatibility test after access and explicit deployment/test approval |
+| Stream server | Bundled Icecast 2.4.4 | Internal Compose hostname `icecast:8000`; **candidate host loopback port 8600** for controlled listener tests |
+| AutoDJ / playlists / uploads | LibreTime 4.5.0 | `127.0.0.1:8700 -> nginx:8080` (candidate only) |
+| One Live DJ | LibreTime **Show Source** via Liquidsoap | `127.0.0.1:8605 -> liquidsoap:8002` (candidate only; use approved access mechanism) |
+| PostgreSQL / RabbitMQ | Bundled internal services | Private Compose network; do not publish host ports |
+| Public listener URL | Existing approved ingress (future) | No DNS, HTTPS, reverse-proxy or firewall changes until separately approved |
 
-**RRN-00 status: BLOCKED FOR AN INTEGRATION PASS, NOT COMPLETE.** Do not convert documentation verification into an acceptance sign-off. No changes to existing RCAT Production systems are authorized by this document.
+**Port values are proposed, not verified free today.** A Docker container's `localhost` is not the host's `localhost`; use the Compose service name `icecast` for internal LibreTime output. Remove the previous plan to add a second SHOUTcast process entirely.
 
-## Protocol-level compatibility review — November 12, 2026
+## Selection acceptance criteria (RRN-00)
 
-**Result: STATIC COMPATIBILITY SUPPORTED; END-TO-END RUNTIME NOT VERIFIED.** This section narrows the remaining gate; it does not claim a successful stream test.
+- [x] Owner explicitly selects Icecast rather than SHOUTcast and maintains the USD 0 incremental software/hosting-fee requirement.
+- [x] The upstream version-pinned LibreTime 4.5.0 Compose already bundles Icecast 2.4.4.
+- [x] The matching LibreTime config template already defines the Icecast output.
+- [x] Official LibreTime documentation identifies live input and automatic switching controls.
+- [x] Existing tracker, implementation paths, and dependent acceptance criteria are revised without creating new workstreams.
 
-### Confirmed from the pinned LibreTime 4.5.0 implementation
+**RRN-00 is a product-selection milestone, not a runtime acceptance gate.** Close RRN-00 as **completed** based on upstream artifacts and owner approval. Keep remaining live proof in existing implementation issues instead:
+- **RRN-01 #3:** One current-host read-only preflight immediately before authorized installation.
+- **RRN-02 #4:** Install the existing upstream bundle within radio-only boundaries and check an actual Icecast listener stream.
+- **RRN-03 #5:** Web media upload and audible AutoDJ playlist.
+- **RRN-04 #6:** One actual Live DJ → AutoDJ automatic fallback, with no redundant tests.
+- **RRN-05 #7:** Public player and HTTPS authorization.
+- **RRN-06 #8:** Backup, SOP and proportionate final sign-off.
 
-1. The [LibreTime 4.5.0 Liquidsoap output template](https://github.com/libretime/libretime/blob/4.5.0/playout/libretime_playout/liquidsoap/templates/outputs.liq.j2) renders a real `output.shoutcast(...)` operator, with `host`, `port`, `user`, `password`, and an `%mp3` encoder. It does **not** use an Icecast mount path for that output.
-2. The [pinned LibreTime output models](https://github.com/libretime/libretime/blob/4.5.0/shared/libretime_shared/config/_models.py) allow a single SHOUTcast output with MP3 and a configurable 128 kbps bitrate. They expose no explicit `icy_id`/SHOUTcast SID field.
-3. The [upstream generated-output snapshot](https://github.com/libretime/libretime/blob/4.5.0/playout/tests/liquidsoap/__snapshots__/entrypoint_test.ambr) contains a SHOUTcast output generation example. This is **source-level/unit-test evidence**, not evidence of audio accepted by DNAS v2.
-4. [Liquidsoap's SHOUTcast documentation](https://www.liquidsoap.info/doc-dev/icecast) explicitly supports SHOUTcast v2, with `icy_id=1` as the default stream ID. RCAT requires one station, so target **DNAS SID 1 only**, avoid unnecessary SID/password decoration, and do not claim that LibreTime can select a different SID via its current config model.
-5. The [SHOUTcast DNAS source-connection reference](https://sc-mirror.shoutca.st/docs/DNAS_Server_Source_Support.html) documents the default first stream and legacy password suffix `:#<sid>` for **SHOUTcast v1-protocol clients**. This is not a universal requirement; never automatically append `:#1` when using the native Liquidsoap operator. The actual DNAS server console provides the appropriate source connection details.
-6. SHOUTcast Basic is **MP3 128 kbps**, not the 256 kbps shown in LibreTime's sample configuration; change the intended radio configuration to **MP3 stereo at 128 kbps** before any compatibility test. Use fresh non-default source credentials.
-7. [LibreTime's stable Stream Settings manual](https://libretime.org/docs/user-manual/settings/) specifies both **Auto Switch On** and **Auto Switch Off**, with scheduled playback as the fallback when authenticated Live DJ disconnects. Both must be enabled in the actual runtime validation.
+No code execution or external runtime check has occurred. Keep RRN-01 through RRN-06 open until actual evidence exists.
 
-**Static conclusion:** The selected protocols, output operator, SID=1 default, MP3 encoder, and Live DJ recovery design align. No custom source gateway, unsupported `description` configuration key, or multi-stream support is needed for this V1 station. This removes a **design uncertainty only**; it does not remove the actual integration-test gate.
+## Explicit exclusions and guardrails
 
-### Remaining single runtime gate — smallest credible proof
+- Never use a paid control panel, new external hosting subscription, custom gateway, custom admin/frontend, or AzuraCast as an unapproved substitute.
+- Do not launch the vendor's unmodified Compose on the shared host: its default host ports **8000, 8001, 8002, 8080**, example credentials, and `latest` image fallback need explicit containment/version pins.
+- Do not delete or restart PDF HUB, AnyFlip, or the shared Docker Engine.
+- Do not expose DJ inputs, panel administration, database, RabbitMQ, or Icecast admin credentials publicly.
+- No installation, purchase, Production operation, public launch, DNS change, shared proxy change or firewall change is authorized by this decision.
+- Avoid needless repeat testing; one scoped end-to-end acceptance pass is enough if the actual evidence supports it.
 
-**Prerequisite:** Access to an **official, legally acquired SHOUTcast Basic DNAS v2 Linux package** for the RCAT station. SHOUTcast explicitly requires member login/registration before downloading, so the package, precise version, build provenance, and entitlement remain unavailable via this GitHub-only workflow. Do not source closed binaries from unofficial mirrors or commit them.
-
-When a separately approved isolated test environment and official package are available:
-
-1. **Setup:** Confirm DNAS v2 is using SID 1, MP3 128 kbps, a dedicated radio-only network route, and a source password stored outside Git. Confirm LibreTime 4.5.0 is pinned and its intended SHOUTcast output enabled without exposing default bundled Icecast or unrelated host ports.
-2. **AutoDJ playback:** Load **one authorized short audio file** into LibreTime, schedule/play it, then confirm DNAS identifies an active source and the actual listener URL delivers audible MP3 (not just HTTP 200).
-3. **Live handoff:** Connect **one** standard encoder to LibreTime's authenticated Live DJ input, verify that the listener hears the Live DJ source without sending the DJ straight to DNAS.
-4. **Return:** Disconnect that encoder and confirm scheduled AutoDJ resumes on the same listener stream with **Auto Switch On and Auto Switch Off enabled**. Record whether this was automatic or required manual UI intervention.
-5. **Report:** Save only redacted DNAS/LibreTime connection status, MP3 bitrate, relevant timestamps, listener playback outcome, and a succinct PASS/FAIL statement in Issue #2. Stop all temporary radio services if the test is authorized to end. Do not create a separate issue or repeatedly retest unrelated PDF HUB/AnyFlip functionality.
-
-**Pass:** All three audible phases (AutoDJ → Live DJ → AutoDJ) work over the DNAS v2 listener endpoint, within the zero-recurring-fee and safe-host scope.
-
-**Fail / blocked:** DNAS binary/entitlement cannot be legally obtained; SHOUTcast rejects LibreTime's source; SID/auth/network requirements cannot be met within the documented interface; the actual AutoDJ handoff requires unsupported modifications; or any change would interfere with shared RCAT services. Record the specific observed reason, do not claim success, and do not proceed to RRN-02.
-
-**Important dependency:** A private network path to DNAS is mandatory. A container's `localhost` is not the host's `127.0.0.1`; RRN-01's current candidate DNAS loopback bind is **not yet a proven reachable arrangement** from LibreTime. Finalize the route only with a supported DNAS packaging decision and an isolated test.
-
-### Evidence classification
-
-| Evidence | Status |
-|---|---|
-| 4.5.0 `output.shoutcast` source operator and encoded MP3 128 support | **Verified by pinned upstream source** |
-| DNAS v2 SID=1 default and Liquidsoap `icy_id` behavior | **Verified by protocol/operator documentation** |
-| LibreTime's Live DJ → scheduled AutoDJ switch controls | **Verified in LibreTime documentation** |
-| Official SHOUTcast Basic DNAS v2 binary and build/version | **Blocked: official member-gated download not accessed** |
-| End-to-end audible output and fallback against that DNAS build | **Not executed; requires authorized isolated test** |
-
-**Decision:** Retain RRN-00 as **OPEN — STATIC COMPATIBILITY REVIEW PASSED; RUNTIME PROOF BLOCKED**. Do not start RRN-02 deployment. All updates remain English-only and no production system is changed.
-
-## Non-production preparation update — November 12, 2026
-
-Created [the LibreTime 4.5.0 feasibility Compose override](../blob/main/testing/compose.feasibility.override.yml) using the official `!override` syntax available in Docker Compose **2.24.4 and later**. The upstream Compose must be supplied separately in an isolated test directory; the override is **not** an independently runnable deployment.
-
-It pins LibreTime images to `4.5.0`, replaces rather than appends the upstream port lists (LibreTime Web at `127.0.0.1:8700`, one DJ input at `127.0.0.1:8605`, bundled Icecast without a published host port), and rejects missing private database/message-broker/Icecast password environment variables. The upstream LibreTime `config.yml` must also be privately generated and validated; **its default passwords cannot be used**. The config may still contain an Icecast output enabled by default, which requires a deliberate decision before testing DNAS. The separate SHOUTcast binary and internal source route remain unresolved.
-
-This is a **guardrail configuration**, not an actual rendered Compose model, a successful DNAS connection, or approval to deploy on `rcatiotserver`. Docker Compose is not available in the current local working environment, and no current RCAT host inspection has been performed. When a permitted test environment exists, validate the merged model and verify that no base host ports survive the merge before starting anything.
-
-**External blocker remains:** SHOUTcast Basic's official Linux DNAS download is member-gated at https://directory.shoutcast.com/BroadcastNow. No verified executable/version or licensed source route was obtained. Do not use unofficial copies. RRN-00 is still **BLOCKED ON ONE ACTUAL TEST** and must not be closed until AutoDJ → Live DJ → AutoDJ audibility through that DNAS build has been demonstrated.
-
-## Legacy-version and licensing audit — November 12, 2026
-
-**Owner question:** Can a legacy SHOUTcast version avoid paid current-product licensing while retaining LibreTime and the USD 0 new-license/hosting budget?
-
-**Finding: Do not downgrade to DNAS 1.9.x or 2.4.x.** The vendor still publishes a **Freemium** server-software license and a **free self-hosted Basic** offer, but that license has conditions. The current free tier is not synonymous with a historic, ad-free, transferable license.
-
-### Three practical paths
-
-| Path | Official evidence | Cost / constraints | Decision |
-|---|---|---|---|
-| **SHOUTcast DNAS 2.6.1 build 777 + LibreTime 4.5.0** | Official 2.6.1 changelog dated **January 30, 2022**; official legal agreement provides **Freemium MP3 128 kbps**; Basic page describes **mandatory pre-roll ads**; official download portal requires member login | No separately published software fee for Freemium; advertising/registration obligations and actual account-gated binary/build verification remain. LibreTime source connection and DJ fallback still untested against DNAS. | **Preferred SHOUTcast route, conditional.** Obtain and confirm the DNAS build and active Freemium entitlement through the vendor, then one isolated audible AutoDJ → Live DJ → AutoDJ test. |
-| **SHOUTcast DNAS 1.9.8 or other pre-2.5 legacy** | SHOUTcast official portal says versions **earlier than 2.5 are no longer supported and subject to directory/API delisting**; 1.9.8 is circa 2008, older than the documented 2.6.1 fixes | Not a verified route around today's terms; official downloadable provenance, license scope, maintained security patches, and public compatibility are not established | **Reject for any public service**. Third-party mirrors are not an acceptable substitute for vendor provenance or a legal license. |
-| **LibreTime + official Icecast** | LibreTime officially supports Icecast; official Icecast site lists **2.5.0** and the open-source **GPL v2** license | **No additional proprietary SHOUTcast registration or mandatory SHOUTcast pre-roll requirement**, and LibreTime's existing Compose contains Icecast, but the streaming engine would **not be SHOUTcast DNAS** | **Fallback only if the owner explicitly relaxes the SHOUTcast DNAS requirement**. Do not silently change the target stack. |
-
-### What the official SHOUTcast material actually establishes
-
-- **License:** https://www.shoutcast.com/legal/agreements/dnas — Article 3.1 offers software use under a Freemium license, specifies MP3 128 kbps, and Article 1 requires registered SHOUTcast membership. Article 4 restricts redistribution and modification of proprietary binaries. Do not treat an online archive or mirror copy as permission to redistribute or use it.
-- **Basic terms:** https://www.shoutcast.com/pricing/basic — says pre-roll advertising is mandatory. Do not assume the ad insertion requirement can legally be bypassed with older binaries.
-- **Release:** https://yp.shoutcast.com/v/2_6_1 — 2.6.1 build 777 has a January 30, 2022 changelog with Linux-native SSL support and fixes over 2.5.5. This is the **most recent official DNAS v2 build positively identified in the present research**, **not a verified claim that there have been no subsequent releases or security updates**.
-- **Download and version floor:** https://directory.shoutcast.com/BroadcastNow — directs users to login or register to download DNAS and states that versions older than 2.5 are unsupported/delisted.
-- **LibreTime support:** https://libretime.org/docs/admin-manual/stream-configuration/ — supports both SHOUTcast and Icecast outputs; the SHOUTcast 4.5.0 operator was reviewed earlier in this record.
-- **Icecast fallback:** https://icecast.org/ — open-source 2.5.0 listed on the official site. This fallback is a **different protocol/server choice**, not SHOUTcast DNAS.
-
-### Security and compatibility conclusions
-
-1. **Legacy is not a security exemption.** The 2022 DNAS build is several years old; neither the official release page nor an absence of matching search results establishes that it is fully patched or free from vulnerabilities. An actual deployment requires source-network isolation, limited admin exposure, scoped listener ingress, and a separate security judgment.
-2. **Do not chase an ad-free legacy build.** A byte-for-byte download from a third-party site would still require a valid vendor license and carry supply-chain provenance risk.
-3. **Do not confuse free software with an ad-free station.** Current SHOUTcast Basic is freemium with specific monetization terms. Music performance and distribution rights are separate obligations.
-4. **No downgrade or paid option is approved.** The preferred one-station stack remains **SHOUTcast DNAS v2.6.1 (subject to official account availability and actual license) + LibreTime 4.5.0**, with MP3 128 kbps and SID 1. DNAS version must be adjusted if the vendor offers a newer supported official build; never pin an outdated build solely for its legacy status.
-
-### Minimum outstanding decision and proof
-
-- [ ] Verify the member-gated DNAS download, precise build, binary checksum/provenance, and actual Freemium rights on the official account; the public website alone cannot do this.
-- [ ] Confirm acceptance of **mandatory pre-roll ads** under the free Basic service before public launch. This is a product trade-off, not a technical compatibility test.
-- [ ] Run the **single isolated** end-to-end AutoDJ → DNAS listener → Live DJ → AutoDJ test, as already specified above, after explicit test authorization and safe RRN-01 preflight.
-- [ ] If official access/terms are unacceptable, request a **single architecture choice**: keep SHOUTcast and record the blocker, or approve Icecast as the fully free software alternative.
-
-**Disposition: RRN-00 remains OPEN; legacy alternatives researched; no account registration, download, server/Production modification, or new issue created.**
+**Historical SHOUTcast research remains available in this document's Git commit history, but is no longer an active dependency.**
