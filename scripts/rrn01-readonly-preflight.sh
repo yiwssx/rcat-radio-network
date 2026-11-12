@@ -13,6 +13,14 @@ if [ -r /etc/os-release ]; then
   (. /etc/os-release; printf 'OS: %s\n' "${PRETTY_NAME:-unknown}")
 else pending "OS information unavailable"; fi
 printf 'Architecture: %s\n' "$(uname -m 2>/dev/null || printf unknown)"
+# Verify only the historic radio LAN address, not the host's full interface inventory.
+if command -v ip >/dev/null 2>&1; then
+  if ipv4="$(ip -o -4 addr show 2>/dev/null)"; then
+    if printf '%s\n' "$ipv4" | awk '$4 ~ /^10[.]10[.]1[.]100\// {found=1} END {exit !found}'; then
+      ok "Historic RCAT LAN IPv4 10.10.1.100 is present"
+    else pending "Historic LAN IPv4 not found; confirm current host routing before any remote DJ ingress"; fi
+  else pending "IPv4 interface inspection unavailable"; fi
+else pending "ip CLI unavailable; LAN IPv4 not verified"; fi
 if command -v docker >/dev/null 2>&1; then
   printf 'Docker client: '; docker --version 2>/dev/null || true
   if compose_version="$(docker compose version --short 2>/dev/null)"; then
