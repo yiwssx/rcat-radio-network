@@ -169,3 +169,42 @@ It pins LibreTime images to `4.5.0`, replaces rather than appends the upstream p
 This is a **guardrail configuration**, not an actual rendered Compose model, a successful DNAS connection, or approval to deploy on `rcatiotserver`. Docker Compose is not available in the current local working environment, and no current RCAT host inspection has been performed. When a permitted test environment exists, validate the merged model and verify that no base host ports survive the merge before starting anything.
 
 **External blocker remains:** SHOUTcast Basic's official Linux DNAS download is member-gated at https://directory.shoutcast.com/BroadcastNow. No verified executable/version or licensed source route was obtained. Do not use unofficial copies. RRN-00 is still **BLOCKED ON ONE ACTUAL TEST** and must not be closed until AutoDJ → Live DJ → AutoDJ audibility through that DNAS build has been demonstrated.
+
+## Legacy-version and licensing audit — November 12, 2026
+
+**Owner question:** Can a legacy SHOUTcast version avoid paid current-product licensing while retaining LibreTime and the USD 0 new-license/hosting budget?
+
+**Finding: Do not downgrade to DNAS 1.9.x or 2.4.x.** The vendor still publishes a **Freemium** server-software license and a **free self-hosted Basic** offer, but that license has conditions. The current free tier is not synonymous with a historic, ad-free, transferable license.
+
+### Three practical paths
+
+| Path | Official evidence | Cost / constraints | Decision |
+|---|---|---|---|
+| **SHOUTcast DNAS 2.6.1 build 777 + LibreTime 4.5.0** | Official 2.6.1 changelog dated **January 30, 2022**; official legal agreement provides **Freemium MP3 128 kbps**; Basic page describes **mandatory pre-roll ads**; official download portal requires member login | No separately published software fee for Freemium; advertising/registration obligations and actual account-gated binary/build verification remain. LibreTime source connection and DJ fallback still untested against DNAS. | **Preferred SHOUTcast route, conditional.** Obtain and confirm the DNAS build and active Freemium entitlement through the vendor, then one isolated audible AutoDJ → Live DJ → AutoDJ test. |
+| **SHOUTcast DNAS 1.9.8 or other pre-2.5 legacy** | SHOUTcast official portal says versions **earlier than 2.5 are no longer supported and subject to directory/API delisting**; 1.9.8 is circa 2008, older than the documented 2.6.1 fixes | Not a verified route around today's terms; official downloadable provenance, license scope, maintained security patches, and public compatibility are not established | **Reject for any public service**. Third-party mirrors are not an acceptable substitute for vendor provenance or a legal license. |
+| **LibreTime + official Icecast** | LibreTime officially supports Icecast; official Icecast site lists **2.5.0** and the open-source **GPL v2** license | **No additional proprietary SHOUTcast registration or mandatory SHOUTcast pre-roll requirement**, and LibreTime's existing Compose contains Icecast, but the streaming engine would **not be SHOUTcast DNAS** | **Fallback only if the owner explicitly relaxes the SHOUTcast DNAS requirement**. Do not silently change the target stack. |
+
+### What the official SHOUTcast material actually establishes
+
+- **License:** https://www.shoutcast.com/legal/agreements/dnas — Article 3.1 offers software use under a Freemium license, specifies MP3 128 kbps, and Article 1 requires registered SHOUTcast membership. Article 4 restricts redistribution and modification of proprietary binaries. Do not treat an online archive or mirror copy as permission to redistribute or use it.
+- **Basic terms:** https://www.shoutcast.com/pricing/basic — says pre-roll advertising is mandatory. Do not assume the ad insertion requirement can legally be bypassed with older binaries.
+- **Release:** https://yp.shoutcast.com/v/2_6_1 — 2.6.1 build 777 has a January 30, 2022 changelog with Linux-native SSL support and fixes over 2.5.5. This is the **most recent official DNAS v2 build positively identified in the present research**, **not a verified claim that there have been no subsequent releases or security updates**.
+- **Download and version floor:** https://directory.shoutcast.com/BroadcastNow — directs users to login or register to download DNAS and states that versions older than 2.5 are unsupported/delisted.
+- **LibreTime support:** https://libretime.org/docs/admin-manual/stream-configuration/ — supports both SHOUTcast and Icecast outputs; the SHOUTcast 4.5.0 operator was reviewed earlier in this record.
+- **Icecast fallback:** https://icecast.org/ — open-source 2.5.0 listed on the official site. This fallback is a **different protocol/server choice**, not SHOUTcast DNAS.
+
+### Security and compatibility conclusions
+
+1. **Legacy is not a security exemption.** The 2022 DNAS build is several years old; neither the official release page nor an absence of matching search results establishes that it is fully patched or free from vulnerabilities. An actual deployment requires source-network isolation, limited admin exposure, scoped listener ingress, and a separate security judgment.
+2. **Do not chase an ad-free legacy build.** A byte-for-byte download from a third-party site would still require a valid vendor license and carry supply-chain provenance risk.
+3. **Do not confuse free software with an ad-free station.** Current SHOUTcast Basic is freemium with specific monetization terms. Music performance and distribution rights are separate obligations.
+4. **No downgrade or paid option is approved.** The preferred one-station stack remains **SHOUTcast DNAS v2.6.1 (subject to official account availability and actual license) + LibreTime 4.5.0**, with MP3 128 kbps and SID 1. DNAS version must be adjusted if the vendor offers a newer supported official build; never pin an outdated build solely for its legacy status.
+
+### Minimum outstanding decision and proof
+
+- [ ] Verify the member-gated DNAS download, precise build, binary checksum/provenance, and actual Freemium rights on the official account; the public website alone cannot do this.
+- [ ] Confirm acceptance of **mandatory pre-roll ads** under the free Basic service before public launch. This is a product trade-off, not a technical compatibility test.
+- [ ] Run the **single isolated** end-to-end AutoDJ → DNAS listener → Live DJ → AutoDJ test, as already specified above, after explicit test authorization and safe RRN-01 preflight.
+- [ ] If official access/terms are unacceptable, request a **single architecture choice**: keep SHOUTcast and record the blocker, or approve Icecast as the fully free software alternative.
+
+**Disposition: RRN-00 remains OPEN; legacy alternatives researched; no account registration, download, server/Production modification, or new issue created.**
