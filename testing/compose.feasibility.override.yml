@@ -1,0 +1,59 @@
+# RRN-00: NON-PRODUCTION LibreTime 4.5.0 feasibility override.
+# Documentation and preparation only. This file is NOT a deployment authorization.
+#
+# Use ONLY with the official LibreTime 4.5.0 docker-compose.yml, a separately
+# prepared private config.yml, and Docker Compose >= 2.24.4 (!override required).
+# Verify the rendered Compose model and host resource/port ownership first.
+# No SHOUTcast DNAS binary is included or downloaded by this project.
+#
+# Upstream has ports 8000/8001/8002/8080. The !override tag is necessary:
+# a plain ports list would MERGE with upstream ports, leaking old mappings.
+#
+# This profile binds LibreTime web and ONE DJ source to host loopback only.
+# The bundled Icecast service remains reachable on its private Compose network
+# but has no published host port. Do not delete it without dependency evidence.
+# A valid, official SHOUTcast DNAS package and a supported private source route
+# remain required to perform the RRN-00 actual audio compatibility test.
+
+name: rcat_radio_feasibility
+
+services:
+  postgres:
+    environment:
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Set private POSTGRES_PASSWORD before rendering}
+
+  rabbitmq:
+    environment:
+      RABBITMQ_DEFAULT_PASS: ${RABBITMQ_DEFAULT_PASS:?Set private RABBITMQ_DEFAULT_PASS before rendering}
+
+  playout:
+    image: ghcr.io/libretime/libretime-playout:4.5.0
+
+  liquidsoap:
+    image: ghcr.io/libretime/libretime-playout:4.5.0
+    ports: !override
+      - "127.0.0.1:8605:8001"
+
+  analyzer:
+    image: ghcr.io/libretime/libretime-analyzer:4.5.0
+
+  worker:
+    image: ghcr.io/libretime/libretime-worker:4.5.0
+
+  api:
+    image: ghcr.io/libretime/libretime-api:4.5.0
+
+  legacy:
+    image: ghcr.io/libretime/libretime-legacy:4.5.0
+
+  nginx:
+    image: ghcr.io/libretime/libretime-nginx:4.5.0
+    ports: !override
+      - "127.0.0.1:8700:8080"
+
+  icecast:
+    ports: !override []
+    environment:
+      ICECAST_SOURCE_PASSWORD: ${ICECAST_SOURCE_PASSWORD:?Set private ICECAST_SOURCE_PASSWORD before rendering}
+      ICECAST_ADMIN_PASSWORD: ${ICECAST_ADMIN_PASSWORD:?Set private ICECAST_ADMIN_PASSWORD before rendering}
+      ICECAST_RELAY_PASSWORD: ${ICECAST_RELAY_PASSWORD:?Set private ICECAST_RELAY_PASSWORD before rendering}
