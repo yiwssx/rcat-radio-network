@@ -10,14 +10,14 @@
 ## Target
 RMS Radio vhost 443 serves a small static HTML5 audio player ONLY.
 IOT bundled Icecast retains HTTP port 8000/host LAN 8600 and adds native HTTPS 8443 with own mounted XML and PEM bundle.
-WAN public 8443 routes directly to IOT; WAN Admin 8700 and Show DJ 8605 are blocked by router; LAN/VPN remain accessible.
+WAN public 8444 routes to IOT private :8443 (existing UniFi WAN :8443 remains unchanged); WAN Admin 8700 and Show DJ 8605 are blocked by router; LAN/VPN remain accessible.
 No streaming HTTP reverse proxy; no new application; no Docker Engine upgrade or non-radio vhost changes.
 
 **Important residual risk:** native Icecast HTTPS on 8443 shares its TLS socket with Icecast's own authenticated /admin URLs. This architecture prevents public access to *LibreTime Admin* and the *Live DJ harbor* via WAN 8700/8605, but does NOT technically block Icecast's own admin URL on :8443. Strong unique Icecast admin/source credentials are mandatory. Do not describe :8443 as a path-isolated listener-only proxy.
 
 ## Production installation sequence (not repeated trial checks)
 
-1. Operator: approve publishing only licensed/authorized content; ensure unique non-default LibreTime admin and source passwords; correct MikroTik firewall/NAT. Permit WAN 8443 TCP -> 10.10.1.100:8443, block WAN 8605 and 8700, and preferably block unnecessary WAN 8600. Safeguard existing RCAT services and LAN/VPN. MikroTik changes cannot be performed through GitHub.
+1. Operator: approve publishing only licensed/authorized content; ensure unique non-default LibreTime admin and source passwords; correct MikroTik firewall/NAT. Permit WAN 8444 TCP -> 10.10.1.100:8443, block WAN 8605 and 8700, and preferably block unnecessary WAN 8600. Safeguard existing RCAT services and LAN/VPN. MikroTik changes cannot be performed through GitHub.
 
 2. RMS to IOT: privately transfer a combined radio PEM bundle containing fullchain.pem followed by privkey.pem, using authenticated SSH/SCP. Do NOT paste certificate private keys into chat, GitHub, URLs, scripts, or shell history. Provision on IOT at /etc/rcat-radio-network/icecast-bundle.pem, root-owned mode 0600, with the parent directory root-only mode 0700. This one-time bootstrap needs authorized access to BOTH servers.
 
