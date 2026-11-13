@@ -132,7 +132,7 @@ awk '
     print "        Require all granted"
     print "    </Directory>"
     print "    DirectoryIndex index.html"
-    print "    Header always set Content-Security-Policy \"default-src \\047none\\047; style-src \\047unsafe-inline\\047; script-src \\047unsafe-inline\\047; media-src https://radio.rcat.ac.th:8443; connect-src https://radio.rcat.ac.th:8443; base-uri \\047none\\047; frame-ancestors \\047none\\047\""
+    print "    Header always set X-Frame-Options \"DENY\""
     print "    Header always set Strict-Transport-Security \"max-age=31536000\""
     print "    Header always set Referrer-Policy \"no-referrer\""
     print; changed_vhost++; next
