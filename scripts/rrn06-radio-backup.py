@@ -125,6 +125,28 @@ def inspect_radio():
     return paths
 
 
+
+def backup_capacity(paths):
+    # Check capacity before stopping live radio, using conservative logical
+    # bytes (uncompressed), plus a 10% cushion and one extra GiB.
+    parent = BACKUPS.parent
+    require(parent.is_dir() and not parent.is_symlink(),
+            "Expected root-owned /var/backups parent directory not available")
+    sources = [str(PRIVATE), str(RUNTIME)] + [str(paths[n]) for n in VOLUMES]
+    report = local_command(["du", "-sb", *sources], 180)
+    lines = report.splitlines()
+    require(len(lines) == len(sources), "Cannot estimate radio backup source sizes")
+    try:
+        bytes_needed = sum(int(line.split()[0]) for line in lines)
+    except (IndexError, ValueError) as exc:
+        raise Stop("Unable to parse radio-only backup source sizes") from exc
+    filesystem = os.statvfs(parent)
+    bytes_free = filesystem.f_bavail * filesystem.f_frsize
+    margin = bytes_needed // 10 + 1024 ** 3
+    require(bytes_free >= bytes_needed + margin,
+            "Not enough free space for conservative local radio backup")
+    return bytes_needed, bytes_free
+
 def ensure_backup_directory():
     require(not BACKUPS.is_symlink(), "Backup directory is a symlink")
     if not BACKUPS.exists():
@@ -229,8 +251,11 @@ def main():
     else:
         require(not args.approve_radio_outage, "Outage approval only applies to --backup")
     paths = inspect_radio()
+    estimated_bytes, free_bytes = backup_capacity(paths)
     if args.plan:
         print("RRN06_PLAN=PASS")
+        print("estimated_uncompressed_bytes=" + str(estimated_bytes))
+        print("backup_filesystem_available_bytes=" + str(free_bytes))
         print("project=" + PROJECT + " running_containers=10")
         print("radio_local_volumes=3")
         print("private_sources=present")
