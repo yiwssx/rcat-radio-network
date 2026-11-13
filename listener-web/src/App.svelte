@@ -63,24 +63,83 @@
     <div class="header-inner">
       <a class="institution" href={COLLEGE_URL} target="_blank" rel="noopener noreferrer" aria-label="เว็บไซต์วิทยาลัยเกษตรและเทคโนโลยีร้อยเอ็ด (เปิดแท็บใหม่)">
         <!-- A reference-image crest is a preview fallback only; replace with verified college asset before deployment. -->
-        <img class="college-mark" src="/images/crest-reference.svg" alt="" width="68" height="68" />
+        <img class="college-mark" src="https://www.rcat.ac.th/rcat-logo-128.png" alt="" width="68" height="68" />
         <span class="institution-name">วิทยาลัยเกษตรและเทคโนโลยีร้อยเอ็ด<small>Roi-Et College of Agriculture and Technology (RCAT)</small></span>
       </a>
       <a class="station-wordmark" href="#home" aria-label="RCAT Radio Network หน้าแรก">
-        <svg class="logo-signal" viewBox="0 0 50 58" fill="none" aria-hidden="true">
-          <circle cx="25" cy="22" r="5" fill="currentColor"/>
-          <path d="M25 30v20M14 14c-7 8-7 18 0 26M36 14c7 8 7 18 0 26M7 6c-13 17-13 29 0 42M43 6c13 17 13 29 0 42" stroke="currentColor" stroke-width="4" stroke-linecap="round"/>
-        </svg>
+        <svg class="logo-signal" aria-hidden="true" focusable="false"
+  xmlns="http://www.w3.org/2000/svg"
+  width="24"
+  height="24"
+  viewBox="0 0 24 24"
+  fill="none"
+  stroke="currentColor"
+  stroke-width="2"
+  stroke-linecap="round"
+  stroke-linejoin="round"
+>
+  <path d="M4.9 16.1C1 12.2 1 5.8 4.9 1.9" />
+  <path d="M7.8 4.7a6.14 6.14 0 0 0-.8 7.5" />
+  <circle cx="12" cy="9" r="2" />
+  <path d="M16.2 4.8c2 2 2.26 5.11.8 7.47" />
+  <path d="M19.1 1.9a9.96 9.96 0 0 1 0 14.1" />
+  <path d="M9.5 18h5" />
+  <path d="m8 22 4-11 4 11" />
+</svg>
+
         <span><strong>RCAT</strong><small>Radio Network</small></span>
       </a>
       <nav class:opened={menuOpen} class="navlinks" aria-label="เมนูหลัก">
-        <a class="nav-active" href="#home" onclick={() => menuOpen = false}><svg class="home-icon" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M2 10.7 12 2.7l10 8v2.6l-2-1.6V21h-6v-6h-4v6H4v-9.3L2 13.3z"/></svg> หน้าแรก</a>
+        <a class="nav-active" href="#home" onclick={() => menuOpen = false}><svg class="home-icon" aria-hidden="true" focusable="false"
+  xmlns="http://www.w3.org/2000/svg"
+  width="24"
+  height="24"
+  viewBox="0 0 24 24"
+  fill="none"
+  stroke="currentColor"
+  stroke-width="2"
+  stroke-linecap="round"
+  stroke-linejoin="round"
+>
+  <path d="M15 21v-8a1 1 0 0 0-1-1h-4a1 1 0 0 0-1 1v8" />
+  <path d="M3 10a2 2 0 0 1 .709-1.528l7-5.999a2 2 0 0 1 2.582 0l7 5.999A2 2 0 0 1 21 10v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" />
+</svg>
+ หน้าแรก</a>
         <button onclick={openSchedule}>ตารางรายการ</button>
         <a href="https://www.rcat.ac.th/announcements" target="_blank" rel="noopener noreferrer" onclick={() => menuOpen = false}>ข่าวสาร</a>
         <a href="#about" onclick={() => menuOpen = false}>เกี่ยวกับสถานี</a>
       </nav>
       <button class="menu-toggle" aria-label={menuOpen ? 'ปิดเมนู' : 'เปิดเมนู'} aria-expanded={menuOpen} onclick={() => menuOpen = !menuOpen}>
-        <span></span><span></span><span></span>
+        {#if menuOpen}<svg class="menu-icon" aria-hidden="true" focusable="false"
+  xmlns="http://www.w3.org/2000/svg"
+  width="24"
+  height="24"
+  viewBox="0 0 24 24"
+  fill="none"
+  stroke="currentColor"
+  stroke-width="2"
+  stroke-linecap="round"
+  stroke-linejoin="round"
+>
+  <path d="M18 6 6 18" />
+  <path d="m6 6 12 12" />
+</svg>
+{:else}<svg class="menu-icon" aria-hidden="true" focusable="false"
+  xmlns="http://www.w3.org/2000/svg"
+  width="24"
+  height="24"
+  viewBox="0 0 24 24"
+  fill="none"
+  stroke="currentColor"
+  stroke-width="2"
+  stroke-linecap="round"
+  stroke-linejoin="round"
+>
+  <line x1="4" x2="20" y1="12" y2="12" />
+  <line x1="4" x2="20" y1="6" y2="6" />
+  <line x1="4" x2="20" y1="18" y2="18" />
+</svg>
+{/if}
       </button>
     </div>
   </header>
@@ -92,9 +151,25 @@
       <div class="hero-accent" aria-hidden="true"></div>
       <div class="hero-content">
         <div class="hero-heading-row">
-          <svg class="hero-signal" viewBox="0 0 54 98" aria-hidden="true">
-            <path d="M27 6v86M14 23v52M40 23v52M3 39v20M51 39v20" stroke="currentColor" stroke-width="8" stroke-linecap="round"/>
-          </svg>
+          <svg class="hero-signal" aria-hidden="true" focusable="false"
+  xmlns="http://www.w3.org/2000/svg"
+  width="24"
+  height="24"
+  viewBox="0 0 24 24"
+  fill="none"
+  stroke="currentColor"
+  stroke-width="2"
+  stroke-linecap="round"
+  stroke-linejoin="round"
+>
+  <path d="M2 10v3" />
+  <path d="M6 6v11" />
+  <path d="M10 3v18" />
+  <path d="M14 8v7" />
+  <path d="M18 5v13" />
+  <path d="M22 10v3" />
+</svg>
+
           <h1 id="hero-title">RCAT<br /><span>Radio Network</span></h1>
         </div>
         <p>สถานีวิทยุออนไลน์<br />วิทยาลัยเกษตรและเทคโนโลยีร้อยเอ็ด</p>
@@ -105,27 +180,113 @@
     <section class="player-wrap" id="listen" aria-label="เครื่องเล่นวิทยุออนไลน์">
       <div class="player-panel">
         <div class="player-station-icon" aria-hidden="true">
-          <svg viewBox="0 0 68 58" fill="none" class="cover-icon" aria-hidden="true"><path d="M11 31v-6C11 12 21 4 34 4s23 8 23 21v6" stroke="currentColor" stroke-width="5" stroke-linecap="round"/><rect x="4" y="27" width="14" height="23" rx="6" fill="currentColor"/><rect x="50" y="27" width="14" height="23" rx="6" fill="currentColor"/><circle cx="34" cy="29" r="3" fill="currentColor"/><path d="M34 33v18M27 20a12 12 0 0 0 0 18M41 20a12 12 0 0 1 0 18M21 15a20 20 0 0 0 0 27M47 15a20 20 0 0 1 0 27" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"/></svg>
+          <svg class="cover-icon" aria-hidden="true" focusable="false"
+  xmlns="http://www.w3.org/2000/svg"
+  width="24"
+  height="24"
+  viewBox="0 0 24 24"
+  fill="none"
+  stroke="currentColor"
+  stroke-width="2"
+  stroke-linecap="round"
+  stroke-linejoin="round"
+>
+  <path d="M3 14h3a2 2 0 0 1 2 2v3a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-7a9 9 0 0 1 18 0v7a2 2 0 0 1-2 2h-1a2 2 0 0 1-2-2v-3a2 2 0 0 1 2-2h3" />
+</svg>
+
           <strong>RCAT</strong><span>RADIO</span>
         </div>
         <div class="player-description">
-          <span class="radio-chip"><svg class="chip-broadcast" viewBox="0 0 28 28" fill="none" aria-hidden="true"><circle cx="14" cy="14" r="3" fill="currentColor"/><path d="M14 18v7M8 8a9 9 0 0 0 0 12M20 8a9 9 0 0 1 0 12M4 4a15 15 0 0 0 0 20M24 4a15 15 0 0 1 0 20" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg> สด</span>
+          <span class="radio-chip"><svg class="chip-broadcast" aria-hidden="true" focusable="false"
+  xmlns="http://www.w3.org/2000/svg"
+  width="24"
+  height="24"
+  viewBox="0 0 24 24"
+  fill="none"
+  stroke="currentColor"
+  stroke-width="2"
+  stroke-linecap="round"
+  stroke-linejoin="round"
+>
+  <path d="M4.9 19.1C1 15.2 1 8.8 4.9 4.9" />
+  <path d="M7.8 16.2c-2.3-2.3-2.3-6.1 0-8.5" />
+  <circle cx="12" cy="12" r="2" />
+  <path d="M16.2 7.8c2.3 2.3 2.3 6.1 0 8.5" />
+  <path d="M19.1 4.9C23 8.8 23 15.1 19.1 19" />
+</svg>
+ สด</span>
           <p class="playing-label">สตรีมวิทยุออนไลน์</p>
           <h2>RCAT Radio Network</h2>
         </div>
         <div class="player-play-area">
           <button class="play-button" onclick={togglePlayback} aria-label={isPlaying || isConnecting ? 'หยุดฟังวิทยุ' : 'เริ่มฟังวิทยุ'} title={isPlaying || isConnecting ? 'หยุดฟัง' : 'ฟังวิทยุสด'}>
             {#if isPlaying || isConnecting}
-              <svg viewBox="0 0 24 24" aria-hidden="true" fill="currentColor"><rect x="5" y="3.5" width="5" height="17" rx="1.5"/><rect x="14" y="3.5" width="5" height="17" rx="1.5"/></svg>
+              <svg class="player-control-icon" aria-hidden="true" focusable="false"
+  xmlns="http://www.w3.org/2000/svg"
+  width="24"
+  height="24"
+  viewBox="0 0 24 24"
+  fill="none"
+  stroke="currentColor"
+  stroke-width="2"
+  stroke-linecap="round"
+  stroke-linejoin="round"
+>
+  <rect x="14" y="4" width="4" height="16" rx="1" />
+  <rect x="6" y="4" width="4" height="16" rx="1" />
+</svg>
+
             {:else}
-              <svg viewBox="0 0 24 24" aria-hidden="true" fill="currentColor"><path d="M7 4.5c0-1.4 1.5-2.3 2.7-1.6l11 7c1.2.8 1.2 2.4 0 3.2l-11 7C8.5 20.8 7 20 7 18.5v-14Z"/></svg>
+              <svg class="player-control-icon" aria-hidden="true" focusable="false"
+  xmlns="http://www.w3.org/2000/svg"
+  width="24"
+  height="24"
+  viewBox="0 0 24 24"
+  fill="none"
+  stroke="currentColor"
+  stroke-width="2"
+  stroke-linecap="round"
+  stroke-linejoin="round"
+>
+  <polygon points="6 3 20 12 6 21 6 3" />
+</svg>
+
             {/if}
           </button>
         </div>
         <div class="volume-group">
-          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 9v6h4l5 4V5L8 9H4Z"/><path d="M16 9a5 5 0 0 1 0 6"/></svg>
+          <svg class="volume-icon" aria-hidden="true" focusable="false"
+  xmlns="http://www.w3.org/2000/svg"
+  width="24"
+  height="24"
+  viewBox="0 0 24 24"
+  fill="none"
+  stroke="currentColor"
+  stroke-width="2"
+  stroke-linecap="round"
+  stroke-linejoin="round"
+>
+  <path d="M11 4.702a.705.705 0 0 0-1.203-.498L6.413 7.587A1.4 1.4 0 0 1 5.416 8H3a1 1 0 0 0-1 1v6a1 1 0 0 0 1 1h2.416a1.4 1.4 0 0 1 .997.413l3.383 3.384A.705.705 0 0 0 11 19.298z" />
+  <path d="M16 9a5 5 0 0 1 0 6" />
+</svg>
+
           <input aria-label="ระดับเสียง" title="ปรับระดับเสียง" type="range" min="0" max="100" step="1" value={volume} oninput={updateVolume} style={`--volume-fill: ${volume}%`} />
-          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 9v6h4l5 4V5L8 9H4Z"/><path d="M16 9a5 5 0 0 1 0 6M18 5a9 9 0 0 1 0 14"/></svg>
+          <svg class="volume-icon" aria-hidden="true" focusable="false"
+  xmlns="http://www.w3.org/2000/svg"
+  width="24"
+  height="24"
+  viewBox="0 0 24 24"
+  fill="none"
+  stroke="currentColor"
+  stroke-width="2"
+  stroke-linecap="round"
+  stroke-linejoin="round"
+>
+  <path d="M11 4.702a.705.705 0 0 0-1.203-.498L6.413 7.587A1.4 1.4 0 0 1 5.416 8H3a1 1 0 0 0-1 1v6a1 1 0 0 0 1 1h2.416a1.4 1.4 0 0 1 .997.413l3.383 3.384A.705.705 0 0 0 11 19.298z" />
+  <path d="M16 9a5 5 0 0 1 0 6" />
+  <path d="M19.364 18.364a9 9 0 0 0 0-12.728" />
+</svg>
+
         </div>
         <div class="playback-message" role="status" aria-live="polite"><span class:active={isPlaying} class:error={status === 'error'} class="status-dot"></span><span>{statusText}</span></div>
       </div>
@@ -168,9 +329,40 @@
 
   <footer class="footer" id="about">
     <div class="footer-inner">
-      <div class="footer-station"><svg viewBox="0 0 54 38" aria-hidden="true"><path d="M27 3v32M18 9v20M36 9v20M9 14v10M45 14v10" stroke="currentColor" stroke-width="5" stroke-linecap="round"/></svg><strong>RCAT Radio Network</strong></div>
+      <div class="footer-station"><svg class="footer-signal" aria-hidden="true" focusable="false"
+  xmlns="http://www.w3.org/2000/svg"
+  width="24"
+  height="24"
+  viewBox="0 0 24 24"
+  fill="none"
+  stroke="currentColor"
+  stroke-width="2"
+  stroke-linecap="round"
+  stroke-linejoin="round"
+>
+  <path d="M2 10v3" />
+  <path d="M6 6v11" />
+  <path d="M10 3v18" />
+  <path d="M14 8v7" />
+  <path d="M18 5v13" />
+  <path d="M22 10v3" />
+</svg>
+<strong>RCAT Radio Network</strong></div>
       <span class="footer-claim">เสียงความรู้ คู่เกษตรก้าวหน้า เพื่อชุมชนและสังคม</span>
-      <a class="footer-listen" href="#listen"><svg viewBox="0 0 32 32" fill="none" aria-hidden="true"><path d="M5 18v-4a11 11 0 0 1 22 0v4" stroke="currentColor" stroke-width="3.5" stroke-linecap="round"/><rect x="2" y="16" width="7" height="12" rx="2.5" fill="currentColor"/><rect x="23" y="16" width="7" height="12" rx="2.5" fill="currentColor"/></svg> รับฟังได้ทุกที่ ทุกเวลา</a>
+      <a class="footer-listen" href="#listen"><svg class="footer-headphones" aria-hidden="true" focusable="false"
+  xmlns="http://www.w3.org/2000/svg"
+  width="24"
+  height="24"
+  viewBox="0 0 24 24"
+  fill="none"
+  stroke="currentColor"
+  stroke-width="2"
+  stroke-linecap="round"
+  stroke-linejoin="round"
+>
+  <path d="M3 14h3a2 2 0 0 1 2 2v3a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-7a9 9 0 0 1 18 0v7a2 2 0 0 1-2 2h-1a2 2 0 0 1-2-2v-3a2 2 0 0 1 2-2h3" />
+</svg>
+ รับฟังได้ทุกที่ ทุกเวลา</a>
     </div>
   </footer>
 </div>
