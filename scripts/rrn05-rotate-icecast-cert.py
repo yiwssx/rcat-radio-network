@@ -8,10 +8,10 @@ This is an operational certificate deployment step, not a music UAT.
 import datetime as dt
 import os
 from pathlib import Path
-import shutil
 import subprocess
 import sys
 import tempfile
+import time
 
 DOMAIN = "radio.rcat.ac.th"
 LAN = "10.10.1.100"
@@ -65,17 +65,25 @@ def check_cert(p, require_future=True):
 
 
 def handshake():
-    p = subprocess.run(["curl", "--noproxy", "*", "-sS",
-                        "--connect-timeout", "4", "--max-time", "9",
-                        "--resolve", DOMAIN + ":8443:" + LAN,
-                        "-o", "/dev/null", "-w", "%{ssl_verify_result} %{http_code}",
-                        "https://" + DOMAIN + ":8443/"],
-                       capture_output=True, timeout=12)
-    parts = p.stdout.decode(errors="replace").split()
-    must(p.returncode == 0 and len(parts) == 2 and
-         parts[0] == "0" and parts[1] in ("200", "302", "403"),
-         "recreated native TLS endpoint did not verify")
-
+    ready = False
+    for _ in range(5):
+        try:
+            p = subprocess.run(["curl", "--noproxy", "*", "-sS",
+                                "--connect-timeout", "3", "--max-time", "5",
+                                "--resolve", DOMAIN + ":8443:" + LAN,
+                                "-o", "/dev/null",
+                                "-w", "%{ssl_verify_result} %{http_code}",
+                                "https://" + DOMAIN + ":8443/"],
+                               capture_output=True, timeout=7)
+            parts = p.stdout.decode(errors="replace").split()
+            if (p.returncode == 0 and len(parts) == 2 and
+                    parts[0] == "0" and parts[1] in ("200", "302", "403")):
+                ready = True
+                break
+        except subprocess.TimeoutExpired:
+            pass
+        time.sleep(2)
+    must(ready, "recreated native TLS endpoint did not verify")
 
 def atomic_replace(data, uid):
     fd, tmp = tempfile.mkstemp(prefix=".rrn05-cert-", dir=str(DEST.parent))
@@ -108,6 +116,13 @@ def main():
          "unexpected certificate input size")
     must((DEST.parent.stat().st_mode & 0o077) == 0,
          "radio private config dir not private")
+    import json
+    icecast = json.loads(run(["docker", "inspect", CONTAINER]))[0]
+    must(icecast["Config"]["Labels"].get("com.docker.compose.project") == PROJECT
+         and icecast["Config"]["Labels"].get("com.docker.compose.service") == "icecast"
+         and icecast["State"]["Running"], "wrong or stopped Icecast container")
+    must(icecast["HostConfig"]["PortBindings"].get("8443/tcp") ==
+         [{"HostIp": LAN, "HostPort": "8443"}], "Icecast TLS binding missing")
     uid = int(run(["docker", "exec", CONTAINER, "id", "-u"]))
     prior_fp = check_cert(DEST, require_future=False)
     next_fp = check_cert(STAGING)
