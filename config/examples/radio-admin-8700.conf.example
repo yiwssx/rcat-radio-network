@@ -1,0 +1,25 @@
+# SAMPLE ONLY — DO NOT APPLY TO RMS WITHOUT HOST-SPECIFIC PREFLIGHT
+# Apache 2.4 (CentOS 7), one dedicated vhost for LibreTime web UI.
+# Existing public WAN TCP 8700 must be forwarded to RMS 10.10.2.100:8700
+# only AFTER this proxy and IOT general.public_url are ready.
+# Verify no existing 8700 Listen directive, or do not add a duplicate.
+Listen 8700
+<VirtualHost *:8700>
+    ServerName radio.rcat.ac.th
+    SSLEngine on
+    SSLCertificateFile /etc/letsencrypt/live/radio.rcat.ac.th/cert.pem
+    SSLCertificateChainFile /etc/letsencrypt/live/radio.rcat.ac.th/chain.pem
+    SSLCertificateKeyFile /etc/letsencrypt/live/radio.rcat.ac.th/privkey.pem
+
+    ProxyRequests Off
+    ProxyPreserveHost On
+    RequestHeader set X-Forwarded-Proto "https"
+    RequestHeader set X-Forwarded-Host "radio.rcat.ac.th:8700"
+    RequestHeader set X-Forwarded-Port "8700"
+    ProxyTimeout 300
+    ProxyPass / http://10.10.1.100:8700/ connectiontimeout=5 timeout=300
+    ProxyPassReverse / http://10.10.1.100:8700/
+
+    Header always set X-Content-Type-Options "nosniff"
+    Header always set Referrer-Policy "same-origin"
+</VirtualHost>
