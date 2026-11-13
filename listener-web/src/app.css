@@ -39,4 +39,15 @@
 /* Provenance: Lucide v0.468.0 + Simple Icons original SVG geometry (see ICON-SOURCES.md). */
 .menu-toggle .menu-icon{width:27px;height:27px;color:#0d703c;display:block;flex:none}
 .short-link .shortcut-icon,.short-link .radio-icon,.short-link .megaphone-icon,.short-link .note-icon,.short-link .team-icon{stroke:currentColor;fill:none;stroke-width:2.6;stroke-linecap:round;stroke-linejoin:round}
-.socials a .social-generic-icon{fill:none;stroke:currentColor;stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round;display:block}
+.socials a .social-brand-icon{display:block;width:27px;height:27px;fill:currentColor;stroke:none;flex:none}
+
+/* Social icons: Bootstrap Icons v1.13.2, unchanged SVG paths, source/LICENSE noted in ICON-SOURCES.md. */
+.socials .facebook{background:#fff;color:#0866ff}
+.socials .facebook .bootstrap-facebook{width:43px;height:43px}
+.socials .youtube{background:#ff0000;color:#fff}
+.socials .tiktok{background:#000;color:#fff}
+.socials .website{background:#707b83;color:#fff}
+.socials a .social-brand-icon{fill:currentColor;stroke:none}
+.socials .youtube .bootstrap-youtube{width:29px;height:29px}
+.socials .tiktok .bootstrap-tiktok{width:25px;height:25px}
+.socials .website .bootstrap-globe{width:25px;height:25px}
