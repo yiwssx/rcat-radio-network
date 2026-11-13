@@ -46,7 +46,7 @@ def change_only_general_public_url(text):
             break
     found = []
     for i in range(start + 1, end):
-        m = re.match(r"^([ ]{2}public_url:[ \t]*)([^#\r\n]*)([ \t]*(?:#.*)?)(\r?\n?)$", lines[i])
+        m = re.match(r"^([ ]{2}public_url:[ \t]*)([^#\r\n]*?)([ \t]*(?:#.*)?)(\r?\n?)$", lines[i])
         if m:
             found.append((i, m))
     require(len(found) == 1, "one general.public_url required")
