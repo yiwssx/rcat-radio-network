@@ -30,6 +30,8 @@ Scope: RCAT Radio Network listener web frontend, Issue #22 / PR #25. Updated 202
 | [`icons/menu.svg`](https://github.com/lucide-icons/lucide/blob/0.468.0/icons/menu.svg) | `c68f00db909e51cd878299755d0884b1b202fdb4` |
 | [`icons/x.svg`](https://github.com/lucide-icons/lucide/blob/0.468.0/icons/x.svg) | `e31794349d3eecea1b3ae8e974b68bb8f4becda7` |
 
+| [\`icons/circle-play.svg\`](https://github.com/lucide-icons/lucide/blob/0.468.0/icons/circle-play.svg) | \`f814cfd9a8b1e685df0895d20863970c22733406\` |
+
 The Lucide license notice from this exact tag is preserved below:
 
 ```text
@@ -52,20 +54,24 @@ OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
 Check the [upstream Lucide license page](https://lucide.dev/license) for the full Feather-derived MIT license notice where applicable.
 
-## Simple Icons — social platform marks
+## Social links — source-licensed generic icons, not brand logos
 
-- Upstream: https://github.com/simple-icons/simple-icons/tree/develop/icons
-- Exact asset contents identified by Git blob SHA below.
-- Source project CC0 license: https://github.com/simple-icons/simple-icons/blob/develop/LICENSE.md
-- **Important disclaimer**: https://github.com/simple-icons/simple-icons/blob/develop/DISCLAIMER.md
+We investigated [Simple Icons](https://simpleicons.org/) for Facebook, YouTube and TikTok. **No social trademark/logo artwork from Simple Icons is included in the listener.** Although the Simple Icons project distributes its own work under CC0, that does not clear third-party trademark restrictions. Source disclaimer: https://github.com/simple-icons/simple-icons/blob/develop/DISCLAIMER.md
 
-| Brand logo | Git blob SHA | Source brand guidelines |
-|---|---|---|
-| [Facebook](https://github.com/simple-icons/simple-icons/blob/develop/icons/facebook.svg) | `f66767e46165f562134ca2c2e3d4bea8f37fb1ac` | https://about.meta.com/brand/resources/facebook/logo |
-| [YouTube](https://github.com/simple-icons/simple-icons/blob/develop/icons/youtube.svg) | `0492366a2be42c6f0372a64b8c6f4f6b2cb660f7` | https://www.youtube.com/howyoutubeworks/resources/brand-resources/#logos-icons-and-colors |
-| [TikTok](https://github.com/simple-icons/simple-icons/blob/develop/icons/tiktok.svg) | `57ce3ae5d6e099d2681dccfb5050af2dabf5c353` | https://www.tiktok.com/ |
+Instead, existing social account links use *generic Lucide* pictograms with explicit accessible labels and link destinations. This avoids implying that a copied social brand logo was licensed:
 
-**Trademark caution:** CC0 for the Simple Icons project does NOT necessarily clear trademark rights in individual brands. The logos here link to the institution's existing real public profiles, and do not imply a sponsorship, affiliation or platform endorsement. Review the current applicable brand rules before public deployment; if in doubt, switch to generic Lucide link icons instead.
+| Link | Generic sourced Lucide icon |
+|---|---|
+| Facebook | `users-round` |
+| YouTube | `circle-play` |
+| TikTok | `music` |
+| College website | `globe` |
+
+For background on the decision:
+- [Meta Facebook brand-resource rules](https://www.meta.com/brand/resources/facebook/logo/) state that its official approved logo pack must be used, and downloading logos from elsewhere is not acceptable.
+- [TikTok for Developers brand rules](https://developers.tiktok.com/docs/en/getting-started-design-guidelines) restrict unapproved use of TikTok marks.
+
+These social-link names describe destinations; no company endorsement or partnership is claimed. Future use of official social logos requires prior review of applicable permission and original approved assets.
 
 ## Institution mark
 
