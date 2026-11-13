@@ -52,7 +52,7 @@ fi
 STAGED=1
 cat > "$CONF" <<'APACHE'
 # RRN05-only: LibreTime WEB UI behind existing RMS radio certificate.
-Listen 10.10.2.100:8700
+Listen 10.10.2.100:8700 https
 <VirtualHost 10.10.2.100:8700>
     ServerName radio.rcat.ac.th
     SSLEngine on
@@ -73,14 +73,44 @@ APACHE
 chmod 0644 "$CONF"
 httpd -t
 systemctl reload httpd
-result=$(curl --noproxy '*' --silent --show-error --connect-timeout 4 --max-time 10 \
-  --resolve "$DOMAIN:8700:$RMS" -o /dev/null \
-  -w '%{http_code} %{ssl_verify_result}' "https://$DOMAIN:8700/login") || exit 2
-read -r http verify <<< "$result"
-[[ "$verify" == 0 && "$http" != 000 && "$http" != 502 && "$http" != 503 && "$http" != 504 ]] || {
-  echo "BLOCKED: RMS proxy TLS acceptance: $result" >&2; exit 2;
-}
+# Apache graceful reload can return before newly-added Listen sockets are
+# observable; a successful syntax check alone does not prove a bound socket.
+# Wait for only this newly-added listener and its TLS/backend readiness.
+state=NO_SOCKET
+http=000
+verify=unknown
+for attempt in {1..15}; do
+  if ss -H -ltn | awk '{print $4}' | grep -Fxq "$RMS:8700"; then
+    state=SOCKET_OPEN
+    if result=$(curl --noproxy '*' --silent --connect-timeout 2 --max-time 7 \
+      --resolve "$DOMAIN:8700:$RMS" -o /dev/null \
+      -w '%{http_code} %{ssl_verify_result}' "https://$DOMAIN:8700/login" 2>/dev/null); then
+      read -r http verify <<< "$result"
+      if [[ "$verify" == 0 && ( "$http" == 200 || "$http" == 301 || "$http" == 302 || "$http" == 303 ) ]]; then
+        state=TLS_ACCEPTED
+        break
+      fi
+      state=SOCKET_OPEN_BAD_RESPONSE
+    else
+      state=SOCKET_OPEN_CONNECT_OR_TLS_FAILED
+    fi
+  fi
+  sleep 2
+done
+if [[ "$state" != TLS_ACCEPTED ]]; then
+  echo "RRN05_RMS_8700_STATE=$state" >&2
+  echo "RRN05_RMS_8700_HTTP=$http SSL_VERIFY=$verify" >&2
+  if [[ "$state" == SOCKET_OPEN_CONNECT_OR_TLS_FAILED ]]; then
+    echo "NEXT=Check only RMS host INPUT firewall for 10.10.2.100:8700; do not change MikroTik" >&2
+  elif [[ "$state" == NO_SOCKET ]]; then
+    echo "NEXT=Inspect RMS httpd Listen startup; no host restart requested" >&2
+  else
+    echo "NEXT=Inspect LibreTime canonical URL and proxy headers, not router NAT" >&2
+  fi
+  exit 2
+fi
 STAGED=0
+echo "RRN05_RMS_8700_STATE=TLS_ACCEPTED"
 echo "RRN05_RMS_ADMIN_HTTPS=READY"
 echo "RRN05_ADMIN_PUBLIC_URL=https://radio.rcat.ac.th:8700/login"
 echo "RRN05_MIKROTIK=NOT_CHANGED"
