@@ -1,3 +1,5 @@
+> **SUPERSEDED — DO NOT DEPLOY THE WAN :8444 PLAN.** The operator explicitly requires public listener, remote LibreTime Admin, and remote Live DJ access. The MikroTik WAN :8443 is occupied by UniFi, and repeated newly added :8444 NAT trials remained invalid/rolled back. Follow [RRN-05 HTTPS access V2](RRN-05-HTTPS-ACCESS-V2.md) instead. This legacy file is retained as historical evidence only; native Icecast TLS on IOT :8443 remains installed.
+
 # RRN-05 — One-pass final installation (not UAT)
 
 ## Accepted evidence: do not repeat

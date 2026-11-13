@@ -101,7 +101,7 @@ footer{text-align:center;color:#849bb0;font-size:.8rem;padding:36px}
 <div class="player">
 <strong>รับฟังผ่านสตรีม HTTPS</strong>
 <audio id="radio" controls preload="none" aria-label="เครื่องเล่นวิทยุ RCAT">
-<source src="https://radio.rcat.ac.th:8444/main.mp3" type="audio/mpeg">
+<source src="https://radio.rcat.ac.th:8600/main.mp3" type="audio/mpeg">
 เบราว์เซอร์นี้ไม่รองรับ HTML5 Audio
 </audio>
 <p id="notice" role="status">กดเล่นเพื่อเริ่มรับฟัง</p>
@@ -153,6 +153,6 @@ STATUS=$(curl --noproxy '*' -sS --connect-timeout 4 --max-time 10 \
 [[ "$STATUS" == "200 0" ]] || exit 2
 echo "RRN05_RMS_LISTENER=INSTALLED"
 echo "RRN05_PUBLIC_URL=https://$DOMAIN/"
-echo "RRN05_STREAM=https://$DOMAIN:8444/main.mp3"
+echo "RRN05_STREAM=https://$DOMAIN:8600/main.mp3"
 echo "RRN05_UNRELATED_VHOSTS=NOT_EDITED"
 echo "RRN05_WAN_AND_RIGHTS=OPERATOR_ATTESTED_NOT_VERIFIED"
