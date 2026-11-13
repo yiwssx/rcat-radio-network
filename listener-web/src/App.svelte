@@ -29,7 +29,7 @@
       audioElement.volume = volume / 100;
       await audioElement.play();
     } catch {
-      if (audioElement.paused) status = 'error';
+      if (status === 'connecting') status = 'error';
     }
   }
 
@@ -124,7 +124,7 @@
           <span>{statusText}</span>
         </div>
       </div>
-      <audio bind:this={audioElement} src={STREAM_URL} preload="none" onplaying={() => status = 'playing'} onwaiting={() => { if (status !== 'paused') status = 'connecting'; }} onpause={() => { if (status !== 'error') status = 'paused'; }} onerror={() => status = 'error'}></audio>
+      <audio bind:this={audioElement} src={STREAM_URL} preload="none" onplaying={() => status = 'playing'} onwaiting={() => { if (status !== 'paused') status = 'connecting'; }} onpause={() => { if (status !== 'error') status = 'paused'; }} onended={() => status = 'error'} onerror={() => status = 'error'}></audio>
     </section>
 
     <section class="container short-links" aria-label="ลิงก์สำคัญ">
