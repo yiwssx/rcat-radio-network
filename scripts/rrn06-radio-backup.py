@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""RRN-06: radio-only cold backup with an explicit short-outage gate.
+"""RRN-06: radio-only cold backup with an explicit outage gate.
 
 --plan: inspect the 10 radio containers and 3 radio volumes, without changes.
 --backup --approve-radio-outage: stop ONLY the radio Compose project, archive
