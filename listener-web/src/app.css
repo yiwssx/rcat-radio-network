@@ -20,3 +20,18 @@
 /* Visual-reference alignment: image already contains the approved green ribbon and wave cut. */
 .hero-shade,.hero-accent,.hero-bottom-swoosh{display:none}
 @media(max-width:750px){.hero-photo{filter:blur(3px);transform:scale(1.055)}.hero-shade{display:block;background:linear-gradient(90deg,#073b25d6,#0763379c 62%,#06471b55)}}
+/* Issue #22 icon fidelity pass: matching owner-approved green Thai-radio reference. SVG inline, no new package. */
+.nav-active .home-icon{width:17px;height:17px;flex:none;vertical-align:-3px;margin-right:3px}
+.chip-broadcast{width:20px;height:20px;vertical-align:-5px;flex:none;margin-right:2px}
+.short-link .shortcut-icon{width:43px;height:43px;display:block;flex:none}
+.short-link .megaphone-icon,.short-link .note-icon,.short-link .team-icon{stroke:none}
+.short-link .radio-icon{stroke-width:2.8}
+.socials a svg{display:block;width:28px;height:28px;flex:none}
+.socials .facebook svg{width:31px;height:31px}
+.socials .youtube svg{width:30px;height:30px}
+.socials .tiktok svg{width:27px;height:27px}
+.socials .website svg{width:28px;height:28px}
+.footer-listen{display:flex;align-items:center;gap:7px}
+.footer-listen svg{width:29px;height:29px;flex:none}
+@media(max-width:750px){.short-link .shortcut-icon{width:38px;height:38px}}
+@media(max-width:390px){.short-link .shortcut-icon{width:40px;height:40px}}
