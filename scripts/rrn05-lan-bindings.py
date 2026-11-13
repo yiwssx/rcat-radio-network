@@ -186,7 +186,7 @@ def restart_changed_services():
     command(compose() + ["restart", *RESTART], 240)
 
 
-def inspect_bindings():
+def inspect_bindings(host=LAN):
     ids = command(["docker", "ps", "-q", "--filter",
                    "label=com.docker.compose.project=" + PROJECT], 30).splitlines()
     need(len(ids) == 10, "Radio containers did not all restart")
@@ -197,7 +197,7 @@ def inspect_bindings():
     for name, (outer, inner) in PORTS.items():
         bindings = by_name[name]["HostConfig"]["PortBindings"]
         actual = bindings.get(str(inner) + "/tcp", [])
-        need(len(actual) == 1 and actual[0]["HostIp"] == LAN
+        need(len(actual) == 1 and actual[0]["HostIp"] == host
              and actual[0]["HostPort"] == str(outer),
              "Docker radio LAN binding did not apply")
     return all(x["State"]["Running"] for x in data)
@@ -275,7 +275,7 @@ def apply():
                 write_in_place(CONFIG, original_config)
                 check_model("127.0.0.1")
                 restart_changed_services()
-                need(inspect_bindings() or False,
+                need(inspect_bindings("127.0.0.1"),
                      "Radio project failed to restart after rollback")
                 print("RRN05_ROLLBACK=COMMANDS_SUCCEEDED", flush=True)
             except BaseException:
