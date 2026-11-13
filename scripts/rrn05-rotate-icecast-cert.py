@@ -51,11 +51,12 @@ def compose():
          "--force-recreate", "icecast"], 180)
 
 
-def check_cert(p):
+def check_cert(p, require_future=True):
     san = run(["openssl", "x509", "-in", str(p), "-noout",
                "-ext", "subjectAltName"])
     must("DNS:" + DOMAIN in san, "certificate name mismatch")
-    run(["openssl", "x509", "-noout", "-checkend", "1209600", "-in", str(p)])
+    if require_future:
+        run(["openssl", "x509", "-noout", "-checkend", "1209600", "-in", str(p)])
     a = run(["openssl", "x509", "-noout", "-pubkey", "-in", str(p)])
     b = run(["openssl", "pkey", "-pubout", "-in", str(p)])
     must(a == b, "certificate/private key mismatch")
@@ -92,6 +93,7 @@ def atomic_replace(data, uid):
 
 
 def main():
+    os.umask(0o077)
     must(os.geteuid() == 0 and sys.argv[1:] == ["--apply"],
          "root invocation requires --apply")
     must(STAGING.is_file() and not STAGING.is_symlink(),
@@ -107,7 +109,7 @@ def main():
     must((DEST.parent.stat().st_mode & 0o077) == 0,
          "radio private config dir not private")
     uid = int(run(["docker", "exec", CONTAINER, "id", "-u"]))
-    prior_fp = check_cert(DEST)
+    prior_fp = check_cert(DEST, require_future=False)
     next_fp = check_cert(STAGING)
     if prior_fp == next_fp:
         STAGING.unlink()
