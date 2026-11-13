@@ -12,6 +12,7 @@ import re
 import shutil
 import subprocess
 import sys
+import time
 
 CONF = Path("/etc/rcat-radio-network/config.yml")
 BACKUPS = Path("/var/backups/rcat-radio-network")
@@ -62,15 +63,24 @@ def restart_web():
     run(["docker", "restart", "--time", "10", *RESTART], timeout=100)
 
 def ready():
-    # HTTPS terminates at RMS; route directly to its LAN IP but validate domain cert.
-    result = run(["curl", "--noproxy", "*", "-sS", "--connect-timeout", "4",
-                  "--max-time", "12", "--resolve",
-                  "radio.rcat.ac.th:8700:10.10.2.100",
-                  "-o", "/dev/null", "-w", "%{http_code} %{ssl_verify_result}",
-                  TARGET + "/login"], timeout=18)
-    p = result.split()
-    require(len(p) == 2 and p[1] == "0" and p[0] in
-            {"200", "301", "302", "303"}, "proxy/public URL not ready: HTTP/TLS=" + result)
+    # Bounded readiness for the three just-restarted radio UI services.
+    deadline = time.monotonic() + 60
+    last = "not started"
+    while time.monotonic() < deadline:
+        try:
+            result = run(["curl", "--noproxy", "*", "-sS",
+                          "--connect-timeout", "3", "--max-time", "9",
+                          "--resolve", "radio.rcat.ac.th:8700:10.10.2.100",
+                          "-o", "/dev/null", "-w", "%{http_code} %{ssl_verify_result}",
+                          TARGET + "/login"], timeout=13)
+            p = result.split()
+            if len(p) == 2 and p[1] == "0" and p[0] in {"200", "301", "302", "303"}:
+                return
+            last = "HTTP/TLS=" + result
+        except (Blocked, subprocess.TimeoutExpired):
+            last = "not yet reachable"
+        time.sleep(3)
+    raise Blocked("radio admin web not ready after restart: " + last)
 
 def main():
     require(sys.argv[1:] == ["--apply"], "usage: sudo python3 rrn05-set-public-url-iot.py --apply")
