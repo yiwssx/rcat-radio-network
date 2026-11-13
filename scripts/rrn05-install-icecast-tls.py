@@ -100,8 +100,6 @@ def preflight():
     key_pub = command(["openssl", "pkey", "-pubout", "-in", str(BUNDLE)])
     require(cert_pub == key_pub, "bundle certificate/private key mismatch")
     require(not XML.exists(), "Icecast TLS config already exists; no overwrite")
-    require(not any(s.get("port") == 8443 for s in
-                    [a for a in []]), "invalid port state")
     # 8443 must not be held by any host process or other project.
     s = socket.socket()
     try:
@@ -204,7 +202,7 @@ def check_delta(before, after):
     newports = new["ports"]
     require(len(newports) == len(oldports) + 1 and
             all(x in newports for x in oldports) and
-            any(p.get("host_ip") == LAN and p.get("published") == "8443"
+            any(p.get("host_ip") == LAN and str(p.get("published")) == "8443"
                 and p.get("target") == 8443 for p in newports),
             "unexpected Icecast listener mapping")
     bindings = new.get("volumes", [])
@@ -278,11 +276,12 @@ def main():
     secure_write(backup / "radio.override.yml", original_override, 0)
     secure_write(backup / "icecast.xml", config_xml, 0)
     prepared = False
+    original_bundle_owner = (BUNDLE.stat().st_uid, BUNDLE.stat().st_gid)
     try:
         secure_write(XML, next_xml, uid)
         os.chown(BUNDLE, uid, 0)  # Host directory remains root/0700.
-        secure_write(OVERRIDE, next_override.encode("utf-8"), 0, 0o644)
         prepared = True
+        secure_write(OVERRIDE, next_override.encode("utf-8"), 0, 0o644)
         check_delta(prior, model())
         radio_recreate()
         tls_acceptance()
@@ -296,6 +295,7 @@ def main():
             except Exception:
                 print("RRN05_ICECAST_ROLLBACK=MANUAL_ATTENTION", file=sys.stderr)
         XML.unlink(missing_ok=True)
+        os.chown(BUNDLE, *original_bundle_owner)
         raise
     print("RRN05_ICECAST_TLS=INSTALLED")
     print("RRN05_BACKUP=" + str(backup))
