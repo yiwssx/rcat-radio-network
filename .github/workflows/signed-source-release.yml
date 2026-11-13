@@ -1,0 +1,57 @@
+name: Manual signed Radio source candidate
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  source-candidate:
+    name: Sign reviewed Radio source (not deployed vendor images)
+    if: github.ref == 'refs/heads/main' && github.actor == 'yiwssx'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    permissions:
+      contents: read
+      id-token: write
+      attestations: write
+      artifact-metadata: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+          fetch-depth: 0
+      - name: Refuse untracked or sensitive release inputs
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(git rev-parse HEAD)" = "$GITHUB_SHA"
+          test -z "$(git status --porcelain)"
+          if git ls-files | grep -Ei '(^|/)(\.env$|.*\.pem$|.*\.key$|.*\.p12$|secrets?/|credentials?/)' >/dev/null; then
+            echo 'Tracked secret-like path; release refused' >&2
+            exit 1
+          fi
+          test -f AGENTS.md
+          test -f scripts/rrn02-isolated-installer.py
+      - name: Archive only committed source at the approved main SHA
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p release
+          name="rcat-radio-source-${GITHUB_SHA}.tar.gz"
+          git archive --format=tar --prefix="rcat-radio-source-${GITHUB_SHA}/" "$GITHUB_SHA" | gzip -n -9 > "release/$name"
+          (cd release && sha256sum "$name" > "$name.sha256")
+      - name: Sign exact source archive bytes with GitHub artifact attestation
+        uses: actions/attest@v4
+        with:
+          subject-path: release/rcat-radio-source-${{ github.sha }}.tar.gz
+      - name: Keep signed candidate for independent consumer verification
+        uses: actions/upload-artifact@v4
+        with:
+          name: radio-signed-source-${{ github.sha }}
+          path: |
+            release/rcat-radio-source-${{ github.sha }}.tar.gz
+            release/rcat-radio-source-${{ github.sha }}.tar.gz.sha256
+          if-no-files-found: error
+          retention-days: 14
