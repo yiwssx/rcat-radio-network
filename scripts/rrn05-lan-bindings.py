@@ -287,7 +287,19 @@ def apply():
         stage = "recreate_radio_port_services"
         restart_only_radio_ports(stage, LAN)
         stage = "confirm_lan_radio_runtime"
-        require(ready(LAN, 90), "radio LAN services did not become healthy")
+        # If only the UI is temporarily 502 after an nginx recreate, use the
+        # previously accepted targeted legacy/nginx recovery once, never a
+        # radio-wide or host-wide restart.
+        if not ready(LAN, 24):
+            if (tcp_ready(LAN, 8605) and
+                    http_ready(LAN, 8600, "/status-json.xsl") and
+                    not http_ready(LAN, 8700, "/")):
+                print("RRN05_ACTION=RECOVER_RADIO_UI_ONLY", flush=True)
+                services = container_map()
+                run(["docker", "restart", "-t", "15",
+                     services["legacy"]["Id"], services["nginx"]["Id"]],
+                    "recover_radio_ui", 90)
+        require(ready(LAN, 72), "radio LAN services did not become healthy")
     except Exception as err:
         print("RRN05_FAILED_STAGE=" + stage, flush=True)
         print("RRN05_ORIGINAL_ERROR=" + str(err), flush=True)
