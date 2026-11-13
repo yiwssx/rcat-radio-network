@@ -17,6 +17,7 @@ import socket
 import subprocess
 import sys
 import tempfile
+import time
 import xml.etree.ElementTree as ET
 
 PROJECT = "rcat_radio_network"
@@ -233,25 +234,32 @@ def radio_recreate():
 
 
 def tls_acceptance():
-    # Deployment socket check only, NOT an AutoDJ, music-rights or end-user UAT.
-    test = subprocess.run(
-        ["curl", "--noproxy", "*", "--silent", "--show-error",
-         "--connect-timeout", "4", "--max-time", "9",
-         "--resolve", DOMAIN + ":8443:" + LAN,
-         "--output", "/dev/null",
-         "--write-out", "%{http_code} %{ssl_verify_result}",
-         "https://" + DOMAIN + ":8443/"],
-        capture_output=True, text=True, timeout=12, check=False)
-    require(test.returncode == 0 and
-            test.stdout.strip().split()[-1:] == ["0"] and
-            test.stdout.strip().split()[0] in {"200", "302", "403"},
-            "native Icecast TLS handshake/trust not accepted")
+    # Bounded deployment readiness only; accepted AutoDJ/DJ UAT is not repeated.
+    ready = False
+    for _ in range(5):
+        try:
+            test = subprocess.run(
+                ["curl", "--noproxy", "*", "--silent", "--show-error",
+                 "--connect-timeout", "3", "--max-time", "5",
+                 "--resolve", DOMAIN + ":8443:" + LAN,
+                 "--output", "/dev/null",
+                 "--write-out", "%{http_code} %{ssl_verify_result}",
+                 "https://" + DOMAIN + ":8443/"],
+                capture_output=True, text=True, timeout=7, check=False)
+            parts = test.stdout.strip().split()
+            if (test.returncode == 0 and len(parts) == 2 and
+                    parts[1] == "0" and parts[0] in {"200", "302", "403"}):
+                ready = True
+                break
+        except subprocess.TimeoutExpired:
+            pass
+        time.sleep(2)
+    require(ready, "native Icecast TLS handshake/trust not accepted")
     info = json.loads(command(["docker", "inspect", CONTAINER]))[0]
     require(info["State"]["Running"], "recreated Icecast did not remain running")
     require(info["HostConfig"]["PortBindings"].get("8443/tcp") ==
             [{"HostIp": LAN, "HostPort": "8443"}],
             "TLS published binding not as configured")
-
 
 def main():
     parser = argparse.ArgumentParser()
@@ -263,6 +271,7 @@ def main():
     require(not backup.exists(), "backup destination collision")
     backup.mkdir(mode=0o700)
     original_override = OVERRIDE.read_bytes()
+    original_override_mode = OVERRIDE.stat().st_mode & 0o777
     source_xml = command(["docker", "cp", CONTAINER + ":/etc/icecast.xml", "-"],
                          timeout=25, binary=True)
     import io
@@ -272,6 +281,13 @@ def main():
         require(len(members) == 1, "unexpected docker cp config archive")
         config_xml = archive.extractfile(members[0]).read()
     next_xml = render_xml(config_xml)
+    # Native Icecast TLS also exposes authenticated /admin paths on this socket;
+    # ensure at minimum the stock factory credentials are not used.
+    auth = ET.fromstring(config_xml).find("authentication")
+    require(auth is not None and
+            auth.findtext("admin-password", "") not in {"", "admin", "hackme"} and
+            auth.findtext("source-password", "") not in {"", "admin", "hackme"},
+            "unsafe factory Icecast credentials; refuse public TLS listener")
     next_override = render_override(original_override.decode("utf-8"))
     secure_write(backup / "radio.override.yml", original_override, 0)
     secure_write(backup / "icecast.xml", config_xml, 0)
@@ -281,7 +297,7 @@ def main():
         secure_write(XML, next_xml, uid)
         os.chown(BUNDLE, uid, 0)  # Host directory remains root/0700.
         prepared = True
-        secure_write(OVERRIDE, next_override.encode("utf-8"), 0, 0o644)
+        secure_write(OVERRIDE, next_override.encode("utf-8"), 0, original_override_mode)
         check_delta(prior, model())
         radio_recreate()
         tls_acceptance()
@@ -289,7 +305,7 @@ def main():
         # Only radio-owned override and Icecast are restored. Never delete volumes.
         if prepared:
             try:
-                secure_write(OVERRIDE, original_override, 0, 0o644)
+                secure_write(OVERRIDE, original_override, 0, original_override_mode)
                 radio_recreate()
                 print("RRN05_ICECAST_ROLLBACK=RECREATE_RETURNED")
             except Exception:
