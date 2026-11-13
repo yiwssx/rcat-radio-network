@@ -49,6 +49,7 @@ if command -v getenforce >/dev/null && [[ "$(getenforce)" == Enforcing ]]; then
   exit 2
 fi
 
+STAGED=1
 cat > "$CONF" <<'APACHE'
 # RRN05-only: LibreTime WEB UI behind existing RMS radio certificate.
 Listen 10.10.2.100:8700
@@ -70,7 +71,6 @@ Listen 10.10.2.100:8700
 </VirtualHost>
 APACHE
 chmod 0644 "$CONF"
-STAGED=1
 httpd -t
 systemctl reload httpd
 result=$(curl --noproxy '*' --silent --show-error --connect-timeout 4 --max-time 10 \
