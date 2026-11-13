@@ -426,7 +426,7 @@
   <circle cx="18" cy="16" r="3" />
 </svg>
 14070
-        <a class="website" aria-label="เว็บไซต์วิทยาลัย" target="_blank" rel="noopener noreferrer" href={COLLEGE_URL}><svg class="brand-mark website-mark" aria-hidden="true" focusable="false"
+        <a class="website" aria-label="เว็บไซต์วิทยาลัย" target="_blank" rel="noopener noreferrer" href={COLLEGE_URL}><svg class="social-generic-icon website-mark" aria-hidden="true" focusable="false"
   xmlns="http://www.w3.org/2000/svg"
   width="24"
   height="24"
