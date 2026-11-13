@@ -54,24 +54,27 @@ OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
 Check the [upstream Lucide license page](https://lucide.dev/license) for the full Feather-derived MIT license notice where applicable.
 
-## Social links — source-licensed generic icons, not brand logos
+## Social icons — Bootstrap Icons v1.13.2
 
-We investigated [Simple Icons](https://simpleicons.org/) for Facebook, YouTube and TikTok. **No social trademark/logo artwork from Simple Icons is included in the listener.** Although the Simple Icons project distributes its own work under CC0, that does not clear third-party trademark restrictions. Source disclaimer: https://github.com/simple-icons/simple-icons/blob/develop/DISCLAIMER.md
+Four aligned social icons in the listener are copied from one MIT-licensed open-source SVG set: [Bootstrap Icons](https://icons.getbootstrap.com/) release [v1.13.2](https://github.com/twbs/icons/tree/v1.13.2/icons). Icon path geometry is unchanged; only root SVG class, ARIA and styling differ. No additional npm dependency, icon CDN or server is required.
 
-Instead, existing social account links use *generic Lucide* pictograms with explicit accessible labels and link destinations. This avoids implying that a copied social brand logo was licensed:
+| Link | Upstream file | SHA-1 Git blob |
+|---|---|---|
+| Facebook | [`facebook.svg`](https://github.com/twbs/icons/blob/v1.13.2/icons/facebook.svg) | `5fc7cec174878aa31148d379e836847efaba5b41` |
+| Youtube | [`youtube.svg`](https://github.com/twbs/icons/blob/v1.13.2/icons/youtube.svg) | `3c9c0be38959a2753cf0f4586856d4706ff20e01` |
+| Tiktok | [`tiktok.svg`](https://github.com/twbs/icons/blob/v1.13.2/icons/tiktok.svg) | `04c6679ea154012e18344185105736606a40b5c2` |
+| Website | [`globe.svg`](https://github.com/twbs/icons/blob/v1.13.2/icons/globe.svg) | `835ff663faa4130c1bd00e9151d1c1ff9480b342` |
 
-| Link | Generic sourced Lucide icon |
-|---|---|
-| Facebook | `users-round` |
-| YouTube | `circle-play` |
-| TikTok | `music` |
-| College website | `globe` |
+**License:** [Bootstrap Icons MIT](https://github.com/twbs/icons/blob/v1.13.2/LICENSE), Copyright (c) 2019-2024 The Bootstrap Authors. Preserve the copyright and license notice when redistributing source or assets. MIT rights to SVG artwork do not override separate platform trademark rules.
 
-For background on the decision:
-- [Meta Facebook brand-resource rules](https://www.meta.com/brand/resources/facebook/logo/) state that its official approved logo pack must be used, and downloading logos from elsewhere is not acceptable.
-- [TikTok for Developers brand rules](https://developers.tiktok.com/docs/en/getting-started-design-guidelines) restrict unapproved use of TikTok marks.
+**Release gate — trademark review:** These symbols are present in a **draft UI for visual review**, not a claim of clearance for public usage.
 
-These social-link names describe destinations; no company endorsement or partnership is claimed. Future use of official social logos requires prior review of applicable permission and original approved assets.
+- [Meta Facebook logo guidelines](https://www.meta.com/brand/resources/facebook/logo/) require current approved assets from Meta's own brand center; third-party icon files are **not** automatically approved.
+- [TikTok developer brand guidelines](https://developers.tiktok.com/docs/en/getting-started-design-guidelines) require prior written permission for use of TikTok marks. Public release of the logo requires approval or replacement with a named text link.
+- [YouTube brand resources](https://www.youtube.com/howyoutubeworks/resources/brand-resources/) also apply to its marks; ensure final brand usage follows the current guidelines.
+- `globe` is a general icon without those third-party trademark constraints.
+
+All four clickable links remain directed to RCAT's existing accounts/website. Do not imply affiliation, sponsorship or endorsement by any platform. If trademark conditions are not met, prefer clearly labeled text links.
 
 ## Institution mark
 
