@@ -164,17 +164,36 @@ def write_same_inode(content):
         os.fsync(file.fileno())
 
 
-def restart_only_radio_ports(stage):
-    run(compose() + ["up", "-d", "--no-deps", "--no-build",
-                     "--pull", "never", "--force-recreate", *RADIO],
-        stage, 300)
+def await_readiness(check, seconds=60):
+    deadline = time.monotonic() + seconds
+    while time.monotonic() < deadline:
+        if check():
+            return True
+        time.sleep(2)
+    return False
+
+
+def restart_only_radio_ports(stage, host):
+    # Start the output first, then DJ Show Source, then UI. This avoids
+    # starting Liquidsoap while its destination Icecast is still unavailable.
+    for service in RADIO:
+        run(compose() + ["up", "-d", "--no-deps", "--no-build",
+                         "--pull", "never", "--force-recreate", service],
+            stage + "_" + service, 240)
+        if service == "icecast":
+            require(await_readiness(
+                lambda: http_ready(host, 8600, "/status-json.xsl")),
+                stage + "_icecast: HTTP did not become ready")
+        if service == "liquidsoap":
+            require(await_readiness(lambda: tcp_ready(host, 8605)),
+                    stage + "_liquidsoap: Show Source did not become ready")
 
 
 def recover_loopback(original):
     write_same_inode(original)
     check_model("127.0.0.1")
     try:
-        restart_only_radio_ports("rollback_recreate")
+        restart_only_radio_ports("rollback_recreate", "127.0.0.1")
     except Blocked as exc:
         print("RRN05_ROLLBACK_RECREATE=" + str(exc), flush=True)
     # If the original script's bug recurs, revive only the already-existing
@@ -266,7 +285,7 @@ def apply():
         check_model(LAN)
         print("RRN05_COMPOSE_VALIDATED=PASS", flush=True)
         stage = "recreate_radio_port_services"
-        restart_only_radio_ports(stage)
+        restart_only_radio_ports(stage, LAN)
         stage = "confirm_lan_radio_runtime"
         require(ready(LAN, 90), "radio LAN services did not become healthy")
     except Exception as err:
