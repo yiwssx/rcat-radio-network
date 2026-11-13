@@ -1,63 +1,64 @@
 #!/usr/bin/env python3
-"""RRN-05: one-command scoped LAN binding change for the existing radio stack.
+"""RRN-05: guarded LAN bindings for exactly three existing radio services.
 
-Expose existing listener (8600), Show DJ (8605), and web UI (8700) on the
-host's 10.10.1.100 address. Fix LibreTime's matching browser-visible URLs.
-Recreate only radio Icecast/Liquidsoap/nginx; restart five radio config readers.
-Does not change MikroTik, Docker Engine, DNS, firewall, external RCAT services,
-named Docker volumes, images, credentials, or the legacy checkout.
-Important: existing MikroTik public dst-nat rules can forward WAN traffic to
-these three ports; a LAN IP bind does NOT make them private behind dst-nat.
+Purposefully changes ONLY the existing radio.override.yml port mappings.
+Does NOT change LibreTime config.yml, databases, images, named volumes,
+host Docker, MikroTik, DNS, firewall or any other RCAT project.
+
+NOTE: Existing MikroTik public DST-NAT rules may also expose these LAN-bound
+ports to WAN! This script does not make 8605/8700 secure from outside.
 """
 import argparse
-import datetime
+import datetime as dt
 import json
 import os
 from pathlib import Path
 import re
-import shutil
-import signal
 import socket
 import subprocess
 import sys
 import time
+from urllib.request import build_opener, ProxyHandler
 
 PROJECT = "rcat_radio_network"
 LAN = "10.10.1.100"
 RUNTIME = Path("/opt/rcat-libretime-runtime")
 PRIVATE = Path("/etc/rcat-radio-network")
-BACKUP = Path("/var/backups/rcat-radio-network")
+BACKUPS = Path("/var/backups/rcat-radio-network")
 OVERRIDE = RUNTIME / "radio.override.yml"
-CONFIG = PRIVATE / "config.yml"
-SERVICES = {"postgres", "rabbitmq", "playout", "liquidsoap",
-            "analyzer", "worker", "api", "legacy", "nginx", "icecast"}
+RADIO = ("icecast", "liquidsoap", "nginx")
+EXPECTED_SERVICES = {
+    "postgres", "rabbitmq", "playout", "liquidsoap", "analyzer",
+    "worker", "api", "legacy", "nginx", "icecast",
+}
 PORTS = {"icecast": (8600, 8000), "liquidsoap": (8605, 8002),
          "nginx": (8700, 8080)}
-RECREATE = ("icecast", "liquidsoap", "nginx")
-RESTART = ("playout", "analyzer", "worker", "api", "legacy")
+# Skip proxy settings for local connections; allow no public requests.
+OPENER = build_opener(ProxyHandler({}))
 
 
 class Blocked(Exception):
     pass
 
 
-def need(ok, msg):
-    if not ok:
-        raise Blocked(msg)
+def require(test, message):
+    if not test:
+        raise Blocked(message)
 
 
-def command(argv, timeout=120):
-    env = {"PATH": os.environ.get("PATH", "/usr/local/sbin:/usr/local/bin:"
-                                 "/usr/sbin:/usr/bin:/sbin:/bin"),
-           "HOME": "/root", "DOCKER_CONTEXT": "default"}
+def run(args, stage, timeout=120):
+    env = {"PATH": os.environ.get(
+        "PATH", "/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
+    ), "HOME": "/root", "DOCKER_CONTEXT": "default"}
     try:
-        p = subprocess.run(argv, capture_output=True, text=True,
-                           timeout=timeout, env=env, check=False)
-    except (OSError, subprocess.TimeoutExpired) as e:
-        raise Blocked("Radio-scoped command failed to run or timed out") from e
-    # Docker Compose renders secrets; never echo stdout/stderr on error.
-    need(p.returncode == 0, "Radio-scoped command failed: " + argv[0])
-    return p.stdout.strip()
+        result = subprocess.run(args, capture_output=True, text=True,
+                                timeout=timeout, env=env, check=False)
+    except (OSError, subprocess.TimeoutExpired):
+        raise Blocked(stage + ": command unavailable/timeout") from None
+    # No Docker stderr/stdout on failures: may contain substituted credentials.
+    require(result.returncode == 0, stage + ": command exit=" +
+            str(result.returncode))
+    return result.stdout.strip()
 
 
 def compose():
@@ -67,235 +68,231 @@ def compose():
             "-f", str(OVERRIDE)]
 
 
-def file_check(p):
-    need(p.is_file() and not p.is_symlink(), "Missing or symlinked radio file")
-    need(p.resolve().is_relative_to(RUNTIME.resolve()) or
-         p.resolve().is_relative_to(PRIVATE.resolve()),
-         "File outside the two isolated radio paths")
+def container_map():
+    ids = run(["docker", "ps", "-aq", "--filter",
+               "label=com.docker.compose.project=" + PROJECT],
+              "project_container_inventory", 45).splitlines()
+    require(len(ids) == 10, "expected exactly ten existing radio containers")
+    data = json.loads(run(["docker", "inspect", *ids],
+                          "project_container_inspect", 60))
+    indexed = {x["Config"]["Labels"].get("com.docker.compose.service"): x
+               for x in data}
+    require(set(indexed) == EXPECTED_SERVICES and len(data) == 10,
+            "unexpected radio project container ownership")
+    return indexed
 
 
-def running_services():
-    ids = command(["docker", "ps", "-q", "--filter",
-                   "label=com.docker.compose.project=" + PROJECT], 30).splitlines()
-    need(len(ids) == 10, "Expected 10 running radio containers")
-    data = json.loads(command(["docker", "inspect", *ids], 45))
-    names = [x["Config"]["Labels"].get("com.docker.compose.service") for x in data]
-    need(set(names) == SERVICES and len(set(names)) == 10,
-         "Unexpected radio Compose service layout")
-
-
-def host_lan_present():
-    interfaces = json.loads(command(["ip", "-j", "-4", "addr", "show"], 30))
-    need(any(x.get("local") == LAN
-             for item in interfaces for x in item.get("addr_info", [])),
-         "Expected LAN address is not assigned to the RCAT Host")
-
-
-def rewrite(override, config):
-    old_ports = {
-        "127.0.0.1:8600:8000": LAN + ":8600:8000",
-        "127.0.0.1:8605:8002": LAN + ":8605:8002",
-        "127.0.0.1:8700:8080": LAN + ":8700:8080",
-    }
-    new_override = override
-    for old, new in old_ports.items():
-        need(new_override.count(old) == 1, "Unexpected old radio port mapping")
-        need(new_override.count(new) == 0, "New mapping already present")
-        new_override = new_override.replace(old, new, 1)
-
-    old_urls = {
-        "http://127.0.0.1:8700": "http://" + LAN + ":8700",
-        "http://127.0.0.1:8600/main.mp3": "http://" + LAN + ":8600/main.mp3",
-    }
-    new_config = config
-    for old, new in old_urls.items():
-        need(new_config.count(old) == 1, "Unexpected original public URL")
-        need(new_config.count(new) == 0, "LAN URL already configured")
-        new_config = new_config.replace(old, new, 1)
-
-    # Avoid showing the wrong Liquidsoap source port (8002) in DJ settings:
-    # advertised Show URL should use host-mapped 8605, while internal port
-    # stays 8002 for LibreTime itself.
-    show = re.search(r"(?ms)^    show:\n(.*?)^      public_url:\s*$", new_config)
-    need(show is not None, "LibreTime Show Source settings not found")
-    block = show.group(0)
-    need(block.count("      public_url:") == 1, "Unexpected show URL structure")
-    new_config = new_config.replace(
-        block, block.replace("      public_url:",
-                             '      public_url: "http://' + LAN + ':8605/show"'), 1)
-    return new_override, new_config
-
-
-def write_in_place(path, content):
-    # Keep the existing inode: the vendor bind-mounts this exact file in
-    # running radio containers. Preserve its existing file permissions.
-    with open(path, "r+", encoding="utf-8") as f:
-        f.seek(0)
-        f.write(content)
-        f.truncate()
-        f.flush()
-        os.fsync(f.fileno())
+def all_running():
+    return all(obj["State"]["Running"] for obj in container_map().values())
 
 
 def check_model(host):
-    model = json.loads(command(compose() + ["config", "--format", "json"], 60))
-    need(model.get("name") == PROJECT, "Unexpected Compose project")
+    model = json.loads(run(compose() + ["config", "--format", "json"],
+                           "render_compose", 90))
+    require(model.get("name") == PROJECT, "unexpected radio Compose project")
     services = model.get("services", {})
-    need(set(services) == SERVICES, "Unexpected Compose service list")
-    ports = set()
-    for service, spec in services.items():
-        for p in spec.get("ports", []):
-            ports.add((service, str(p.get("host_ip", "")),
-                       int(p.get("published", -1)),
-                       int(p.get("target", -1)), p.get("protocol", "tcp")))
-    expected = {(name, host, outer, inner, "tcp")
-                for name, (outer, inner) in PORTS.items()}
-    need(ports == expected, "Unexpected Compose network exposure")
-    need(set(model.get("volumes", {})) ==
-         {"postgres_data", "libretime_storage", "libretime_playout"},
-         "Unexpected Compose volumes")
-    need(set(model.get("networks", {})) == {"default"},
-         "Unexpected Compose network")
+    require(set(services) == EXPECTED_SERVICES,
+            "unexpected radio Compose services")
+    published = {
+        (svc, str(p.get("host_ip", "")), int(p.get("published", -1)),
+         int(p.get("target", -1)), p.get("protocol", "tcp"))
+        for svc, obj in services.items() for p in obj.get("ports", [])
+    }
+    require(published == {(svc, host, public, private, "tcp")
+                          for svc, (public, private) in PORTS.items()},
+            "unexpected radio Compose port bindings")
+    require(set(model.get("volumes", {})) ==
+            {"postgres_data", "libretime_storage", "libretime_playout"},
+            "unexpected radio Compose data volumes")
+    require(set(model.get("networks", {})) == {"default"},
+            "unexpected radio Compose networks")
 
 
-def make_backup(original_override, original_config):
-    need(BACKUP.is_dir() and not BACKUP.is_symlink()
-         and BACKUP.stat().st_uid == 0
-         and BACKUP.stat().st_mode & 0o077 == 0,
-         "Root-only radio backup directory missing or unsafe")
-    timestamp = datetime.datetime.now(datetime.timezone.utc).strftime("%Y%m%dT%H%M%SZ")
-    folder = BACKUP / ("lan-binding-before-" + timestamp)
-    folder.mkdir(mode=0o700)
-    for name, data in (("radio.override.yml", original_override),
-                       ("config.yml", original_config)):
-        path = folder / name
-        fd = os.open(path, os.O_CREAT | os.O_EXCL | os.O_WRONLY, 0o600)
-        with os.fdopen(fd, "w", encoding="utf-8") as f:
-            f.write(data)
-            f.flush()
-            os.fsync(f.fileno())
-    return folder
+def inspect_ports(host):
+    containers = container_map()
+    if not all(x["State"]["Running"] for x in containers.values()):
+        return False
+    for svc, (public, private) in PORTS.items():
+        bindings = containers[svc]["HostConfig"]["PortBindings"]
+        entry = bindings.get(str(private) + "/tcp", [])
+        if not (len(entry) == 1 and
+                entry[0].get("HostIp") == host and
+                entry[0].get("HostPort") == str(public)):
+            return False
+    return True
 
 
-def restart_changed_services():
-    # Recreate three containers only for host port changes. Never pull images,
-    # restart Docker itself, remove Docker volumes or alter other projects.
-    command(compose() + ["up", "-d", "--no-deps", "--no-build",
-                         "--pull", "never", "--force-recreate", *RECREATE], 300)
-    # Five existing radio services read the bind-mounted public URLs on start.
-    command(compose() + ["restart", *RESTART], 240)
-
-
-def inspect_bindings(host=LAN):
-    ids = command(["docker", "ps", "-q", "--filter",
-                   "label=com.docker.compose.project=" + PROJECT], 30).splitlines()
-    need(len(ids) == 10, "Radio containers did not all restart")
-    data = json.loads(command(["docker", "inspect", *ids], 60))
-    by_name = {x["Config"]["Labels"].get("com.docker.compose.service"): x
-               for x in data}
-    need(set(by_name) == SERVICES, "Radio project changed unexpectedly")
-    for name, (outer, inner) in PORTS.items():
-        bindings = by_name[name]["HostConfig"]["PortBindings"]
-        actual = bindings.get(str(inner) + "/tcp", [])
-        need(len(actual) == 1 and actual[0]["HostIp"] == host
-             and actual[0]["HostPort"] == str(outer),
-             "Docker radio LAN binding did not apply")
-    return all(x["State"]["Running"] for x in data)
-
-
-def local_http(port, path):
-    import urllib.request
+def tcp_ready(host, port):
     try:
-        with urllib.request.urlopen(
-            "http://" + LAN + ":" + str(port) + path, timeout=3
-        ) as response:
+        with socket.create_connection((host, port), timeout=2):
+            return True
+    except OSError:
+        return False
+
+
+def http_ready(host, port, path):
+    try:
+        result = OPENER.open("http://" + host + ":" + str(port) + path,
+                             timeout=3)
+        with result as response:
             return 200 <= response.status < 400
     except Exception:
         return False
 
 
-def listen_ready():
-    for _ in range(20):
-        try:
-            with socket.create_connection((LAN, 8605), timeout=3):
-                show_ok = True
-        except OSError:
-            show_ok = False
-        if show_ok and local_http(8700, "/") and local_http(8600, "/status-json.xsl"):
+def ready(host, timeout=90):
+    # Current observed failure is an exited Liquidsoap container and HTTP 502.
+    # Check actual process and endpoints, not simply Docker command exit 0.
+    deadline = time.monotonic() + timeout
+    while time.monotonic() < deadline:
+        if (inspect_ports(host) and tcp_ready(host, 8605) and
+                http_ready(host, 8700, "/") and
+                http_ready(host, 8600, "/status-json.xsl")):
             return True
-        time.sleep(2)
+        time.sleep(3)
     return False
 
 
-def apply():
-    need(os.geteuid() == 0, "Run as root on the RCAT Host")
-    for directory in (RUNTIME, PRIVATE):
-        need(directory.is_dir() and not directory.is_symlink(),
-             "Radio runtime directory missing or symlinked")
-    for p in (OVERRIDE, CONFIG, RUNTIME / "docker-compose.yml",
-              PRIVATE / "compose.env"):
-        file_check(p)
-    need((PRIVATE / "compose.env").stat().st_mode & 0o077 == 0,
-         "Radio private env file has unsafe permissions")
-    host_lan_present()
-    running_services()
+def write_same_inode(content):
+    # Vendor bind-mounts an existing runtime file. Atomic path replacement
+    # would leave a running container reading a stale inode.
+    with open(OVERRIDE, "r+", encoding="utf-8") as file:
+        file.seek(0)
+        file.write(content)
+        file.truncate()
+        file.flush()
+        os.fsync(file.fileno())
 
-    original_override = OVERRIDE.read_text(encoding="utf-8")
-    original_config = CONFIG.read_text(encoding="utf-8")
-    lan_ports = all((LAN + ":" + str(outer) + ":" + str(inner)) in original_override
-                    for outer, inner in PORTS.values())
-    lan_urls = all(x in original_config for x in (
-        "http://" + LAN + ":8700", "http://" + LAN + ":8600/main.mp3",
-        "http://" + LAN + ":8605/show"))
-    if lan_ports and lan_urls:
+
+def restart_only_radio_ports(stage):
+    run(compose() + ["up", "-d", "--no-deps", "--no-build",
+                     "--pull", "never", "--force-recreate", *RADIO],
+        stage, 300)
+
+
+def recover_loopback(original):
+    write_same_inode(original)
+    check_model("127.0.0.1")
+    try:
+        restart_only_radio_ports("rollback_recreate")
+    except Blocked as exc:
+        print("RRN05_ROLLBACK_RECREATE=" + str(exc), flush=True)
+    # If the original script's bug recurs, revive only the already-existing
+    # radio Liquidsoap, as accepted once in the owner-provided recovery.
+    containers = container_map()
+    if not containers["liquidsoap"]["State"]["Running"]:
+        run(["docker", "start", containers["liquidsoap"]["Id"]],
+            "rollback_start_liquidsoap", 45)
+    if not http_ready("127.0.0.1", 8700, "/"):
+        run(["docker", "restart", "-t", "15",
+             containers["legacy"]["Id"], containers["nginx"]["Id"]],
+            "rollback_restart_radio_ui", 90)
+    require(ready("127.0.0.1", 75),
+            "rollback did not restore all ten radio containers and HTTP/TCP")
+    print("RRN05_ROLLBACK=HEALTH_CONFIRMED", flush=True)
+
+
+def apply():
+    require(os.geteuid() == 0, "Run as root on the already approved radio Host")
+    require(RUNTIME.is_dir() and not RUNTIME.is_symlink(),
+            "radio runtime directory unavailable or symlinked")
+    require(PRIVATE.is_dir() and not PRIVATE.is_symlink(),
+            "radio private config directory unavailable or symlinked")
+    for file in (OVERRIDE, RUNTIME / "docker-compose.yml",
+                 PRIVATE / "compose.env", PRIVATE / "config.yml"):
+        require(file.is_file() and not file.is_symlink(),
+                "required radio file unavailable/symlinked")
+    require((PRIVATE / "compose.env").stat().st_mode & 0o077 == 0,
+            "private radio .env has unsafe permissions")
+    require(BACKUPS.is_dir() and not BACKUPS.is_symlink() and
+            BACKUPS.stat().st_uid == 0 and
+            BACKUPS.stat().st_mode & 0o077 == 0,
+            "root-only radio backup directory unavailable/unsafe")
+    ip_addrs = json.loads(run(["ip", "-j", "-4", "addr", "show"],
+                             "check_host_lan_ip", 30))
+    require(any(item.get("local") == LAN
+                for interface in ip_addrs
+                for item in interface.get("addr_info", [])),
+            "host does not own requested radio LAN IP")
+    original = OVERRIDE.read_text(encoding="utf-8")
+    replacements = {
+        "127.0.0.1:8600:8000": LAN + ":8600:8000",
+        "127.0.0.1:8605:8002": LAN + ":8605:8002",
+        "127.0.0.1:8700:8080": LAN + ":8700:8080",
+    }
+    if all(new in original for new in replacements.values()):
         check_model(LAN)
-        need(inspect_bindings(), "Existing LAN-bound radio stack is not running")
+        require(ready(LAN, 15),
+                "LAN mappings already present but radio endpoints not healthy")
         print("RRN05_LAN_BINDINGS=ALREADY_APPLIED")
         return
+    require(all(original.count(old) == 1 and new not in original
+                for old, new in replacements.items()),
+            "radio config differs from expected loopback state")
+    check_model("127.0.0.1")
+    require(ready("127.0.0.1", 15),
+            "existing radio baseline not healthy; refusing new outage")
+    updated = original
+    for old, new in replacements.items():
+        updated = updated.replace(old, new, 1)
 
-    updated_override, updated_config = rewrite(original_override, original_config)
-    check_model("127.0.0.1")  # validate existing model before any change
-    folder = make_backup(original_override, original_config)
-    print("RRN05_BACKUP_CONFIG_SAVED=" + str(folder), flush=True)
-    changed = False
+    # Verify desired address isn't already occupied before touching files.
+    listeners = run(["ss", "-H", "-ltn"], "check_lan_port_conflicts", 30)
+    for p in PORTS.values():
+        outer = p[0]
+        for row in listeners.splitlines():
+            columns = row.split()
+            if len(columns) < 4:
+                continue
+            addr = columns[3]
+            if any(addr.endswith(":" + str(outer)) and
+                   addr.startswith(prefix)
+                   for prefix in (LAN + ":", "0.0.0.0:", "*:", "[::]:")):
+                raise Blocked("radio LAN destination port occupied: " +
+                              str(outer))
+    now = dt.datetime.now(dt.timezone.utc).strftime("%Y%m%dT%H%M%SZ")
+    backup = BACKUPS / ("lan-port-bindings-" + now + ".original.yml")
+    fd = os.open(backup, os.O_CREAT | os.O_EXCL | os.O_WRONLY, 0o600)
+    with os.fdopen(fd, "w", encoding="utf-8") as file:
+        file.write(original)
+        file.flush()
+        os.fsync(file.fileno())
+    print("RRN05_ORIGINAL_OVERRIDE_BACKUP=" + str(backup), flush=True)
+
+    stage = "write_override"
     try:
-        changed = True
-        write_in_place(OVERRIDE, updated_override)
-        write_in_place(CONFIG, updated_config)
+        write_same_inode(updated)
+        stage = "validate_new_compose"
         check_model(LAN)
         print("RRN05_COMPOSE_VALIDATED=PASS", flush=True)
-        restart_changed_services()
-        need(inspect_bindings(), "Docker binding/readiness did not converge")
-        need(listen_ready(), "LAN ports/HTTP did not become ready")
-    except BaseException as exc:
-        if changed:
-            print("RRN05_APPLY=FAILED_ROLLBACK_ATTEMPT", flush=True)
-            try:
-                write_in_place(OVERRIDE, original_override)
-                write_in_place(CONFIG, original_config)
-                check_model("127.0.0.1")
-                restart_changed_services()
-                need(inspect_bindings("127.0.0.1"),
-                     "Radio project failed to restart after rollback")
-                print("RRN05_ROLLBACK=COMMANDS_SUCCEEDED", flush=True)
-            except BaseException:
-                print("RRN05_ROLLBACK=NEEDS_OPERATOR_ATTENTION", flush=True)
-        raise Blocked("LAN binding change failed: radio-only rollback attempted") from exc
+        stage = "recreate_radio_port_services"
+        restart_only_radio_ports(stage)
+        stage = "confirm_lan_radio_runtime"
+        require(ready(LAN, 90), "radio LAN services did not become healthy")
+    except Exception as err:
+        print("RRN05_FAILED_STAGE=" + stage, flush=True)
+        print("RRN05_ORIGINAL_ERROR=" + str(err), flush=True)
+        try:
+            recover_loopback(original)
+        except Exception as rollback_err:
+            print("RRN05_ROLLBACK=NEEDS_OPERATOR_ATTENTION", flush=True)
+            print("RRN05_ROLLBACK_ERROR=" + str(rollback_err), flush=True)
+        raise Blocked("LAN change failed; see stage and rollback status") from None
+
     print("RRN05_LAN_BINDINGS=PASS")
-    print("icecast=http://" + LAN + ":8600/main.mp3")
-    print("show_source=" + LAN + ":8605")
-    print("libretime=http://" + LAN + ":8700")
-    print("radio_services_running=10")
-    print("lan_port_http_tcp=PASS")
-    print("source_audio_after_recreate=NOT_TESTED")
-    print("public_router_nat=UNCHANGED")
-    print("WAN_EXPOSURE_WARNING=EXISTING_MIKROTIK_DST_NAT_MAY_FORWARD_ALL_THREE")
+    print("radio_containers_running=10")
+    print("icecast_listener=http://" + LAN + ":8600/main.mp3")
+    print("show_source=" + LAN + ":8605/show")
+    print("libretime_ui=http://" + LAN + ":8700")
+    print("public_urls_in_private_config=UNCHANGED")
+    print("libretime_audio=NOT_RETESTED")
+    print("mikrotik_dstnat=UNCHANGED_POSSIBLE_WAN_EXPOSURE")
 
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("--apply", action="store_true", required=True)
-    args = parser.parse_args()
+    parser.parse_args()
     try:
         apply()
     except Blocked as exc:
