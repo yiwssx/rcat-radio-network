@@ -62,7 +62,7 @@
         <a class="nav-active" href="#home" onclick={() => menuOpen = false}>หน้าแรก</a>
         <a href="#listen" onclick={() => menuOpen = false}>ฟังวิทยุสด</a>
         <a href="#about" onclick={() => menuOpen = false}>เกี่ยวกับสถานี</a>
-        <a href={COLLEGE_URL} target="_blank" rel="noopener noreferrer" onclick={() => menuOpen = false}>เว็บไซต์วิทยาลัย ↗</a>
+        <a href="mailto:saraban@rcat.ac.th" onclick={() => menuOpen = false}>ติดต่อเรา</a>
       </nav>
       <button class="menu-toggle" aria-label={menuOpen ? 'ปิดเมนู' : 'เปิดเมนู'} aria-expanded={menuOpen} onclick={() => menuOpen = !menuOpen}>
         <span></span><span></span><span></span>
@@ -72,72 +72,83 @@
 
   <main id="home">
     <section class="hero" aria-labelledby="hero-title">
-      <div class="hero-photo" aria-hidden="true"></div>
-      <div class="hero-shade" aria-hidden="true"></div>
-      <div class="container hero-content">
-        <div class="hero-copy">
-          <div class="eyebrow"><span class="signal-dot" aria-hidden="true"></span> RCAT RADIO NETWORK</div>
-          <h1 id="hero-title">เสียงดี ๆ <span>จาก RCAT</span></h1>
-          <p class="hero-leading">สถานีวิทยุออนไลน์<br />วิทยาลัยเกษตรและเทคโนโลยีร้อยเอ็ด</p>
-          <div class="hero-tagline"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M12 3v18M8 7a7 7 0 0 0 0 10M16 7a7 7 0 0 1 0 10M4 3a13 13 0 0 0 0 18M20 3a13 13 0 0 1 0 18"/></svg> เสียงเพื่อการเรียนรู้ เกษตร นวัตกรรม และชุมชน</div>
-        </div>
-        <div class="hero-illustration" aria-hidden="true">
-          <div class="disc disc-outside"></div><div class="disc disc-inside"></div>
-          <svg class="radio-headset" viewBox="0 0 250 265" fill="none" xmlns="http://www.w3.org/2000/svg">
-            <path d="M41 133V116C41 69 78 27 125 27S209 69 209 116V133" stroke="#e8f5ed" stroke-width="22" stroke-linecap="round" />
-            <path d="M41 133V116C41 69 78 27 125 27S209 69 209 116V133" stroke="#183b2b" stroke-width="11" stroke-linecap="round" />
-            <rect x="19" y="115" width="45" height="86" rx="19" fill="#164c34" stroke="#d2eed7" stroke-width="6" />
-            <rect x="186" y="115" width="45" height="86" rx="19" fill="#164c34" stroke="#d2eed7" stroke-width="6" />
-            <rect x="97" y="96" width="56" height="103" rx="28" fill="#f5faf1" stroke="#184d32" stroke-width="5" />
-            <rect x="108" y="103" width="34" height="91" rx="17" fill="#93aa9b" />
-            <path d="M125 201V236M94 236H156" stroke="#d8ece1" stroke-width="9" stroke-linecap="round" />
-            <path d="M84 169C84 209 98 216 125 216C152 216 166 209 166 169" stroke="#e8f5ed" stroke-width="8" stroke-linecap="round" />
-            <path d="M114 116V181M125 113V181M136 116V181" stroke="#ecf3e9" stroke-width="3" opacity="0.5" />
-          </svg>
-        </div>
+  <div class="hero-photo" aria-hidden="true"></div>
+  <div class="hero-shade" aria-hidden="true"></div>
+  <div class="hero-accent" aria-hidden="true"></div>
+  <div class="container hero-content">
+    <div class="hero-copy">
+      <div class="hero-heading-row">
+        <svg class="hero-wave-mark" viewBox="0 0 48 80" width="52" height="81" fill="none" aria-hidden="true"><path d="M24 5v70M12 19v42M36 19v42M3 30v20M45 30v20" stroke="currentColor" stroke-width="6" stroke-linecap="round"/></svg>
+        <h1 id="hero-title">RCAT<br /><span>Radio Network</span></h1>
       </div>
-      <div class="hero-wave" aria-hidden="true"></div>
-    </section>
+      <p class="hero-leading">สถานีวิทยุออนไลน์<br />วิทยาลัยเกษตรและเทคโนโลยีร้อยเอ็ด</p>
+    </div>
+  </div>
+  <div class="hero-wave" aria-hidden="true"></div>
+</section>
 
-    <section class="container player-wrap" id="listen" aria-labelledby="player-heading">
-      <div class="player-panel">
-        <div class="player-station-icon" aria-hidden="true"><svg viewBox="0 0 44 44" width="36" height="36" fill="none"><path d="M22 9v26M15 14v16M29 14v16M8 18v8M36 18v8" stroke="currentColor" stroke-width="5" stroke-linecap="round" /></svg><span>RCAT<br />RADIO</span></div>
-        <div class="player-description">
-          <span class="radio-chip"><span></span> สตรีมวิทยุสด</span>
-          <h2 id="player-heading">RCAT Radio Network</h2>
-          <p>วิทยาลัยเกษตรและเทคโนโลยีร้อยเอ็ด</p>
-        </div>
-        <button class="play-button" onclick={togglePlayback} aria-label={isActive || status === 'connecting' ? 'หยุดฟังวิทยุ' : 'เริ่มฟังวิทยุ'} title={isActive || status === 'connecting' ? 'หยุดฟัง' : 'ฟังวิทยุสด'}>
-          {#if isActive || status === 'connecting'}
-            <svg viewBox="0 0 24 24" width="28" height="28" fill="currentColor" aria-hidden="true"><rect x="5" y="4" width="5" height="16" rx="1.5"/><rect x="14" y="4" width="5" height="16" rx="1.5"/></svg>
-          {:else}
-            <svg viewBox="0 0 24 24" width="28" height="28" fill="currentColor" aria-hidden="true"><path d="M7 4.5a1.5 1.5 0 0 1 2.32-1.26l11.22 7.5a1.5 1.5 0 0 1 0 2.5l-11.22 7.5A1.5 1.5 0 0 1 7 19.5v-15Z"/></svg>
-          {/if}
-        </button>
-        <div class="volume-group">
-          <svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 9v6h4l5 4V5L8 9H4Z"/><path d="M16 9a5 5 0 0 1 0 6"/><path d="M18 6a9 9 0 0 1 0 12"/></svg>
-          <input aria-label="ระดับเสียง" title="ปรับระดับเสียง" type="range" min="0" max="100" step="1" value={volume} oninput={updateVolume} style={`--volume-fill: ${volume}%`} />
-          <span class="volume-percentage" aria-hidden="true">{volume}%</span>
-        </div>
-        <div class="playback-message" role="status" aria-live="polite">
-          <span class:active={status === 'playing'} class:error={status === 'error'} class="status-dot"></span>
-          <span>{statusText}</span>
-        </div>
-      </div>
-      <audio bind:this={audioElement} src={STREAM_URL} preload="none" onplaying={() => status = 'playing'} onwaiting={() => { if (status !== 'paused') status = 'connecting'; }} onpause={() => { if (status !== 'error') status = 'paused'; }} onended={() => status = 'error'} onerror={() => status = 'error'}></audio>
-    </section>
+    <section class="container player-wrap" id="listen" aria-label="เครื่องเล่นวิทยุออนไลน์">
+  <div class="player-panel">
+    <div class="player-station-icon" aria-hidden="true">
+      <svg viewBox="0 0 44 42" width="37" height="36" fill="none"><path d="M22 3v36M14 10v22M30 10v22M6 17v8M38 17v8" stroke="currentColor" stroke-width="5" stroke-linecap="round"/></svg>
+      <strong>RCAT</strong><span>RADIO</span>
+    </div>
+    <div class="player-description">
+      <span class="radio-chip">◉ สด · LIVE STREAM</span>
+      <h2>RCAT Radio Network</h2>
+      <p>สถานีวิทยุออนไลน์ของวิทยาลัย</p>
+    </div>
+    <button class="play-button" onclick={togglePlayback} aria-label={isActive || status === 'connecting' ? 'หยุดฟังวิทยุ' : 'เริ่มฟังวิทยุ'} title={isActive || status === 'connecting' ? 'หยุดฟัง' : 'ฟังวิทยุสด'}>
+      {#if isActive || status === 'connecting'}
+       <svg viewBox="0 0 24 24" width="30" height="30" fill="currentColor" aria-hidden="true"><rect x="5" y="3" width="5" height="18" rx="1.5"/><rect x="14" y="3" width="5" height="18" rx="1.5"/></svg>
+      {:else}
+       <svg viewBox="0 0 24 24" width="30" height="30" fill="currentColor" aria-hidden="true"><path d="M7 4.5a1.5 1.5 0 0 1 2.32-1.26l11.22 7.5a1.5 1.5 0 0 1 0 2.5l-11.22 7.5A1.5 1.5 0 0 1 7 19.5v-15Z"/></svg>
+      {/if}
+    </button>
+    <div class="volume-group">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" aria-hidden="true"><path d="M4 9v6h4l5 4V5L8 9H4Z"/><path d="M16 9a5 5 0 0 1 0 6M18 5a9 9 0 0 1 0 14"/></svg>
+      <input aria-label="ระดับเสียง" title="ปรับระดับเสียง" type="range" min="0" max="100" step="1" value={volume} oninput={updateVolume} style={`--volume-fill: ${volume}%`} />
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" aria-hidden="true"><path d="M4 9v6h4l5 4V5L8 9H4Z"/><path d="M16 9a5 5 0 0 1 0 6M18 5a9 9 0 0 1 0 14"/></svg>
+    </div>
+    <div class="playback-message" role="status" aria-live="polite">
+      <span class:active={status === 'playing'} class:error={status === 'error'} class="status-dot"></span>
+      <span>{statusText}</span>
+    </div>
+  </div>
+  <audio bind:this={audioElement} src={STREAM_URL} preload="none" onplaying={() => status = 'playing'} onwaiting={() => { if (status !== 'paused') status = 'connecting'; }} onpause={() => { if (status !== 'error') status = 'paused'; }} onended={() => status = 'error'} onerror={() => status = 'error'}></audio>
+</section>
 
     <section class="container short-links" aria-label="ลิงก์สำคัญ">
-      <a href="#listen" class="short-link"><span class="tile-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" aria-hidden="true"><path d="M12 3v18M8 7a7 7 0 0 0 0 10M16 7a7 7 0 0 1 0 10"/><path d="M4 3a13 13 0 0 0 0 18M20 3a13 13 0 0 1 0 18"/></svg></span><strong>ฟังวิทยุสด</strong><small>เปิดฟังสถานี RCAT</small></a>
-      <a href="#about" class="short-link"><span class="tile-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="16" rx="3"/><path d="M8 9h8M8 13h8M8 17h5"/></svg></span><strong>เกี่ยวกับสถานี</strong><small>รู้จัก RCAT Radio</small></a>
-      <a href={COLLEGE_URL} target="_blank" rel="noopener noreferrer" class="short-link"><span class="tile-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 10.5 12 4l9 6.5V20H3v-9.5Z"/><path d="M9 20v-7h6v7"/></svg></span><strong>เว็บไซต์วิทยาลัย</strong><small>ข้อมูลและประชาสัมพันธ์ ↗</small></a>
-    </section>
+  <div class="shortcut-grid">
+    <div class="short-link disabled" aria-disabled="true" title="ยังไม่มีตารางรายการเผยแพร่">
+      <span class="tile-icon"><svg viewBox="0 0 32 32" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="5" y="8" width="22" height="17" rx="3"/><path d="M9 12h14M9 17h8M19 18h4M10 4h12"/></svg></span><strong>ตารางรายการ</strong><small>รอเผยแพร่</small>
+    </div>
+    <a href="https://www.rcat.ac.th/announcements" target="_blank" rel="noopener noreferrer" class="short-link">
+      <span class="tile-icon"><svg viewBox="0 0 32 32" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M5 13h5l15-7v20l-15-7H5v-6Z"/><path d="m9 20 2 8h5l-2-7"/></svg></span><strong>ข่าวประชาสัมพันธ์</strong><small>เว็บไซต์วิทยาลัย ↗</small>
+    </a>
+    <a href={COLLEGE_URL} target="_blank" rel="noopener noreferrer" class="short-link">
+      <span class="tile-icon"><svg viewBox="0 0 32 32" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="m12 12 12-7v22l-12-7H6v-8h6Z"/><path d="M9 20v7M26 12h4M26 19h4"/></svg></span><strong>กิจกรรมวิทยาลัย</strong><small>ดูข้อมูลเพิ่มเติม ↗</small>
+    </a>
+    <a href="mailto:saraban@rcat.ac.th" class="short-link">
+      <span class="tile-icon"><svg viewBox="0 0 32 32" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="11" cy="12" r="5"/><circle cx="23" cy="13" r="4"/><path d="M2 28v-2c0-6 4-9 9-9s9 3 9 9v2M22 19c5 1 8 3 8 9"/></svg></span><strong>ติดต่อเรา</strong><small>saraban@rcat.ac.th</small>
+    </a>
+  </div>
+  <div class="follow-section">
+    <h2>ติดตามเราได้ที่</h2>
+    <div class="socials">
+      <a aria-label="Facebook วิทยาลัย" target="_blank" rel="noopener noreferrer" href="https://www.facebook.com/profile.php?id=100063746585360">f</a>
+      <a aria-label="YouTube วิทยาลัย" target="_blank" rel="noopener noreferrer" href="https://www.youtube.com/@RCAT101">▶</a>
+      <a aria-label="TikTok วิทยาลัย" target="_blank" rel="noopener noreferrer" href="https://www.tiktok.com/@rcat_101">♪</a>
+      <a aria-label="เว็บไซต์วิทยาลัย" target="_blank" rel="noopener noreferrer" href={COLLEGE_URL}>↗</a>
+    </div>
+  </div>
+</section>
 
-    <section id="about" class="container about-section" aria-labelledby="about-heading">
-      <div class="about-emblem" aria-hidden="true"><span>RCAT</span><svg viewBox="0 0 60 45" width="65" height="50"><path d="M9 35c9-2 12-9 20-14 9-6 17-8 24-10-2 21-10 30-27 29" fill="#c9e779"/><path d="M14 43C24 30 36 21 53 11" fill="none" stroke="#106937" stroke-width="2"/></svg></div>
-      <div><span class="section-kicker">ABOUT THE STATION</span><h2 id="about-heading">สถานีวิทยุออนไลน์ RCAT</h2><p>พื้นที่เสียงเพื่อการเรียนรู้และการสื่อสารของวิทยาลัยเกษตรและเทคโนโลยีร้อยเอ็ด เชื่อมโยงสาระด้านการศึกษา เกษตร และนวัตกรรมสู่ชุมชน</p></div>
-    </section>
+    
   </main>
 
-  <footer class="footer"><div class="container footer-inner"><div><strong>RCAT Radio Network</strong><span>เสียงเพื่อการเรียนรู้ เกษตร นวัตกรรม และชุมชน</span></div><a href="#listen">ฟังวิทยุออนไลน์ <span aria-hidden="true">↗</span></a></div></footer>
+  <footer class="footer" id="about"><div class="container footer-inner">
+  <div><strong>▂▆█▆▂ &nbsp; RCAT Radio Network</strong><span>เสียงความรู้ คู่เกษตรก้าวหน้า เพื่อชุมชนและสังคม</span></div>
+  <a href="#listen">♫ รับฟังวิทยุออนไลน์</a>
+</div></footer>
 </div>
