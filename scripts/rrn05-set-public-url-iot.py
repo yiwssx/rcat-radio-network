@@ -62,6 +62,33 @@ def change_only_general_public_url(text):
 def restart_web():
     run(["docker", "restart", "--time", "10", *RESTART], timeout=100)
 
+def preflight_rms_tls():
+    """IOT -> RMS is a distinct path from the prior RMS localhost acceptance.
+
+    Must pass BEFORE touching canonical URL or restarting any radio containers.
+    Report only bounded transport code (no login cookies/HTML/credentials).
+    """
+    try:
+        r = subprocess.run(
+            ["curl", "--noproxy", "*", "-sS", "--connect-timeout", "4",
+             "--max-time", "10", "--resolve",
+             "radio.rcat.ac.th:8700:10.10.2.100",
+             "-o", "/dev/null", "-w", "%{http_code} %{ssl_verify_result}",
+             TARGET + "/login"],
+            stdout=subprocess.PIPE, stderr=subprocess.PIPE,
+            text=True, timeout=14, check=False)
+    except (OSError, subprocess.TimeoutExpired):
+        raise Blocked("IOT_TO_RMS_8700=UNREACHABLE (preflight timeout/command unavailable)") from None
+    require(r.returncode == 0,
+            "IOT_TO_RMS_8700=UNREACHABLE (curl exit=" +
+            str(r.returncode) + "; check RMS host firewall/TLS)")
+    p = r.stdout.split()
+    require(len(p) == 2 and p[1] == "0" and
+            p[0] in {"200", "301", "302", "303"},
+            "IOT_TO_RMS_8700=BAD_RESPONSE (" + r.stdout.strip() + ")")
+    print("RRN05_IOT_TO_RMS_8700=PASS", flush=True)
+
+
 def ready():
     # Bounded readiness for the three just-restarted radio UI services.
     deadline = time.monotonic() + 60
@@ -95,6 +122,9 @@ def main():
     if status == "ALREADY_APPLIED":
         print("RRN05_IOT_PUBLIC_URL=ALREADY_APPLIED")
         return
+    # RMS self-test passed previously; separately require IOT -> RMS TLS path.
+    # Do not mutate a production config/restart containers while this is blocked.
+    preflight_rms_tls()
     # Only the existing radio project's named containers may be restarted.
     records = json.loads(run(["docker", "inspect", *RESTART], timeout=60))
     require(len(records) == 3 and
