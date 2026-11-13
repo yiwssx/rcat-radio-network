@@ -69,10 +69,19 @@ gh attestation verify <archive> --repo yiwssx/rcat-radio-network
 
 The attestation covers repository source, not upstream container image bytes, private runtime settings, media rights, backup recovery or a live station. This manual workflow performs no Host deployment, SSH, DNS change, GHCR push or GitHub Release publication.
 
-## Licensing status
+## License
 
-A repository-level license for RCAT-authored scripts and documentation is **pending the owner's licensing and copyright-holder decision**; no new license grant is made by this README.
+The original RCAT-authored scripts, configuration examples and documentation in this repository are licensed under the [MIT License](LICENSE).
 
-Third-party software retains its own licenses: [LibreTime 4.5.0](https://github.com/libretime/libretime/blob/4.5.0/LICENSE) uses GNU AGPL version 3, and [Icecast](https://www.icecast.org/) uses GNU GPL version 2. Other dependencies retain their respective notices. Any copied or adapted upstream material remains subject to its applicable terms.
+Copyright (c) 2026 Roi-Et College of Agriculture and Technology.
+
+MIT applies to original material for which the college holds licensing rights. It does not relicense third-party software or material copied or adapted from upstream projects. Those materials remain subject to their applicable licenses and notices.
+
+| Component or material | License scope |
+| --- | --- |
+| Original RCAT-authored repository material | [MIT](LICENSE) |
+| LibreTime 4.5.0 | [GNU AGPL version 3](https://github.com/libretime/libretime/blob/4.5.0/LICENSE) |
+| Icecast | [GNU GPL version 2](https://www.icecast.org/) |
+| Other third-party dependencies or adapted material | Respective upstream licenses and notices |
 
 Software licensing does not grant rights to broadcast music or use institutional logos, names or other separately controlled content.
