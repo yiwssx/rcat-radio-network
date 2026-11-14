@@ -169,6 +169,43 @@ button:focus-visible, a:focus-visible, input:focus-visible {
   position: absolute; inset: 0 0 0 42%; z-index: -2;
   background: #074a30 url("/images/rcat-campus-original.webp") center / contain no-repeat;
 }
+/* Photo labels in the previously owner-selected enhanced image contain AI
+   artifacts. Replace ONLY the four lines inside the plaque with exact HTML
+   text provided by the owner. The underlying photo file is not edited. */
+.hero-photo-canvas {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 100%;
+  aspect-ratio: 1621 / 970;
+  transform: translate(-50%, -50%);
+  container-type: inline-size;
+  pointer-events: none;
+}
+.hero-plaque-text {
+  position: absolute;
+  left: 51.45%;
+  top: 55.36%;
+  width: 21.8%;
+  height: 10.1%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0;
+  overflow: hidden;
+  background: #21303f;
+  color: #f5d052;
+  text-align: center;
+  text-shadow: 0 1px 1px #101820;
+  font-family: "RCAT Noto Sans Thai", "Noto Sans Thai", Tahoma, sans-serif;
+  font-stretch: 75%;
+  font-size: clamp(3px, 0.84cqw, 11px);
+  font-weight: 800;
+  line-height: 1.12;
+}
+.hero-plaque-text > span { display: block; max-width: 100%; white-space: nowrap; }
+
 .hero-shade {
   position: absolute; inset: 0; z-index: -1;
   background: linear-gradient(90deg, rgba(2,58,30,.98) 0%, rgba(2,62,32,.97) 34%, rgba(2,63,35,.92) 42%, rgba(2,57,35,.16) 55%, rgba(2,53,35,0) 70%);
