@@ -161,6 +161,7 @@
     <section class="hero" aria-labelledby="hero-title">
       <div class="hero-photo" aria-hidden="true"></div>
       <div class="hero-shade" aria-hidden="true"></div>
+      <p class="hero-offer" aria-label="เรียนฟรี หอพักฟรี อาหารฟรี มีรายได้ระหว่างเรียน"><span>เรียนฟรี หอพักฟรี</span><span>อาหารฟรี มีรายได้ระหว่างเรียน</span></p>
       <div class="hero-accent" aria-hidden="true"></div>
       <div class="hero-content">
         <div class="hero-heading-row">
