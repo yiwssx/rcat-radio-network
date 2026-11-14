@@ -61,6 +61,11 @@ jobs:
           grep -q 'assets/index-' /tmp/rrn22-index.html
           curl --fail --silent --show-error http://127.0.0.1:4173/images/RCAT.png -o /tmp/rrn22-logo.png
           cmp public/images/RCAT.png /tmp/rrn22-logo.png
+          # Make sure the browser can load the actual self-hosted Thai font.
+          curl --fail --silent --show-error http://127.0.0.1:4173/fonts/NotoSansThai-VF.ttf -o /tmp/rrn22-thai-font.ttf
+          cmp public/fonts/NotoSansThai-VF.ttf /tmp/rrn22-thai-font.ttf
+          grep -Fq '/images/RCAT.png?v=rrn22-thai-font-1' /tmp/rrn22-index.html
+          echo 'PASS: self-hosted Thai font bytes + original RCAT favicon are served'
           echo 'PASS: local preview loads index, bundled assets and the exact owner-supplied logo'
           # The GitHub runner image can lack Thai fonts, rendering Thai copy as tofu.
           # Install licensed Ubuntu Thai/Noto fonts for screenshots ONLY (not in dist/).

@@ -32,7 +32,9 @@ Defined once in `src/app.css` (Tailwind `@theme inline` maps semantic names):
 | `--station-bright` | `#addc42` | Small functional highlights |
 | `--station-live` | `#de3048` | LIVE chip only |
 
-Typography: Sarabun / Noto Sans Thai / system fallback. Title sizes use CSS `clamp`, not individually pixel-matched text. Radii: `--radius` base 14–18px, hero 25px, player 23px. Spacing: primarily 8/12/16/22/32px.
+Typography: project-hosted Noto Sans Thai variable (100–900 weights) from `listener-web/public/fonts/NotoSansThai-VF.ttf`, fallback to OS Noto Sans Thai/Tahoma. Original upstream source: `google/fonts/ofl/notosansthai/NotoSansThai[wdth,wght].ttf` (SIL Open Font License 1.1; license shipped as `public/fonts/OFL.txt`). This avoids Windows-specific artificial bold/fallback glyph differences. Browser favicon and Apple touch icon point to the owner's **existing original `/images/RCAT.png`**; no reconstruction, no new logo. Text baked inside the owner-supplied campus photograph is raster art and cannot be corrected by web-font changes.
+
+Typography was previously: Sarabun / Noto Sans Thai / system fallback. Title sizes use CSS `clamp`, not individually pixel-matched text. Radii: `--radius` base 14–18px, hero 25px, player 23px. Spacing: primarily 8/12/16/22/32px.
 
 ## Component map
 | UI zone | Primitive | Behavior |

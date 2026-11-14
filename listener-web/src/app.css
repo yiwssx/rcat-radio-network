@@ -1,5 +1,17 @@
 @import "tailwindcss";
 
+/* Self-host the licensed variable font. Never depend on fonts installed on
+   a viewer's Windows, Android or Linux device for Thai shaping and weight. */
+@font-face {
+  font-family: "RCAT Noto Sans Thai";
+  src: url("/fonts/NotoSansThai-VF.ttf") format("truetype");
+  font-style: normal;
+  font-weight: 100 900;
+  font-stretch: 62.5% 100%;
+  font-display: swap;
+}
+
+
 /* RCAT Radio Network / Design System v1
  * shadcn-svelte Button, Card, Badge + semantic Tailwind v4 theme tokens.
  * Sources: SHADCN-SOURCES.md. Brand green is institutional, not a sci-fi theme.
@@ -31,7 +43,7 @@
   --station-bright: #addc42;
   --station-live: #de3048;
   --page-width: 1220px;
-  font-family: "Sarabun", "Noto Sans Thai", "Segoe UI", Tahoma, sans-serif;
+  font-family: "RCAT Noto Sans Thai", "Noto Sans Thai", Tahoma, sans-serif;
   font-synthesis: none;
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
