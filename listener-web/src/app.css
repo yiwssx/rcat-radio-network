@@ -54,3 +54,7 @@
 
 /* Issue #22: unavailable station-only content is visibly labelled, not a dead link. */
 .short-link .short-link-status{position:absolute;bottom:5px;right:8px;padding:3px 6px;border-radius:99px;background:#edf4eb;color:#5f7663;font-size:9px;font-weight:700;line-height:1;white-space:nowrap}
+
+/* Keep explanatory feedback near the cards that were actually clicked, including narrow mobile viewports. */
+.shortcut-grid > .schedule-notice{grid-column:1 / -1;width:100%;max-width:100%;margin:0;gap:12px;font-size:14px;line-height:1.45}
+.shortcut-grid > .schedule-notice button{flex:none;min-height:32px;padding:5px 12px}
