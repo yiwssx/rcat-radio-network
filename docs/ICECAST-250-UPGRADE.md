@@ -55,3 +55,22 @@ Never use docker compose down -v, prune or mass-upgrade the host. If the 2-secon
 The first operator run stopped after a strict model mismatch, and the second stopped in `--plan` with the sole difference `model.services.icecast.image`. Repo evidence confirms the original `testing/compose.feasibility.override.yml` pins Icecast 2.4.4, and the installer copies it to the runtime `radio.override.yml`. The previous script changed only the upstream base file; the override won the merge and the effective image remained old. This was an **upgrade-script defect**, not evidence of Icecast/TLS failing. The corrected preflight renders TWO temporary updated Compose files before changes. On successful preflight, it backs up and updates BOTH image pins. No Icecast restart occurs when preflight fails.
 
 Use the current version from `main`; do not rerun the older script from a stale temporary checkout without `git pull --ff-only`. The running old Icecast image should remain active until `--apply` succeeds. Verify mobile listening separately after the Host reports TLS stream PASS.
+
+
+## Post-rollback diagnostic: TLS on Icecast 2.5 without another radio interruption
+
+Operator evidence from 2026-11-14:
+- Upgrade to 2.5.0 passed the two-layer Compose preflight but failed the script's one-shot, seven-second HTTPS/MP3 readiness check. The script reported rollback to 2.4.4. Since it did not report curl status, bytes or TLS errors, this does not prove that the 2.5 XML is incompatible.
+- The restored old 2.4.4 container was observed running with zero restart count. Both LAN HTTP and HTTPS MP3 returned 200 and 252000 bytes over 12 seconds, TLS verification 0, and curl exit 28 due to the live stream timeout.
+- Old and new images both run as UID 1000. TLS config and PEM are UID 1000, mode 0600, so there is no evidence for a permission mismatch.
+- TLS config uses legacy ssl and ssl-certificate XML tags. The Icecast official January 2026 announcement explicitly states that 2.5.x still reads Icecast 2.4.x XML. Legacy warnings are possible, but a tag alone does not prove TLS failure.
+
+**Before trying another Production upgrade**, execute this radio-only throwaway canary in the approved IOT host from the reviewed Git checkout:
+
+    sudo bash scripts/diagnose-icecast-2.5-tls.sh
+
+The script requires the already cached 2.5.0 image, mounts private TLS XML and PEM read-only, bypasses the image's XML-editing entrypoint, and exposes HTTPS only on host loopback 127.0.0.1:8866. It sends SNI radio.rcat.ac.th and checks the real certificate chain. It removes its own container on exit and does not stop or recreate Production 2.4.4. If port 8866 is busy, stop rather than affecting its owner.
+
+An affirmative canary result proves **only that the existing XML + PEM work with Icecast 2.5 TLS startup**. The canary has no Live DJ or AutoDJ source and cannot test MP3 or the mobile 2-second problem. If it succeeds, next prioritize inspecting the Production upgrade's one-shot 7-second curl readiness and Liquidsoap source reconnect timing rather than changing TLS XML without evidence. If it fails, diagnose the ephemeral container's TLS logs before any Production changes.
+
+Official sources: https://icecast.org/news/end-of-support-2_4_4/ and https://www.icecast.org/docs/icecast-latest/config_file/.
