@@ -42,7 +42,8 @@ fi
 echo "PROBE=STARTING_EPHEMERAL_ICECAST_250"
 echo "PROBE_SCOPE=LOOPBACK_127.0.0.1_8866_ONLY"
 echo "PRODUCTION_ICECAST=UNTOUCHED"
-docker run --detach --rm \
+created=1
+docker run --detach \
   --name "$name" --network bridge \
   --publish "127.0.0.1:8866:8443" \
   --user "1000:0" \
@@ -50,7 +51,6 @@ docker run --detach --rm \
   --mount "type=bind,source=$bundle,target=/etc/icecast-bundle.pem,readonly" \
   --entrypoint icecast \
   "$image" -c /etc/icecast.xml >/dev/null
-created=1
 
 status="NOT_READY"
 for attempt in 1 2 3 4 5 6; do
@@ -76,16 +76,21 @@ for attempt in 1 2 3 4 5 6; do
 done
 echo "PROBE_STATUS=$status"
 
-# Only the ephemeral canary's logs. Omit raw configuration and secret material.
-# The isolated container is auto-removed on script exit.
+# Logs are inspected inside the script. Never print raw canary logs or XML,
+# because private TLS settings and stream credentials belong only on the Host.
 if [[ "$status" != "TLS_OK" ]]; then
-  echo "PROBE_LOGS_BEGIN"
-  docker logs --tail 30 "$name" 2>&1 |
-    sed -E \
-      -e 's/(password|passwd|secret|token|authorization)([=: ]+)[^ ]+/\1\2[REDACTED]/Ig' \
-      -e 's#/(etc|opt|root)/[^ ]+\.pem#[PEM_PATH]#g' ||
-      true
-  echo "PROBE_LOGS_END"
+  logs="$(docker logs --tail 100 "$name" 2>&1 || true)"
+  if [[ "$logs" == *"Invalid cert file"* || "$logs" == *"No TLS capability"* ]]; then
+    echo "PROBE_LOG_HINT=TLS_CERTIFICATE_OR_TLS_CONTEXT"
+  elif [[ "$logs" == *"Permission denied"* ]]; then
+    echo "PROBE_LOG_HINT=FILE_PERMISSION"
+  elif [[ "$logs" == *"Address already in use"* || "$logs" == *"bind failed"* ]]; then
+    echo "PROBE_LOG_HINT=LISTENER_BIND"
+  elif [[ "$logs" == *"Error"* || "$logs" == *"ERROR"* || "$logs" == *"WARN"* ]]; then
+    echo "PROBE_LOG_HINT=ICECAST_ERROR_OR_WARNING"
+  else
+    echo "PROBE_LOG_HINT=NO_RECOGNIZED_ERROR"
+  fi
 fi
 if [[ "$status" == "TLS_OK" ]]; then
   echo "PROBE_RESULT=TLS_CONFIG_COMPATIBLE_ICECAST_250"
