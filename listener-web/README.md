@@ -7,6 +7,32 @@ Issue #22 only: a responsive, public, single-station listening UI using **Svelte
 - Intended existing production destination (requires **separate operator approval**): RMS Apache `/var/www/radio-listener/`
 - No Node runtime, new container, proxy change, authentication, backend service, or LibreTime/Icecast configuration change. A small optional **public read-only** client-side metadata integration is described below.
 
+## Build on any new machine (no previous checkout required)
+
+You do **not** need access to the original Windows PC, its `$HOME/rcat-radio-listener-build` directory, `node_modules`, generated `dist`, or local archive. The authoritative source is the **existing PR #25 branch on GitHub**. Work in a fresh, non-Production folder.
+
+Prerequisites: Git, Bash, npm, and a Vite 7-supported Node.js release (Node 20.19+ or 22.12+; Node 24 LTS recommended). On Windows use **Git Bash**; on Linux/macOS use a Bash shell. Verify with `git --version`, `node --version`, and `npm --version`.
+
+From the directory **where you want the new checkout** (the clone command creates a subdirectory):
+
+```bash
+git clone --depth 1 --single-branch \
+  --branch feat/issue-22-green-listener-svelte \
+  https://github.com/yiwssx/rcat-radio-network.git
+
+cd rcat-radio-network/listener-web
+bash scripts/prepare-static-release.sh
+npm run preview
+```
+
+Open `http://127.0.0.1:4173/` on the new computer. If you **already cloned** this branch, run `git pull --ff-only` from that checkout instead of cloning again. **Do not use** hard-coded paths from a previous person's PC or pull/reset the historical Production checkout.
+
+The current build gate uses `npm install` when `package-lock.json` is not committed and `npm ci` once a reviewed lockfile is committed. It runs Svelte checks, focused metadata parser checks, Vite build, and a source-faithful college-logo SHA-256 comparison. It then creates `listener-web/artifacts/rrn22-listener-dist.tar.gz` and `.sha256`, **only on the computer where it was run**. A new computer must generate its own candidate; do not claim that the old machine's archive is available locally.
+
+The new-machine build needs **no radio server installation**. With `VITE_LIBRETIME_LIVE_INFO_URL` unset, the optional previous/current/next cards show an honest “metadata not connected” state; setting up a new computer does **not** activate a public LibreTime API or fix CORS. Only configure an independently authorized public read-only HTTPS endpoint, with no keys or internal URLs.
+
+This local preview/build **does not deploy** the listener. Preserve the existing RMS Apache webroot and follow a separately authorized backup/cutover procedure before any Production update.
+
 ## Local use
 
 For a normal local development session, run `npm install` (or `npm ci` after the lockfile is committed), then `npm run dev`. For the release gate, use the command below to run the typecheck and production build together. Do not execute the original `scripts/rrn05-publish-listener-rms.sh` first-install script on an existing listener webroot.
@@ -25,7 +51,7 @@ Following owner feedback that repeated custom CSS overrides produced inconsisten
 - Only the existing player/buttons/shortcuts were converted. The native audio/volume behavior and external URLs remain unchanged.
 - **Do not run `shadcn-svelte init` indiscriminately:** it can replace the maintained `src/app.css` and negate the owner-approved theme. Review CLI output and only add needed components.
 
-The previous Windows compiler/Build PASS applied to the old layout and **does not validate this migration**. Re-run `bash scripts/prepare-static-release.sh` once on the Windows build machine, then perform one focused desktop/mobile visual and interactive smoke test before approving release. The local package-lock may be stale after new dependencies: the release script now refreshes untracked lockfiles using `npm install`, then uses `npm ci` after a reviewed lockfile is committed to the PR.
+The previous Windows compiler/Build PASS applied to the old layout and **does not validate this migration**. Re-run `bash scripts/prepare-static-release.sh` once on any supported networked build machine, then perform one focused desktop/mobile visual and interactive smoke test before approving release. The local package-lock may be stale after new dependencies: the release script now refreshes untracked lockfiles using `npm install`, then uses `npm ci` after a reviewed lockfile is committed to the PR.
 
 ## One-command build and release-candidate preparation
 
