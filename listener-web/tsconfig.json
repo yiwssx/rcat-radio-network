@@ -23,7 +23,8 @@
       "$lib/*": [
         "./src/lib/*"
       ]
-    }
+    },
+    "noEmit": true
   },
   "include": [
     "src/**/*.ts",
