@@ -11,7 +11,7 @@ jobs:
     name: Sign reviewed Radio source (not deployed vendor images)
     if: github.ref == 'refs/heads/main' && github.actor == 'yiwssx'
     runs-on: ubuntu-24.04
-    timeout-minutes: 10
+    timeout-minutes: 20
     permissions:
       contents: read
       id-token: write
@@ -42,6 +42,19 @@ jobs:
           name="rcat-radio-source-${GITHUB_SHA}.tar.gz"
           git archive --format=tar --prefix="rcat-radio-source-${GITHUB_SHA}/" "$GITHUB_SHA" | gzip -n -9 > "release/$name"
           (cd release && sha256sum "$name" > "$name.sha256")
+      - name: Set up public registry manifest inspection (no pulls or pushes)
+        uses: docker/setup-buildx-action@v3
+      - name: Verify complete vendor image-set public manifest bytes
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 scripts/rrn-hda06-vendor-manifest.py
+          cd release
+          sha256sum -c "vendor-image-set-${GITHUB_SHA}.json.sha256"
+      - name: Sign exact vendor-image-set receipt bytes
+        uses: actions/attest@v4
+        with:
+          subject-path: release/vendor-image-set-${{ github.sha }}.json
       - name: Sign exact source archive bytes with GitHub artifact attestation
         uses: actions/attest@v4
         with:
@@ -53,5 +66,7 @@ jobs:
           path: |
             release/rcat-radio-source-${{ github.sha }}.tar.gz
             release/rcat-radio-source-${{ github.sha }}.tar.gz.sha256
+            release/vendor-image-set-${{ github.sha }}.json
+            release/vendor-image-set-${{ github.sha }}.json.sha256
           if-no-files-found: error
           retention-days: 14
