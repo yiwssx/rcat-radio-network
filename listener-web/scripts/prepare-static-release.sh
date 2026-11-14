@@ -5,6 +5,9 @@ set -Eeuo pipefail
 readonly ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 cd "$ROOT"
 
+# Invalidate any stale candidate before attempting a fresh build.
+rm -f "$ROOT/artifacts/rrn22-listener-dist.tar.gz" "$ROOT/artifacts/rrn22-listener-dist.tar.gz.sha256"
+
 command -v node >/dev/null || { echo 'BLOCKED: Node.js not installed' >&2; exit 1; }
 command -v npm >/dev/null || { echo 'BLOCKED: npm not installed' >&2; exit 1; }
 
