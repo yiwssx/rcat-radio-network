@@ -11,7 +11,6 @@ import json
 import os
 from pathlib import Path
 import re
-import shutil
 import subprocess
 import sys
 import tempfile
@@ -58,16 +57,17 @@ def call(args, timeout=120, allowed=(0,)):
     return result
 
 
-def compose_args(source_path=COMPOSE_FILE):
+def compose_args(source_path=COMPOSE_FILE, override_path=OVERRIDE):
     return [
         "docker", "compose", "--project-directory", str(RUNTIME),
         "--env-file", str(ENV_FILE), "-p", PROJECT,
-        "-f", str(source_path), "-f", str(OVERRIDE),
+        "-f", str(source_path), "-f", str(override_path),
     ]
 
 
-def model(source_path=COMPOSE_FILE):
-    return json.loads(call(compose_args(source_path) + ["config", "--format", "json"]).stdout)
+def model(source_path=COMPOSE_FILE, override_path=OVERRIDE):
+    return json.loads(call(compose_args(source_path, override_path)
+                           + ["config", "--format", "json"]).stdout)
 
 
 def inspect():
@@ -111,7 +111,10 @@ def check_runtime():
             "Base Compose must contain exactly one pinned 2.4.4 image")
     require(call(["docker", "image", "inspect", OLD]).returncode == 0,
             "Old rollback image not available")
-    return before, src
+    override_src = OVERRIDE.read_text(encoding="utf-8")
+    # The original RRN-01 override pins Icecast 2.4.4 too.
+    build_override_candidate(override_src)
+    return before, src, override_src
 
 
 def atomic_replace(path, text):
@@ -167,26 +170,58 @@ def verify_model(before, after):
 
 
 def build_candidate(src):
-    replacement = IMAGE_PATTERN.sub(lambda m: m.group(1) + NEW + m.group(2),
-                                    src)
-    require(replacement != src, "No pinned image replaced")
+    replacement, count = IMAGE_PATTERN.subn(
+        lambda m: m.group(1) + NEW + m.group(2), src
+    )
+    require(count == 1, "Expected exactly one base Icecast image pin")
     return replacement
 
 
-def preflight_candidate(before, replacement):
-    # Use a private temporary Compose file in the SAME runtime directory.
-    # It never replaces the active config, pulls images or restarts containers.
-    fd, candidate = tempfile.mkstemp(
-        prefix=".radio-icecast-preflight-", suffix=".yml", dir=RUNTIME
+def build_override_candidate(src):
+    # Change the image within the Icecast service only, never other services.
+    section_pattern = re.compile(
+        r"(?ms)^  icecast:[ \t]*\n(.*?)(?=^  [A-Za-z_][\w-]*:[ \t]*\n|\Z)"
     )
+    sections = list(section_pattern.finditer(src))
+    require(len(sections) == 1,
+            "Expected exactly one Icecast service in radio.override.yml")
+    section = sections[0]
+    body, count = IMAGE_PATTERN.subn(
+        lambda m: m.group(1) + NEW + m.group(2), section.group(1)
+    )
+    require(count == 1,
+            "Expected exactly one pinned 2.4.4 image in Icecast override")
+    return src[:section.start(1)] + body + src[section.end(1):]
+
+
+def preflight_candidate(before, base_replacement, override_replacement):
+    # Render both candidates, without editing live files or pulling images.
+    candidates = []
     try:
-        os.fchmod(fd, 0o600)
-        with os.fdopen(fd, "w", encoding="utf-8") as fp:
-            fp.write(replacement)
-        verify_model(before, model(Path(candidate)))
+        for content in (base_replacement, override_replacement):
+            fd, name = tempfile.mkstemp(
+                prefix=".radio-icecast-preflight-", suffix=".yml",
+                dir=RUNTIME
+            )
+            candidates.append(Path(name))
+            os.fchmod(fd, 0o600)
+            with os.fdopen(fd, "w", encoding="utf-8") as fp:
+                fp.write(content)
+                fp.flush()
+            require(candidates[-1].is_file(),
+                    "Could not prepare temporary Compose candidate")
+        verify_model(before, model(*candidates))
     finally:
-        if os.path.exists(candidate):
-            os.unlink(candidate)
+        for candidate in candidates:
+            candidate.unlink(missing_ok=True)
+
+
+def write_snapshot(path, content):
+    fd = os.open(path, os.O_WRONLY | os.O_CREAT | os.O_EXCL, 0o600)
+    with os.fdopen(fd, "w", encoding="utf-8") as fp:
+        fp.write(content)
+        fp.flush()
+        os.fsync(fp.fileno())
 
 
 def recreate_icecast():
@@ -229,14 +264,16 @@ def main():
                 "Apply needs --approve-brief-stream-reconnect")
 
     check_files()
-    before, src = check_runtime()
+    before, src, override_src = check_runtime()
     print("RADIO_UPGRADE_SCOPE=ICECAST_ONLY")
     print("SOURCE_IMAGE=" + OLD)
     print("TARGET_IMAGE=" + NEW)
     print("LIBRETIME=UNCHANGED_4.5.0")
     replacement = build_candidate(src)
-    preflight_candidate(before, replacement)
+    override_replacement = build_override_candidate(override_src)
+    preflight_candidate(before, replacement, override_replacement)
     print("RADIO_UPGRADE_COMPOSE_DIFF=ICECAST_IMAGE_ONLY")
+    print("RADIO_UPGRADE_IMAGE_PINS=BASE_AND_RADIO_OVERRIDE")
     if not args.apply:
         print("RADIO_UPGRADE=READY_PLAN_ONLY")
         return
@@ -245,15 +282,23 @@ def main():
     call(["docker", "pull", NEW], timeout=300)
     now = dt.datetime.now(dt.timezone.utc).strftime("%Y%m%dT%H%M%SZ")
     backup = BACKUPS / ("icecast-compose-before-2.5.0-" + now + ".yml")
-    require(not backup.exists(), "Refusing overwrite of rollback snapshot")
-    with backup.open("x", encoding="utf-8") as fp:
-        os.chmod(backup, 0o600)
-        fp.write(src)
-    changed = False
+    override_backup = BACKUPS / (
+        "icecast-override-before-2.5.0-" + now + ".yml"
+    )
+    require(not backup.exists() and not override_backup.exists(),
+            "Refusing overwrite of rollback snapshots")
+    write_snapshot(backup, src)
+    write_snapshot(override_backup, override_src)
+    originals = ((COMPOSE_FILE, src), (OVERRIDE, override_src))
+    changed = []
     recreation_attempted = False
     try:
-        atomic_replace(COMPOSE_FILE, replacement)
-        changed = True
+        for path, content in (
+            (COMPOSE_FILE, replacement),
+            (OVERRIDE, override_replacement),
+        ):
+            atomic_replace(path, content)
+            changed.append(path)
         verify_model(before, model())
         recreation_attempted = True
         recreate_icecast()
@@ -261,7 +306,9 @@ def main():
     except Exception:
         if changed:
             try:
-                atomic_replace(COMPOSE_FILE, src)
+                for path, original in originals:
+                    if path in changed:
+                        atomic_replace(path, original)
                 if recreation_attempted:
                     recreate_icecast()
                     print("RADIO_UPGRADE_ROLLBACK=OLD_IMAGE_RESTORED")
@@ -273,6 +320,7 @@ def main():
         raise
     print("RADIO_UPGRADE=HOST_HTTPS_STREAM_PASS")
     print("ROLLBACK_COMPOSE_SNAPSHOT=" + str(backup))
+    print("ROLLBACK_OVERRIDE_SNAPSHOT=" + str(override_backup))
     print("MOBILE_2_SECOND_PLAYBACK=NOT_YET_VERIFIED")
     print("OTHER_RADIO_SERVICES_AND_VOLUMES=UNMODIFIED_BY_SCRIPT")
 
