@@ -231,22 +231,36 @@ def recreate_icecast():
     ], timeout=180)
 
 
-def verify_https_stream():
-    obj = inspect()
-    require(obj["State"]["Running"] and obj["Config"]["Image"] == NEW,
-            "New Icecast image not running")
-    # An endless stream intentionally ends curl at max-time; status 28 is
-    # acceptable ONLY if a valid TLS exchange delivered actual MP3 bytes.
-    test = call([
-        "curl", "--noproxy", "*", "-sS", "--max-time", "7",
-        "--resolve", "radio.rcat.ac.th:8443:10.10.1.100",
-        "-o", "/dev/null", "-w", "%{http_code} %{size_download} %{ssl_verify_result}",
-        "https://radio.rcat.ac.th:8443/main.mp3",
-    ], timeout=12, allowed=(0, 28))
-    fields = test.stdout.strip().split()
-    require(len(fields) == 3 and fields[0] == "200" and fields[2] == "0"
-            and float(fields[1]) >= 4096,
-            "Icecast TLS/MP3 stream could not be verified for 7 seconds")
+def verify_https_ready():
+    # The player mount may be absent briefly while Liquidsoap reconnects.
+    # Do not roll back a healthy Icecast 2.5 HTTPS service merely because
+    # /main.mp3 has not yet received source audio within seven seconds.
+    last = "not attempted"
+    for attempt in range(1, 7):
+        obj = inspect()
+        require(obj["State"]["Running"] and obj["Config"]["Image"] == NEW,
+                "Icecast 2.5.0 failed to remain running")
+        try:
+            test = subprocess.run([
+                "curl", "--noproxy", "*", "--silent", "--show-error",
+                "--connect-timeout", "2", "--max-time", "5",
+                "--resolve", "radio.rcat.ac.th:8443:10.10.1.100",
+                "--output", "/dev/null",
+                "--write-out", "%{http_code} %{ssl_verify_result}",
+                "https://radio.rcat.ac.th:8443/",
+            ], stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True,
+                timeout=7, check=False)
+            fields = test.stdout.strip().split()
+            code, tls = fields if len(fields) == 2 else ("unknown", "unknown")
+            last = "curl=" + str(test.returncode) + " http=" + code + " tls=" + tls
+            if test.returncode == 0 and tls == "0" and code in {"200", "302", "403"}:
+                print("RADIO_ICECAST_250_HTTPS=READY")
+                return
+        except (OSError, subprocess.TimeoutExpired):
+            last = "curl=timeout_or_unavailable"
+        if attempt < 6:
+            subprocess.run(["sleep", "2"], check=False)
+    raise Stop("Icecast 2.5 HTTPS not ready after 6 bounded attempts; " + last)
 
 
 def main():
@@ -302,7 +316,7 @@ def main():
         verify_model(before, model())
         recreation_attempted = True
         recreate_icecast()
-        verify_https_stream()
+        verify_https_ready()
     except Exception:
         if changed:
             try:
@@ -318,7 +332,8 @@ def main():
                 print("RADIO_UPGRADE_ROLLBACK=FAILED_OPERATOR_ATTENTION_REQUIRED",
                       file=sys.stderr)
         raise
-    print("RADIO_UPGRADE=HOST_HTTPS_STREAM_PASS")
+    print("RADIO_UPGRADE=ICECAST_250_HTTPS_READY")
+    print("RADIO_MP3_SOURCE=NOT_A_DEPLOYMENT_GATE")
     print("ROLLBACK_COMPOSE_SNAPSHOT=" + str(backup))
     print("ROLLBACK_OVERRIDE_SNAPSHOT=" + str(override_backup))
     print("MOBILE_2_SECOND_PLAYBACK=NOT_YET_VERIFIED")

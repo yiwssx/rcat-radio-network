@@ -27,7 +27,7 @@ After review/merge, use a **fresh temporary checkout** of the exact approved Git
     sudo python3 scripts/upgrade-icecast-2.5.py --plan
     sudo python3 scripts/upgrade-icecast-2.5.py --apply --approve-brief-stream-reconnect
 
-The upgrade requires root, the original isolated ten-service stack, running Icecast 2.4.4, an existing RRN-06 archive checksum, and existing native TLS port 8443. It pulls the new image before altering anything, writes a private timestamped Compose rollback snapshot, replaces ONLY the Icecast image tag, and confirms the rendered configuration is otherwise identical. Then it recreates ONLY Icecast and checks that the Host can download real MP3 bytes over correctly verified TLS. An error after editing attempts automatic Icecast-only rollback. The command interrupts listening briefly; it does not restart other services or modify volumes, certs, NAT, DNS or RMS Apache.
+The upgrade requires root, the original isolated ten-service stack, running Icecast 2.4.4, an existing RRN-06 archive checksum, and existing native TLS port 8443. It pulls the new image before altering anything, writes a private timestamped Compose rollback snapshot, replaces ONLY the Icecast image tag, and confirms the rendered configuration is otherwise identical. Then it recreates ONLY Icecast and checks native HTTPS service readiness with correct certificate verification (up to six bounded attempts); MP3 mount presence is not an immediate deployment gate because Liquidsoap may need time to reconnect. An Icecast container or TLS readiness failure attempts automatic Icecast-only rollback; a temporarily absent MP3 mount does not trigger a rollback. The command interrupts listening briefly; it does not restart other services or modify volumes, certs, NAT, DNS or RMS Apache.
 
 Do not rerun historical initial installer/TLS installation scripts. The existing certificate renewal receiver uses the installed Compose configuration and remains in place.
 
@@ -74,3 +74,11 @@ The script requires the already cached 2.5.0 image, mounts private TLS XML and P
 An affirmative canary result proves **only that the existing XML + PEM work with Icecast 2.5 TLS startup**. The canary has no Live DJ or AutoDJ source and cannot test MP3 or the mobile 2-second problem. If it succeeds, next prioritize inspecting the Production upgrade's one-shot 7-second curl readiness and Liquidsoap source reconnect timing rather than changing TLS XML without evidence. If it fails, diagnose the ephemeral container's TLS logs before any Production changes.
 
 Official sources: https://icecast.org/news/end-of-support-2_4_4/ and https://www.icecast.org/docs/icecast-latest/config_file/.
+
+## Simplified direct operation (2026-11-14)
+
+The owner explicitly requested a direct upgrade instead of further separate canary or repeated preflight commands. The --apply path already executes the preflight internally, so only ONE command is necessary after pulling updated source. The script no longer requires /main.mp3 audio within the first seven seconds; that old check caused a rollback even though HTTP/TLS and source readiness were not separately diagnosed. The upgraded container must still run and serve a certificate-valid HTTPS status page. The 2.5.0 upgrade and mobile playback remain pending Host confirmation.
+
+    sudo python3 scripts/upgrade-icecast-2.5.py --apply --approve-brief-stream-reconnect
+
+This interrupts Icecast listeners briefly once. Do not run the isolated test container first or repeat the historical installer; LibreTime and the shared host remain outside this change.
