@@ -6,7 +6,7 @@ This repository contains RCAT deployment scripts, configuration examples and ope
 
 ## Project status
 
-**Live streaming fix accepted (14 November 2026):** Operator reported that mobile listening previously stopped after ~2 seconds **only on 4G/5G**, while Wi-Fi and desktop listening were unaffected. After the guarded Icecast upgrade to 2.5.0, native HTTPS readiness passed and the operator confirmed mobile listening works. This is a successful user-reported symptom resolution, **not proof of a specific TLS/buffer root cause**. LibreTime remains 4.5.0; the earlier 2.4.4 installer and historical stack decision remain historical baseline documents.
+**Live streaming fix accepted (14 November 2026):** Operator reported that mobile listening previously stopped after ~2 seconds **only on 4G/5G**, while Wi-Fi and desktop listening were unaffected. After the guarded Icecast upgrade to 2.5.0, native HTTPS readiness passed and the operator confirmed mobile listening works **including continuous playback when switching to another mobile app**; background playback had also failed before the upgrade. This confirms app-switch background listening as observed, not untested lock-screen, power-saving, or every mobile OS behavior. This is a successful user-reported symptom resolution, **not proof of a specific TLS/buffer root cause**. LibreTime remains 4.5.0; the earlier 2.4.4 installer and historical stack decision remain historical baseline documents.
 
 **Main technical delivery is complete.** [Master Tracker #1](https://github.com/yiwssx/rcat-radio-network/issues/1) and all seven RRN-00–RRN-06 work items are closed within the owner-approved scope.
 
