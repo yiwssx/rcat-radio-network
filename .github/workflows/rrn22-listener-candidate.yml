@@ -59,6 +59,24 @@ jobs:
             exit 1
           fi
           grep -q 'assets/index-' /tmp/rrn22-index.html
+          # The existing RMS Apache may declare a legacy response charset.
+          # Keep only the static HTML head's Thai copy ASCII-encoded, so DOM
+          # title/description decode correctly regardless of that header.
+          node <<'CHECK_THAI_HEAD'
+          const fs = require('node:fs');
+          const html = fs.readFileSync('/tmp/rrn22-index.html', 'utf8');
+          const escape = (str) => Array.from(str, ch =>
+            ch.codePointAt(0) > 127 ? '&#' + ch.codePointAt(0) + ';' : ch
+          ).join('');
+          const title = 'RCAT Radio Network | ฟังวิทยุออนไลน์';
+          const description = 'RCAT Radio Network สถานีวิทยุออนไลน์ วิทยาลัยเกษตรและเทคโนโลยีร้อยเอ็ด รับฟังวิทยุสดผ่านเว็บไซต์';
+          if (!html.includes('<title>' + escape(title) + '</title>') ||
+              !html.includes('name="description" content="' + escape(description) + '"')) {
+            console.error('FAIL: built static <head> lost the encoding-safe Thai title or description');
+            process.exit(1);
+          }
+          console.log('PASS: built HTML head keeps exact Thai title/description as ASCII character references');
+          CHECK_THAI_HEAD
           curl --fail --silent --show-error http://127.0.0.1:4173/images/RCAT.png -o /tmp/rrn22-logo.png
           cmp public/images/RCAT.png /tmp/rrn22-logo.png
           # Make sure the browser can load the actual self-hosted Thai font.
