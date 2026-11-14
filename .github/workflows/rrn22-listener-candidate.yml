@@ -62,6 +62,15 @@ jobs:
           curl --fail --silent --show-error http://127.0.0.1:4173/images/RCAT.png -o /tmp/rrn22-logo.png
           cmp public/images/RCAT.png /tmp/rrn22-logo.png
           echo 'PASS: local preview loads index, bundled assets and the exact owner-supplied logo'
+          # The GitHub runner image can lack Thai fonts, rendering Thai copy as tofu.
+          # Install licensed Ubuntu Thai/Noto fonts for screenshots ONLY (not in dist/).
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq --no-install-recommends fonts-noto-core fonts-thai-tlwg
+          fc-cache -f
+          if [[ -z "$(fc-list :lang=th)" ]]; then
+            echo 'FAIL: no Thai font available for meaningful visual screenshots'
+            exit 1
+          fi
           # Render the COMPILED Svelte UI with the preinstalled runner browser.
           # Audio is not autoplayed; no real station endpoint or credentials are used.
           chrome_bin="$(command -v google-chrome || command -v chromium || true)"
