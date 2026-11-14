@@ -5,7 +5,7 @@ Issue #22 only: a responsive, public, single-station listening UI using **Svelte
 - Existing stream: `https://radio.rcat.ac.th:8600/main.mp3`
 - Static output: `npm run build` → `dist/`
 - Intended existing production destination (requires **separate operator approval**): RMS Apache `/var/www/radio-listener/`
-- No Node runtime, new container, proxy change, auth, backend, API integration, or LibreTime/Icecast configuration change.
+- No Node runtime, new container, proxy change, authentication, backend service, or LibreTime/Icecast configuration change. A small optional **public read-only** client-side metadata integration is described below.
 
 ## Local use
 
@@ -13,7 +13,7 @@ For a normal local development session, run `npm install` (or `npm ci` after the
 
 The **hero currently uses a local reference illustration adapted from the owner-selected design**, not a verified campus photograph. The page falls back to a styled green background if unavailable. Do not misrepresent this illustration as an authenticated photo of the campus. **The college emblem is the exact, unmodified owner-supplied `RCAT.png`** stored locally at `public/images/RCAT.png` and served from `/images/RCAT.png`, with no external image URL or generated/reconstructed logo.
 
-Playback state starts neutral and changes only on audio events. Song metadata, music schedules, social feeds, and other UI mockup cards are intentionally not implemented.
+Playback state starts neutral and changes only on audio events. The optional song timeline reads just **previous/current/next** playout metadata when a verified public LibreTime API URL is configured; full song history, music schedules and social feeds are not implemented.
 
 ## Design System v1 — shadcn-svelte manual integration (2026-11-14)
 
@@ -49,6 +49,25 @@ Before approving a live release, launch the locally compiled preview with `npm r
 
 The hero is currently an owner-approved **design-reference illustration**, not an authentic college photograph. Obtain owner sign-off for public use of that specific asset or replace it with an authorized real campus image without inventing college signage. Social-brand logo usage must also satisfy each platform's branding requirements (see `ICON-SOURCES.md`).
 
+## Previous / Now / Next metadata (owner-approved UI addition, 2026-11-14)
+
+The `TrackTimeline.svelte` below the shortcuts uses **existing LibreTime 4.5.0 `/api/live-info-v2/` data** with the documented `tracks.previous`, `tracks.current` and `tracks.next` shape. It displays one item in each group, **not** an invented album feed or multiple-song listening history. A live DJ may supply a live-program label instead of music track titles. Inactive, empty, malformed, timed-out and unreachable endpoints show a plain unavailable state, never fictitious titles or stale songs.
+
+The public RCAT LibreTime API endpoint **could not be reached/verified from this environment**. The new view therefore remains visible but unconfigured by default; **no credentials or internal endpoint are embedded in the client**. An operator may only set an independently authorized, publicly readable URL (prefer a pre-existing cached, same-origin HTTPS endpoint), e.g. in a local **uncommitted** environment:
+
+```bash
+# Set only to an actual operator-verified public HTTPS URL with CORS access.
+# Never use your private LibreTime admin/API key or internal IP address.
+export VITE_LIBRETIME_LIVE_INFO_URL='https://<approved-public-endpoint>/api/live-info-v2/'
+bash scripts/prepare-static-release.sh
+```
+
+The example URL above is deliberately a placeholder, **not** a claim that RCAT already exposes this address. Leave the variable unset to avoid any metadata requests until the operator verifies an accessible, anonymous JSON response with the `tracks` schema. If the endpoint is a different origin, its CORS policy must explicitly allow the listener origin; the frontend does **not** bypass CORS or publish the private LibreTime Admin UI. **Do not open Public API / reverse proxy / firewall as an automatic side effect of this UI change.**
+
+For an already-authorized public endpoint, the page fetches with `credentials: omit`, at most once per 90 seconds while visible, with an eight-second timeout, cancellation on unmount and no persistent storage. If LibreTime reports a live source it is labeled as a live program; no fabricated next-song data. Browser tabs not in view skip polling. At scale, prefer an approved cached static JSON source as recommended by LibreTime; do not direct unlimited public listener traffic to the admin backend.
+
+Focused local parser test: `npm run test:live-info` (10 fixtures/assertions for AutoDJ, Live DJ, empty, invalid and long payloads). This command is included in the existing build gate, not a new CI workflow. A **new actual Svelte check/build is still required** after these changes; previous owner checks predated the metadata feature.
+
 ## Release scope (operator-only)
 
 Preserve the current static webroot contents first, copy **only** the reviewed `dist/` contents into that same webroot, and verify page UTF-8, mobile layout and one player interaction. No Apache reload needed when only static files change. A rollback restores the preserved webroot files; never touch Icecast/LibreTime or shared vhosts.
@@ -57,6 +76,6 @@ Preserve the current static webroot contents first, copy **only** the reviewed `
 
 This source revision uses the **exact owner-selected green Thai-radio screenshot** as the visual reference for desktop and mobile layout. Core HTML/Svelte controls remain interactive: no image of the whole webpage is used in place of a frontend. The hero background remains **adapted from the owner-provided AI mockup** for visual comparison and is not authenticated campus photography. The college crest, by contrast, is now **the exact PNG file provided by the owner**, committed without generation or editing. The hero background still requires a rights-cleared actual college photograph before public release. The current design is not claimed as a 100% pixel-identical match across devices and font stacks.
 
-The schedule and station-activity tiles open truthful "not yet published" messages; they do not invent separate pages or event feeds. News/contact/social links use known existing college destinations. Stream playback uses HTMLAudioElement with user-initiated play, real playing/waiting/error events, and no fictitious LIVE success state. No metadata / Now Playing feature was added.
+The schedule and station-activity tiles open truthful "not yet published" messages; they do not invent separate pages or event feeds. News/contact/social links use known existing college destinations. Stream playback uses HTMLAudioElement with user-initiated play, real playing/waiting/error events, and no fictitious LIVE success state. A later owner-authorized **previous/current/next** music metadata display was added in Issue #22, separately from the existing audio playback controls.
 
 Reference-size Chromium **HTML/CSS presentation previews**, rather than compiled Svelte captures, were produced at 1208×864 and 319×864 (the two panels of the owner-supplied reference), plus 1440×900 and 390×844 for responsive checks. These do not establish a successful Svelte/Vite build; no dependency installation or radio playback validation is implied.
