@@ -63,4 +63,4 @@ Release acceptance now additionally checks the song timeline's 3-card layout at 
 ## Release boundary
 The previous 2026-11-14 Windows `svelte-check: 0 errors` and Vite build PASS apply to the **earlier code**, not this new component migration. After the new sources are pulled, rebuild **once** on the networked Windows builder, correct actual diagnostics and perform one real desktop/mobile Browser + audio smoke test. Existing `scripts/prepare-static-release.sh` still creates a candidate only, never deploys. Preserve the existing Apache listener webroot and rollback path; do not modify Icecast/LibreTime.
 
-The hero remains an owner-approved **concept illustration**, not authenticated campus photography. Brand-logo trademark review is separate from the MIT/ISC license of SVG code.
+The hero now uses the owner-attached RCAT college photograph, cropped only to omit the tiny pre-rendered caption. The exact offer text is separate accessible HTML, not AI-generated artwork. Original photo resolution 391×234 limits genuine sharpness despite the 3840px SVG canvas. Brand-logo trademark review is separate from the MIT/ISC license of SVG code.
