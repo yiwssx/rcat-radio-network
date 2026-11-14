@@ -136,7 +136,7 @@
   .song-card-head { display:flex; align-items:center; justify-content:space-between; gap:12px; }
   .song-number { font-size:11px; font-weight:900; letter-spacing:.12em; color:#80968a; }
   .song-card-head :global(.song-role) { font-size:11px; font-weight:800; }
-  .song-information h3 { margin:0; font-size:17px; font-weight:800; line-height:1.34; overflow-wrap:anywhere; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden; }
+  .song-information h3 { margin:0; font-size:17px; font-weight:800; line-height:1.34; overflow-wrap:anywhere; display:-webkit-box; line-clamp:2; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden; }
   .song-information p { margin:7px 0 0; font-size:12px; line-height:1.45; color:var(--muted-foreground); overflow-wrap:anywhere; }
   .song-footnote { margin:12px 0 0; font-size:11px; color:var(--muted-foreground); }
   .song-mobile-expand { display:none; }
