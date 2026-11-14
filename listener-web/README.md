@@ -15,6 +15,18 @@ The **hero currently uses a local reference illustration adapted from the owner-
 
 Playback state starts neutral and changes only on audio events. Song metadata, music schedules, social feeds, and other UI mockup cards are intentionally not implemented.
 
+## Design System v1 — shadcn-svelte manual integration (2026-11-14)
+
+Following owner feedback that repeated custom CSS overrides produced inconsistent layouts, this Listener now uses **actual upstream MIT-licensed shadcn-svelte Button/Card/Badge source components** under `src/lib/components/ui/` (source and hashes in `SHADCN-SOURCES.md`).
+
+- Tokens and one consolidated responsive stylesheet: `src/app.css`; spec: `DESIGN-SYSTEM.md`.
+- `components.json`, Vite/TypeScript `$lib` aliases, and `cn` + `tailwind-variants` make further official shadcn-svelte additions possible.
+- This is a **manual installation** for the existing **Vite + Svelte 5 + Tailwind v4** app; the CLI was **not** run and no SvelteKit, new backend or radio service was introduced.
+- Only the existing player/buttons/shortcuts were converted. The native audio/volume behavior and external URLs remain unchanged.
+- **Do not run `shadcn-svelte init` indiscriminately:** it can replace the maintained `src/app.css` and negate the owner-approved theme. Review CLI output and only add needed components.
+
+The previous Windows compiler/Build PASS applied to the old layout and **does not validate this migration**. Re-run `bash scripts/prepare-static-release.sh` once on the Windows build machine, then perform one focused desktop/mobile visual and interactive smoke test before approving release. The local package-lock may be stale after new dependencies: the release script now refreshes untracked lockfiles using `npm install`, then uses `npm ci` after a reviewed lockfile is committed to the PR.
+
 ## One-command build and release-candidate preparation
 
 From an **isolated working checkout** on a trusted machine with network access to npm and Node.js **20.19+ / 22.12+ / 24+**:
