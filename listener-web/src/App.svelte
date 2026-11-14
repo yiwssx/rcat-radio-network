@@ -98,7 +98,7 @@
 
         <span><strong>RCAT</strong><small>Radio Network</small></span>
       </a>
-      <nav class:opened={menuOpen} class="navlinks" aria-label="เมนูหลัก">
+      <nav class:opened={menuOpen} class="navlinks" id="primary-nav" aria-label="เมนูหลัก">
         <a class="nav-active" href="#home" onclick={() => menuOpen = false}><svg class="home-icon" aria-hidden="true" focusable="false"
   xmlns="http://www.w3.org/2000/svg"
   width="24"
@@ -118,7 +118,7 @@
         <a href={NEWS_URL} target="_blank" rel="noopener noreferrer" onclick={() => menuOpen = false}>ข่าวสาร</a>
         <a href="#about" onclick={() => menuOpen = false}>เกี่ยวกับสถานี</a>
       </nav>
-      <button class="menu-toggle" aria-label={menuOpen ? 'ปิดเมนู' : 'เปิดเมนู'} aria-expanded={menuOpen} onclick={() => menuOpen = !menuOpen}>
+      <button class="menu-toggle" aria-label={menuOpen ? 'ปิดเมนู' : 'เปิดเมนู'} aria-expanded={menuOpen} aria-controls="primary-nav" onclick={() => menuOpen = !menuOpen}>
         {#if menuOpen}<svg class="menu-icon" aria-hidden="true" focusable="false"
   xmlns="http://www.w3.org/2000/svg"
   width="24"
@@ -305,7 +305,7 @@
         onpause={() => { if (status !== 'error') status = 'paused'; }}
         onended={() => status = 'error'}
         onerror={() => status = 'error'}></audio>
-      {#if scheduleNotice || activityNotice}<div class="schedule-notice" role="status">{scheduleNotice ? 'ยังไม่มีตารางรายการเผยแพร่ในขณะนี้' : 'ยังไม่มีข้อมูลกิจกรรมสถานีเผยแพร่ในขณะนี้'} <button onclick={() => {scheduleNotice = false; activityNotice = false;}}>ปิด</button></div>{/if}
+
     </section>
 
     <section class="short-links" aria-label="ลิงก์สำคัญ">
@@ -386,6 +386,7 @@
 
           <strong>ติดต่อเรา</strong>
         </a>
+        {#if scheduleNotice || activityNotice}<div class="schedule-notice" role="status">{scheduleNotice ? 'ยังไม่มีตารางรายการเผยแพร่ในขณะนี้' : 'ยังไม่มีข้อมูลกิจกรรมสถานีเผยแพร่ในขณะนี้'} <button onclick={() => {scheduleNotice = false; activityNotice = false;}}>ปิด</button></div>{/if}
       </div>
       <div class="follow-section"><h2>ติดตามเราได้ที่</h2><div class="socials">
         <a class="facebook" aria-label="Facebook วิทยาลัย" target="_blank" rel="noopener noreferrer" href={SOCIAL_URLS.facebook} title="Facebook"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="social-brand-icon bootstrap-facebook" aria-hidden="true" focusable="false" viewBox="0 0 16 16">
