@@ -1,0 +1,155 @@
+name: RRN-22 Listener release candidate
+
+# This workflow is explicitly authorized for Issue #22. It is intentionally
+# scoped to the existing frontend branch and never deploys to RCAT hosts.
+on:
+  pull_request:
+    branches:
+      - main
+    paths:
+      - 'listener-web/**'
+      - '.github/workflows/rrn22-listener-candidate.yml'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: rrn22-listener-candidate-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  verify-and-package:
+    name: Check, test, build and package static listener
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Checkout this revision
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+
+      - name: Install supported Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+
+      - name: Validate source and create candidate
+        working-directory: listener-web
+        run: bash scripts/prepare-static-release.sh
+
+      - name: Local HTTP smoke and headless Chromium screenshots (no public requests)
+        working-directory: listener-web
+        shell: bash
+        run: |
+          set -Eeuo pipefail
+          npm run preview > /tmp/rrn22-preview.log 2>&1 &
+          preview_pid=$!
+          trap 'kill "$preview_pid" 2>/dev/null || true' EXIT
+          ready=0
+          for attempt in $(seq 1 25); do
+            if curl --fail --silent --show-error http://127.0.0.1:4173/ -o /tmp/rrn22-index.html 2>/dev/null; then
+              ready=1
+              break
+            fi
+            sleep 1
+          done
+          if [[ "$ready" != 1 ]]; then
+            cat /tmp/rrn22-preview.log
+            echo 'FAIL: preview did not respond over localhost'
+            exit 1
+          fi
+          grep -q 'assets/index-' /tmp/rrn22-index.html
+          # The existing RMS Apache may declare a legacy response charset.
+          # Keep only the static HTML head's Thai copy ASCII-encoded, so DOM
+          # title/description decode correctly regardless of that header.
+          node <<'CHECK_THAI_HEAD'
+          const fs = require('node:fs');
+          const html = fs.readFileSync('/tmp/rrn22-index.html', 'utf8');
+          const escape = (str) => Array.from(str, ch =>
+            ch.codePointAt(0) > 127 ? '&#' + ch.codePointAt(0) + ';' : ch
+          ).join('');
+          const title = 'RCAT Radio Network | ฟังวิทยุออนไลน์';
+          const description = 'RCAT Radio Network สถานีวิทยุออนไลน์ วิทยาลัยเกษตรและเทคโนโลยีร้อยเอ็ด รับฟังวิทยุสดผ่านเว็บไซต์';
+          if (!html.includes('<title>' + escape(title) + '</title>') ||
+              !html.includes('name="description" content="' + escape(description) + '"')) {
+            console.error('FAIL: built static <head> lost the encoding-safe Thai title or description');
+            process.exit(1);
+          }
+          console.log('PASS: built HTML head keeps exact Thai title/description as ASCII character references');
+          CHECK_THAI_HEAD
+          curl --fail --silent --show-error http://127.0.0.1:4173/images/RCAT.png -o /tmp/rrn22-logo.png
+          cmp public/images/RCAT.png /tmp/rrn22-logo.png
+          # The player badge is the exact uploaded artwork; no redraw or generated logo.
+          test -s dist/images/RCAT_Radio_Network_512x512.png
+          cmp public/images/RCAT_Radio_Network_512x512.png dist/images/RCAT_Radio_Network_512x512.png
+          curl --fail --silent --show-error http://127.0.0.1:4173/images/RCAT_Radio_Network_512x512.png -o /tmp/rrn22-radio-logo.png
+          cmp public/images/RCAT_Radio_Network_512x512.png /tmp/rrn22-radio-logo.png
+          echo 'PASS: exact owner-uploaded 512x512 player artwork served unchanged'
+          # Make sure the browser can load the actual self-hosted Thai font.
+          curl --fail --silent --show-error http://127.0.0.1:4173/fonts/NotoSansThai-VF.ttf -o /tmp/rrn22-thai-font.ttf
+          cmp public/fonts/NotoSansThai-VF.ttf /tmp/rrn22-thai-font.ttf
+          grep -Fq '/images/RCAT.png?v=rrn22-thai-font-1' /tmp/rrn22-index.html
+          echo 'PASS: self-hosted Thai font bytes + original RCAT favicon are served'
+          echo 'PASS: local preview loads index, bundled assets and the exact owner-supplied logo'
+          # The GitHub runner image can lack Thai fonts, rendering Thai copy as tofu.
+          # Install licensed Ubuntu Thai/Noto fonts for screenshots ONLY (not in dist/).
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq --no-install-recommends fonts-noto-core fonts-thai-tlwg
+          fc-cache -f
+          if [[ -z "$(fc-list :lang=th)" ]]; then
+            echo 'FAIL: no Thai font available for meaningful visual screenshots'
+            exit 1
+          fi
+          # Render the COMPILED Svelte UI with the preinstalled runner browser.
+          # Audio is not autoplayed; no real station endpoint or credentials are used.
+          chrome_bin="$(command -v google-chrome || command -v chromium || true)"
+          if [[ -z "$chrome_bin" ]]; then
+            echo 'FAIL: Chromium/Chrome is not installed on this GitHub runner'
+            exit 1
+          fi
+          mkdir -p artifacts
+          for target in '1440,900:desktop' '768,1100:tablet' '390,1250:mobile'; do
+            size="${target%%:*}"
+            label="${target##*:}"
+            screenshot="$PWD/artifacts/rrn22-${label}.png"
+            if ! "$chrome_bin" --headless --no-sandbox --disable-dev-shm-usage \
+                --hide-scrollbars --force-device-scale-factor=1 \
+                --window-size="$size" --virtual-time-budget=3000 \
+                --screenshot="$screenshot" http://127.0.0.1:4173/ \
+                > "/tmp/rrn22-chrome-${label}.log" 2>&1; then
+              cat "/tmp/rrn22-chrome-${label}.log"
+              echo "FAIL: headless Chromium ${label} render"
+              exit 1
+            fi
+            [[ -s "$screenshot" ]] || { echo "FAIL: screenshot missing for $label"; exit 1; }
+            echo "PASS: compiled Chromium screenshot ${label} (${size})"
+          done
+
+      - name: Upload verified deployable static files + SHA-256
+        uses: actions/upload-artifact@v4
+        with:
+          name: rrn22-listener-candidate-${{ github.sha }}
+          path: |
+            listener-web/artifacts/rrn22-listener-dist.tar.gz
+            listener-web/artifacts/rrn22-listener-dist.tar.gz.sha256
+            listener-web/artifacts/rrn22-desktop.png
+            listener-web/artifacts/rrn22-tablet.png
+            listener-web/artifacts/rrn22-mobile.png
+          if-no-files-found: error
+          retention-days: 14
+
+      - name: Record immutable candidate reference
+        shell: bash
+        run: |
+          {
+            echo "### RCAT Listener build candidate"
+            echo "- Source SHA: \`${GITHUB_SHA}\`"
+            echo "- Svelte typecheck: required"
+            echo "- Metadata parser tests: required"
+            echo "- Production Vite build: required"
+            echo "- Local HTTP smoke: required"
+            echo "- Real Chromium screenshots: Desktop, Tablet, Mobile (included in artifact)"
+            echo "- Owner-supplied RCAT.png checksum: required"
+            echo "- Download artifact from this Actions run (retained 14 days)"
+            echo "- **Not deployed:** Apache/Icecast/LibreTime remain untouched"
+          } >> "$GITHUB_STEP_SUMMARY"
