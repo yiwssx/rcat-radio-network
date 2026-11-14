@@ -207,7 +207,7 @@
       <Card class="player-panel">
         <div class="player-station-icon" aria-hidden="true">
           <!-- Exact PNG supplied by the owner; replaces the old headphone/RCAT block only. -->
-          <img class="player-station-logo" src="/images/RCAT_Radio_Network_512x512.png" alt="" width="512" height="512" decoding="async" />
+          <img class="player-station-logo" src="/images/RCAT_Radio_Network_512x512.png" alt="" width="512" height="512" loading="eager" decoding="sync" fetchpriority="high" />
         </div>
         <div class="player-description">
           <Badge variant="secondary" class="radio-chip"><svg class="chip-broadcast" aria-hidden="true" focusable="false"
