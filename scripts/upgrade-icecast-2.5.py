@@ -58,16 +58,16 @@ def call(args, timeout=120, allowed=(0,)):
     return result
 
 
-def compose_args():
+def compose_args(source_path=COMPOSE_FILE):
     return [
         "docker", "compose", "--project-directory", str(RUNTIME),
         "--env-file", str(ENV_FILE), "-p", PROJECT,
-        "-f", str(COMPOSE_FILE), "-f", str(OVERRIDE),
+        "-f", str(source_path), "-f", str(OVERRIDE),
     ]
 
 
-def model():
-    return json.loads(call(compose_args() + ["config", "--format", "json"]).stdout)
+def model(source_path=COMPOSE_FILE):
+    return json.loads(call(compose_args(source_path) + ["config", "--format", "json"]).stdout)
 
 
 def inspect():
@@ -128,14 +128,65 @@ def atomic_replace(path, text):
             os.unlink(candidate)
 
 
-def verify_model(before):
-    after = model()
+def differing_paths(left, right, location="model", limit=12):
+    """Report only JSON key paths, never values or environment secrets."""
+    if type(left) is not type(right):
+        return [location]
+    if isinstance(left, dict):
+        found = []
+        for key in sorted(set(left) | set(right)):
+            loc = location + "." + key
+            if key not in left or key not in right:
+                found.append(loc)
+            else:
+                found.extend(differing_paths(left[key], right[key], loc, limit))
+            if len(found) >= limit:
+                break
+        return found[:limit]
+    if isinstance(left, list):
+        found = []
+        if len(left) != len(right):
+            found.append(location + ".length")
+        for i in range(min(len(left), len(right))):
+            found.extend(differing_paths(left[i], right[i],
+                                         location + "[" + str(i) + "]", limit))
+            if len(found) >= limit:
+                break
+        return found[:limit]
+    return [] if left == right else [location]
+
+
+def verify_model(before, after):
     require(set(after.get("services", {})) == SERVICES,
             "Upgrade changed radio service set")
     expected = json.loads(json.dumps(before))
     expected["services"]["icecast"]["image"] = NEW
-    require(after == expected,
-            "Upgrade would change Compose settings other than Icecast image")
+    diff = differing_paths(expected, after)
+    require(not diff, "Upgrade would change Compose settings other than "
+            "Icecast image; differing keys ONLY: " + ", ".join(diff))
+
+
+def build_candidate(src):
+    replacement = IMAGE_PATTERN.sub(lambda m: m.group(1) + NEW + m.group(2),
+                                    src)
+    require(replacement != src, "No pinned image replaced")
+    return replacement
+
+
+def preflight_candidate(before, replacement):
+    # Use a private temporary Compose file in the SAME runtime directory.
+    # It never replaces the active config, pulls images or restarts containers.
+    fd, candidate = tempfile.mkstemp(
+        prefix=".radio-icecast-preflight-", suffix=".yml", dir=RUNTIME
+    )
+    try:
+        os.fchmod(fd, 0o600)
+        with os.fdopen(fd, "w", encoding="utf-8") as fp:
+            fp.write(replacement)
+        verify_model(before, model(Path(candidate)))
+    finally:
+        if os.path.exists(candidate):
+            os.unlink(candidate)
 
 
 def recreate_icecast():
@@ -183,6 +234,9 @@ def main():
     print("SOURCE_IMAGE=" + OLD)
     print("TARGET_IMAGE=" + NEW)
     print("LIBRETIME=UNCHANGED_4.5.0")
+    replacement = build_candidate(src)
+    preflight_candidate(before, replacement)
+    print("RADIO_UPGRADE_COMPOSE_DIFF=ICECAST_IMAGE_ONLY")
     if not args.apply:
         print("RADIO_UPGRADE=READY_PLAN_ONLY")
         return
@@ -195,21 +249,24 @@ def main():
     with backup.open("x", encoding="utf-8") as fp:
         os.chmod(backup, 0o600)
         fp.write(src)
-    replacement = IMAGE_PATTERN.sub(lambda m: m.group(1) + NEW + m.group(2), src)
-    require(replacement != src, "No pinned image replaced")
     changed = False
+    recreation_attempted = False
     try:
         atomic_replace(COMPOSE_FILE, replacement)
         changed = True
-        verify_model(before)
+        verify_model(before, model())
+        recreation_attempted = True
         recreate_icecast()
         verify_https_stream()
     except Exception:
         if changed:
             try:
                 atomic_replace(COMPOSE_FILE, src)
-                recreate_icecast()
-                print("RADIO_UPGRADE_ROLLBACK=OLD_IMAGE_RESTORED")
+                if recreation_attempted:
+                    recreate_icecast()
+                    print("RADIO_UPGRADE_ROLLBACK=OLD_IMAGE_RESTORED")
+                else:
+                    print("RADIO_UPGRADE_ROLLBACK=CONFIG_RESTORED_NO_RESTART")
             except Exception:
                 print("RADIO_UPGRADE_ROLLBACK=FAILED_OPERATOR_ATTENTION_REQUIRED",
                       file=sys.stderr)
