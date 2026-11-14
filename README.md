@@ -1,10 +1,12 @@
 # RCAT Radio Network
 
-A single online radio station for Roi-Et College of Agriculture and Technology (RCAT), using **LibreTime 4.5.0** and its bundled **Icecast 2.4.4**.
+A single online radio station for Roi-Et College of Agriculture and Technology (RCAT), using **LibreTime 4.5.0** with **Icecast 2.5.0** (upgraded from the original bundled Icecast 2.4.4 on 14 November 2026).
 
 This repository contains RCAT deployment scripts, configuration examples and operating documentation. Media uploads, scheduling, playlists, AutoDJ and authenticated Live DJ use the existing LibreTime interface and services.
 
 ## Project status
+
+**Live streaming fix accepted (14 November 2026):** Operator reported that mobile listening previously stopped after ~2 seconds **only on 4G/5G**, while Wi-Fi and desktop listening were unaffected. After the guarded Icecast upgrade to 2.5.0, native HTTPS readiness passed and the operator confirmed mobile listening works. This is a successful user-reported symptom resolution, **not proof of a specific TLS/buffer root cause**. LibreTime remains 4.5.0; the earlier 2.4.4 installer and historical stack decision remain historical baseline documents.
 
 **Main technical delivery is complete.** [Master Tracker #1](https://github.com/yiwssx/rcat-radio-network/issues/1) and all seven RRN-00–RRN-06 work items are closed within the owner-approved scope.
 
