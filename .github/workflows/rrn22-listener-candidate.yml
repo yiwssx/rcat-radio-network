@@ -37,7 +37,7 @@ jobs:
         working-directory: listener-web
         run: bash scripts/prepare-static-release.sh
 
-      - name: Browser-independent local HTTP smoke (no public requests)
+      - name: Local HTTP smoke and headless Chromium screenshots (no public requests)
         working-directory: listener-web
         shell: bash
         run: |
@@ -62,6 +62,30 @@ jobs:
           curl --fail --silent --show-error http://127.0.0.1:4173/images/RCAT.png -o /tmp/rrn22-logo.png
           cmp public/images/RCAT.png /tmp/rrn22-logo.png
           echo 'PASS: local preview loads index, bundled assets and the exact owner-supplied logo'
+          # Render the COMPILED Svelte UI with the preinstalled runner browser.
+          # Audio is not autoplayed; no real station endpoint or credentials are used.
+          chrome_bin="$(command -v google-chrome || command -v chromium || true)"
+          if [[ -z "$chrome_bin" ]]; then
+            echo 'FAIL: Chromium/Chrome is not installed on this GitHub runner'
+            exit 1
+          fi
+          mkdir -p artifacts
+          for target in '1440,900:desktop' '768,1100:tablet' '390,1250:mobile'; do
+            size="${target%%:*}"
+            label="${target##*:}"
+            screenshot="$PWD/artifacts/rrn22-${label}.png"
+            if ! "$chrome_bin" --headless --no-sandbox --disable-dev-shm-usage \
+                --hide-scrollbars --force-device-scale-factor=1 \
+                --window-size="$size" --virtual-time-budget=3000 \
+                --screenshot="$screenshot" http://127.0.0.1:4173/ \
+                > "/tmp/rrn22-chrome-${label}.log" 2>&1; then
+              cat "/tmp/rrn22-chrome-${label}.log"
+              echo "FAIL: headless Chromium ${label} render"
+              exit 1
+            fi
+            [[ -s "$screenshot" ]] || { echo "FAIL: screenshot missing for $label"; exit 1; }
+            echo "PASS: compiled Chromium screenshot ${label} (${size})"
+          done
 
       - name: Upload verified deployable static files + SHA-256
         uses: actions/upload-artifact@v4
@@ -70,6 +94,9 @@ jobs:
           path: |
             listener-web/artifacts/rrn22-listener-dist.tar.gz
             listener-web/artifacts/rrn22-listener-dist.tar.gz.sha256
+            listener-web/artifacts/rrn22-desktop.png
+            listener-web/artifacts/rrn22-tablet.png
+            listener-web/artifacts/rrn22-mobile.png
           if-no-files-found: error
           retention-days: 14
 
@@ -83,6 +110,7 @@ jobs:
             echo "- Metadata parser tests: required"
             echo "- Production Vite build: required"
             echo "- Local HTTP smoke: required"
+            echo "- Real Chromium screenshots: Desktop, Tablet, Mobile (included in artifact)"
             echo "- Owner-supplied RCAT.png checksum: required"
             echo "- Download artifact from this Actions run (retained 14 days)"
             echo "- **Not deployed:** Apache/Icecast/LibreTime remain untouched"
