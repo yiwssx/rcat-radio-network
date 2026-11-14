@@ -9,11 +9,33 @@ Issue #22 only: a responsive, public, single-station listening UI using **Svelte
 
 ## Local use
 
-Run `npm install` (or `npm ci` once a reviewed lockfile is committed), then `npm run check`, `npm run dev`, and `npm run build`. Do not execute the original `scripts/rrn05-publish-listener-rms.sh` first-install script on an existing listener webroot.
+For a normal local development session, run `npm install` (or `npm ci` after the lockfile is committed), then `npm run dev`. For the release gate, use the command below to run the typecheck and production build together. Do not execute the original `scripts/rrn05-publish-listener-rms.sh` first-install script on an existing listener webroot.
 
-The hero URL is an **official-site-owned RCAT image endpoint candidate**, not a verified photograph of a specific campus building. The page falls back to a styled green background if unavailable. **The college emblem is the exact, unmodified owner-supplied `RCAT.png`** stored locally at `public/images/RCAT.png` and served from `/images/RCAT.png`, with no external image URL or generated/reconstructed logo.
+The **hero currently uses a local reference illustration adapted from the owner-selected design**, not a verified campus photograph. The page falls back to a styled green background if unavailable. Do not misrepresent this illustration as an authenticated photo of the campus. **The college emblem is the exact, unmodified owner-supplied `RCAT.png`** stored locally at `public/images/RCAT.png` and served from `/images/RCAT.png`, with no external image URL or generated/reconstructed logo.
 
 Playback state starts neutral and changes only on audio events. Song metadata, music schedules, social feeds, and other UI mockup cards are intentionally not implemented.
+
+## One-command build and release-candidate preparation
+
+From an **isolated working checkout** on a trusted machine with network access to npm and Node.js **20.19+ / 22.12+ / 24+**:
+
+```bash
+cd listener-web
+bash scripts/prepare-static-release.sh
+```
+
+The script (1) verifies the owner-supplied college logo by original SHA-256, (2) installs dependencies, (3) runs `npm run check`, (4) runs `npm run build`, (5) checks the output and copied logo checksum, then (6) creates:
+
+- `listener-web/artifacts/rrn22-listener-dist.tar.gz` — static **release candidate only**
+- `listener-web/artifacts/rrn22-listener-dist.tar.gz.sha256` — checksum
+
+It **never** touches RMS/Production, Docker, DNS, Apache, Icecast or LibreTime. If any step fails, stop and report the exact failure. No release should be claimed to have passed without a successful **real** run of that script.
+
+There is **no committed npm lockfile yet** because npm Registry was inaccessible from the ChatGPT test container. On the first real `npm install`, inspect and commit the resulting `package-lock.json` to this same PR for reproducible subsequent `npm ci` builds. Do not invent a lockfile. The script accepts an existing lockfile and uses `npm ci` automatically.
+
+Before approving a live release, launch the locally compiled preview with `npm run preview` and perform one targeted **actual browser** acceptance: desktop and phone layout, Thai labels, menu open/close, announcement and contact links, all four Social links, schedule/activity messages, play/pause and audio status (including a real connected stream test), and browser console errors. An earlier static HTML/CSS screenshot **does not replace** this compiled-app check.
+
+The hero is currently an owner-approved **design-reference illustration**, not an authentic college photograph. Obtain owner sign-off for public use of that specific asset or replace it with an authorized real campus image without inventing college signage. Social-brand logo usage must also satisfy each platform's branding requirements (see `ICON-SOURCES.md`).
 
 ## Release scope (operator-only)
 
