@@ -159,9 +159,21 @@
 
   <main>
     <section class="hero" aria-labelledby="hero-title">
-      <div class="hero-photo" aria-hidden="true"></div>
+      <div class="hero-photo" aria-hidden="true">
+        <!-- The supplied AI-enhanced campus photo has unreadable generated glyphs
+             on this plaque. Render the exact operator-supplied wording as DOM text
+             over the plaque; keep the photographed building and original asset intact. -->
+        <div class="hero-photo-canvas">
+          <div class="hero-plaque-text">
+            <span>การประชุมวิชาการระดับชาติองค์การเกษตรกรในอนาคตแห่งประเทศไทย</span>
+            <span>ในพระราชูปถัมภ์สมเด็จพระเทพรัตนราชสุดาฯ สยามบรมราชกุมารี</span>
+            <span>ครั้งที่ ๒๗ ๒๐-๒๓ กุมภาพันธ์ ๒๕๔๘</span>
+            <span>ณ วิทยาลัยเกษตรและเทคโนโลยีร้อยเอ็ด</span>
+          </div>
+        </div>
+      </div>
       <div class="hero-shade" aria-hidden="true"></div>
-      <p class="sr-only">ภาพวิทยาลัยเกษตรและเทคโนโลยีร้อยเอ็ด พร้อมข้อความ เรียนฟรี หอพักฟรี อาหารฟรี มีรายได้ระหว่างเรียน</p>
+      <p class="sr-only">ภาพวิทยาลัยเกษตรและเทคโนโลยีร้อยเอ็ด พร้อมข้อความ เรียนฟรี หอพักฟรี อาหารฟรี มีรายได้ระหว่างเรียน และป้ายการประชุมวิชาการระดับชาติองค์การเกษตรกรในอนาคตแห่งประเทศไทย ในพระราชูปถัมภ์สมเด็จพระเทพรัตนราชสุดาฯ สยามบรมราชกุมารี ครั้งที่ ๒๗ ๒๐-๒๓ กุมภาพันธ์ ๒๕๔๘ ณ วิทยาลัยเกษตรและเทคโนโลยีร้อยเอ็ด</p>
       <div class="hero-accent" aria-hidden="true"></div>
       <div class="hero-content">
         <div class="hero-heading-row">
