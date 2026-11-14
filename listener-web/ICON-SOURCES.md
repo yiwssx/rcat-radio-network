@@ -104,7 +104,7 @@ All four clickable links remain directed to RCAT's existing accounts/website. Do
 
 ## Institution mark
 
-The header uses the real image URL published by the college: https://www.rcat.ac.th/rcat-logo-128.png . It is not generated or manually reconstructed. The station name itself is typeset text; Lucide radio symbols do not purport to be the college's official station logo.
+The header uses **the original owner-uploaded `RCAT.png`**, preserved **byte for byte** at `listener-web/public/images/RCAT.png` and loaded from `/images/RCAT.png` by the Svelte page. PNG dimensions: **1254 × 1254**; original size: **2,613,937 bytes**; SHA-256: `de9118f241788a81b3aa7eb5cd160e4462a0c933137632da4d86005f1ba57d90`. Original Git blob SHA-1: `2bc1c83578490a910c8eb2788865051a65bee095`. This asset is **not AI-generated, redrawn, or resized**; it is supplied directly by the owner. Use rights are based on the owner-provided college material and must remain within institutional permissions. The station name is typeset text and Lucide radio symbols do not purport to be an official station logo.
 
 ## Update rule
 

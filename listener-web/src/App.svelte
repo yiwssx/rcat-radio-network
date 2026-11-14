@@ -62,8 +62,8 @@
   <header class="topbar">
     <div class="header-inner">
       <a class="institution" href={COLLEGE_URL} target="_blank" rel="noopener noreferrer" aria-label="เว็บไซต์วิทยาลัยเกษตรและเทคโนโลยีร้อยเอ็ด (เปิดแท็บใหม่)">
-        <!-- A reference-image crest is a preview fallback only; replace with verified college asset before deployment. -->
-        <img class="college-mark" src="https://www.rcat.ac.th/rcat-logo-128.png" alt="" width="68" height="68" />
+        <!-- Original college emblem supplied by the owner, stored without modification at public/images/RCAT.png. -->
+        <img class="college-mark" src="/images/RCAT.png" alt="" width="68" height="68" decoding="async" />
         <span class="institution-name">วิทยาลัยเกษตรและเทคโนโลยีร้อยเอ็ด<small>Roi-Et College of Agriculture and Technology (RCAT)</small></span>
       </a>
       <a class="station-wordmark" href="#home" aria-label="RCAT Radio Network หน้าแรก">
