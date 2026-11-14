@@ -28,6 +28,7 @@ else
   npm install --no-audit --no-fund
 fi
 npm run check
+npm run test:live-info
 npm run build
 
 [[ -s dist/index.html ]] || { echo 'BLOCKED: Vite did not generate dist/index.html' >&2; exit 1; }
