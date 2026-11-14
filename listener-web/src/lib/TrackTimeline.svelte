@@ -44,6 +44,9 @@
         if (target.protocol !== 'https:' && !localDevelopment) {
           throw new Error('Only public HTTPS endpoints are supported');
         }
+        if (target.username || target.password || [...target.searchParams.keys()].some(key => /api[_-]?key|token|secret|password|auth/i.test(key))) {
+          throw new Error('Public metadata URLs must not contain credentials or API keys');
+        }
         const response = await fetch(target.toString(), {
           method: 'GET',
           credentials: 'omit',
@@ -94,7 +97,7 @@
       <span class="song-feed-dot" aria-hidden="true"></span>{feedStatus}
     </span>
   </div>
-  <div class:show-all={showMobileDetails} class="song-grid" id="song-track-grid">
+  <div class={showMobileDetails ? "song-grid show-all" : "song-grid"} id="song-track-grid">
     {#each slots as slot (slot.key)}
       {@const item = tracks?.[slot.key] ?? null}
       <Card class={slot.key === 'current' ? 'song-card song-card-current' : 'song-card'}>
