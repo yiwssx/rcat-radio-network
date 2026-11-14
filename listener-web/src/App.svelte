@@ -2,6 +2,7 @@
   import { Button } from "$lib/components/ui/button";
   import { Card } from "$lib/components/ui/card";
   import { Badge } from "$lib/components/ui/badge";
+  import TrackTimeline from "$lib/TrackTimeline.svelte";
   type PlaybackStatus = 'idle' | 'connecting' | 'playing' | 'paused' | 'error';
   const STREAM_URL = 'https://radio.rcat.ac.th:8600/main.mp3';
   const COLLEGE_URL = 'https://www.rcat.ac.th/';
@@ -407,6 +408,8 @@
 </a>
       </div></div>
     </section>
+
+    <TrackTimeline />
   </main>
 
   <footer class="footer" id="about">
