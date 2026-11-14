@@ -306,9 +306,11 @@ button:focus-visible, a:focus-visible, input:focus-visible {
   .station-wordmark { display:none; }
   .hero { height:360px; }
   .hero-content { width:52%; }
-  .hero-photo { inset:0 0 0 43%; }
-  .hero h1 { font-size:clamp(44px,6vw,58px); }
-  .hero-content p { font-size:20px; }
+  .hero-photo { inset:0 0 0 45%; }
+  .hero-heading-row { gap:12px; }
+  .hero-signal { width:32px; height:62px; }
+  .hero h1 { font-size:clamp(36px,5.2vw,50px); }
+  .hero-content p { font-size:18px; margin-left:44px; }
   .short-links { grid-template-columns:1fr; gap:18px; }
   .follow-section { display:flex; justify-content:center; align-items:center; gap:16px; }
   .follow-section h2 { margin:0; }
