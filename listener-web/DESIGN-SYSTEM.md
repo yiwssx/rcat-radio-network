@@ -52,6 +52,14 @@ Typography: Sarabun / Noto Sans Thai / system fallback. Title sizes use CSS `cla
 - **<=350px:** no clipped wordmarks, volume control, horizontal scrolling or footer text.
 - Keyboard: visible focus; reduced-motion mode honored. Touch controls: roughly 44px minimum.
 
+## Song timeline — existing public LibreTime 4.5 metadata
+
+Added after owner's request to use excessive Desktop/Tablet whitespace with useful station content. It is a **read-only UI**, not a music database or a new scheduling service. `src/lib/TrackTimeline.svelte` displays three shadcn-svelte Cards: previous, current, next; current is visually prioritized, and small screens show the current item first with an expandable history/up-next disclosure. `src/lib/live-info.js` normalizes untrusted JSON, keeps titles as escaped text, handles livestream items and rejects malformed responses.
+
+**Public read-only URL is opt-in via `VITE_LIBRETIME_LIVE_INFO_URL`**. No default public endpoint was confirmed for RCAT; the page therefore displays a truthful unconfigured/unavailable state until an operator supplies a verified authorized HTTPS/CORS destination. Never expose the private Admin/API keys, add CORS broadening or open an internal backend as part of this UI work. Polling is 90 seconds only when visible, and error/empty states do not present fake song names. One previous + one next only; no multi-song Playout History API.
+
+Release acceptance now additionally checks the song timeline's 3-card layout at Desktop/Tablet, 1-card+disclosure mobile, actual public data (only when the operator-authorized endpoint is available), and graceful empty/blocked behavior.
+
 ## Release boundary
 The previous 2026-11-14 Windows `svelte-check: 0 errors` and Vite build PASS apply to the **earlier code**, not this new component migration. After the new sources are pulled, rebuild **once** on the networked Windows builder, correct actual diagnostics and perform one real desktop/mobile Browser + audio smoke test. Existing `scripts/prepare-static-release.sh` still creates a candidate only, never deploys. Preserve the existing Apache listener webroot and rollback path; do not modify Icecast/LibreTime.
 
