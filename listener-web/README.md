@@ -7,6 +7,20 @@ Issue #22 only: a responsive, public, single-station listening UI using **Svelte
 - Intended existing production destination (requires **separate operator approval**): RMS Apache `/var/www/radio-listener/`
 - No Node runtime, new container, proxy change, authentication, backend service, or LibreTime/Icecast configuration change. A small optional **public read-only** client-side metadata integration is described below.
 
+## Automatic Release Candidate (no workstation required)
+
+**Owner-approved change on 2026-11-14:** GitHub Actions now performs the same isolated check/build/package sequence on updates to the current PR #25. This explicitly requested automation is an exception to the older rule against adding CI *merely to generate evidence*; it is used here to eliminate repeated manual builds after the owner moved computers.
+
+Workflow: [`.github/workflows/rrn22-listener-candidate.yml`](../.github/workflows/rrn22-listener-candidate.yml). On updates to the PR targeting `main` and affecting `listener-web/`, it automatically:
+1. Checks out the exact PR revision on a GitHub-hosted Ubuntu runner (Node 24).
+2. Runs the existing `scripts/prepare-static-release.sh` unchanged: Node prerequisite; exact RCAT.png SHA-256; dependencies; `svelte-check`; 10 LibreTime parser fixtures; Vite production build; archive + SHA-256.
+3. Starts `npm run preview` on localhost and verifies `index.html` and the original logo bytes over HTTP, without accessing private RCAT services.
+4. Uploads `rrn22-listener-dist.tar.gz` + `.sha256` as a **GitHub Actions artifact (14 days)** with the immutable commit SHA in its name.
+
+Workflow permissions: `contents: read`. It has no server credentials, public API keys, write token, production environment or remote deployment step. It does **not** merge the PR, change DNS/Apache/Docker/LibreTime/Icecast, open the private metadata API, or authorize public trademark/hero asset usage. If GitHub Actions is disabled or blocks this workflow, the source file alone does not prove an actual run; check the workflow run status before claiming the candidate exists.
+
+There is no need to clone this repository or run Node/npm on the owner's current computer. The fresh-machine commands below remain only a fallback, not the primary workflow. Production still requires a **separately confirmed** radio-only deployment path with authorized host access and a safe rollback. Never silently replace the existing RMS webroot or enable GitHub remote SSH credentials from this workflow.
+
 ## Build on any new machine (no previous checkout required)
 
 You do **not** need access to the original Windows PC, its `$HOME/rcat-radio-listener-build` directory, `node_modules`, generated `dist`, or local archive. The authoritative source is the **existing PR #25 branch on GitHub**. Work in a fresh, non-Production folder.
