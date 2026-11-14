@@ -1,4 +1,7 @@
 <script lang="ts">
+  import { Button } from "$lib/components/ui/button";
+  import { Card } from "$lib/components/ui/card";
+  import { Badge } from "$lib/components/ui/badge";
   type PlaybackStatus = 'idle' | 'connecting' | 'playing' | 'paused' | 'error';
   const STREAM_URL = 'https://radio.rcat.ac.th:8600/main.mp3';
   const COLLEGE_URL = 'https://www.rcat.ac.th/';
@@ -118,7 +121,7 @@
         <a href={NEWS_URL} target="_blank" rel="noopener noreferrer" onclick={() => menuOpen = false}>ข่าวสาร</a>
         <a href="#about" onclick={() => menuOpen = false}>เกี่ยวกับสถานี</a>
       </nav>
-      <button class="menu-toggle" aria-label={menuOpen ? 'ปิดเมนู' : 'เปิดเมนู'} aria-expanded={menuOpen} aria-controls="primary-nav" onclick={() => menuOpen = !menuOpen}>
+      <Button variant="ghost" class="menu-toggle" aria-label={menuOpen ? 'ปิดเมนู' : 'เปิดเมนู'} aria-expanded={menuOpen} aria-controls="primary-nav" onclick={() => menuOpen = !menuOpen}>
         {#if menuOpen}<svg class="menu-icon" aria-hidden="true" focusable="false"
   xmlns="http://www.w3.org/2000/svg"
   width="24"
@@ -149,7 +152,7 @@
   <line x1="4" x2="20" y1="18" y2="18" />
 </svg>
 {/if}
-      </button>
+      </Button>
     </div>
   </header>
 
@@ -187,7 +190,7 @@
     </section>
 
     <section class="player-wrap" id="listen" aria-label="เครื่องเล่นวิทยุออนไลน์">
-      <div class="player-panel">
+      <Card class="player-panel">
         <div class="player-station-icon" aria-hidden="true">
           <svg class="cover-icon" aria-hidden="true" focusable="false"
   xmlns="http://www.w3.org/2000/svg"
@@ -206,7 +209,7 @@
           <strong>RCAT</strong><span>RADIO</span>
         </div>
         <div class="player-description">
-          <span class="radio-chip"><svg class="chip-broadcast" aria-hidden="true" focusable="false"
+          <Badge variant="secondary" class="radio-chip"><svg class="chip-broadcast" aria-hidden="true" focusable="false"
   xmlns="http://www.w3.org/2000/svg"
   width="24"
   height="24"
@@ -223,12 +226,12 @@
   <path d="M16.2 7.8c2.3 2.3 2.3 6.1 0 8.5" />
   <path d="M19.1 4.9C23 8.8 23 15.1 19.1 19" />
 </svg>
- สด</span>
+ สด</Badge>
           <p class="playing-label">สตรีมวิทยุออนไลน์</p>
           <h2>RCAT Radio Network</h2>
         </div>
         <div class="player-play-area">
-          <button class="play-button" onclick={togglePlayback} aria-label={isPlaying || isConnecting ? 'หยุดฟังวิทยุ' : 'เริ่มฟังวิทยุ'} title={isPlaying || isConnecting ? 'หยุดฟัง' : 'ฟังวิทยุสด'}>
+          <Button variant="default" size="icon-lg" class="play-button" onclick={togglePlayback} aria-label={isPlaying || isConnecting ? 'หยุดฟังวิทยุ' : 'เริ่มฟังวิทยุ'} title={isPlaying || isConnecting ? 'หยุดฟัง' : 'ฟังวิทยุสด'}>
             {#if isPlaying || isConnecting}
               <svg class="player-control-icon" aria-hidden="true" focusable="false"
   xmlns="http://www.w3.org/2000/svg"
@@ -261,7 +264,7 @@
 </svg>
 
             {/if}
-          </button>
+          </Button>
         </div>
         <div class="volume-group">
           <svg class="volume-icon" aria-hidden="true" focusable="false"
@@ -298,7 +301,7 @@
 
         </div>
         <div class="playback-message" role="status" aria-live="polite"><span class:active={isPlaying} class:error={status === 'error'} class="status-dot"></span><span>{statusText}</span></div>
-      </div>
+      </Card>
       <audio bind:this={audioElement} src={STREAM_URL} preload="none"
         onplaying={() => status = 'playing'}
         onwaiting={() => { if (status !== 'paused') status = 'connecting'; }}
@@ -310,7 +313,7 @@
 
     <section class="short-links" aria-label="ลิงก์สำคัญ">
       <div class="shortcut-grid">
-        <button class="short-link" onclick={openSchedule} title="ตารางรายการ — เร็ว ๆ นี้">
+        <Button variant="outline" class="short-link" onclick={openSchedule} title="ตารางรายการ — เร็ว ๆ นี้">
           <svg class="shortcut-icon radio-icon" aria-hidden="true" focusable="false"
   xmlns="http://www.w3.org/2000/svg"
   width="24"
@@ -328,9 +331,9 @@
   <path d="M18 12h.01" />
 </svg>
 
-          <strong>ตารางรายการ</strong><span class="short-link-status">เร็ว ๆ นี้</span>
-        </button>
-        <a class="short-link" href={NEWS_URL} target="_blank" rel="noopener noreferrer">
+          <strong>ตารางรายการ</strong><Badge variant="outline" class="short-link-status">เร็ว ๆ นี้</Badge>
+        </Button>
+        <Button variant="outline" class="short-link" href={NEWS_URL} target="_blank" rel="noopener noreferrer">
           <svg class="shortcut-icon megaphone-icon" aria-hidden="true" focusable="false"
   xmlns="http://www.w3.org/2000/svg"
   width="24"
@@ -347,8 +350,8 @@
 </svg>
 
           <strong>ข่าวประชาสัมพันธ์</strong>
-        </a>
-        <button class="short-link" onclick={openActivity} title="กิจกรรมสถานี — เร็ว ๆ นี้">
+        </Button>
+        <Button variant="outline" class="short-link" onclick={openActivity} title="กิจกรรมสถานี — เร็ว ๆ นี้">
           <svg class="shortcut-icon note-icon" aria-hidden="true" focusable="false"
   xmlns="http://www.w3.org/2000/svg"
   width="24"
@@ -365,9 +368,9 @@
   <circle cx="18" cy="16" r="3" />
 </svg>
 
-          <strong>กิจกรรมสถานี</strong><span class="short-link-status">เร็ว ๆ นี้</span>
-        </button>
-        <a class="short-link" href={CONTACT_URL} target="_blank" rel="noopener noreferrer">
+          <strong>กิจกรรมสถานี</strong><Badge variant="outline" class="short-link-status">เร็ว ๆ นี้</Badge>
+        </Button>
+        <Button variant="outline" class="short-link" href={CONTACT_URL} target="_blank" rel="noopener noreferrer">
           <svg class="shortcut-icon team-icon" aria-hidden="true" focusable="false"
   xmlns="http://www.w3.org/2000/svg"
   width="24"
@@ -385,7 +388,7 @@
 </svg>
 
           <strong>ติดต่อเรา</strong>
-        </a>
+        </Button>
         {#if scheduleNotice || activityNotice}<div class="schedule-notice" role="status">{scheduleNotice ? 'ยังไม่มีตารางรายการเผยแพร่ในขณะนี้' : 'ยังไม่มีข้อมูลกิจกรรมสถานีเผยแพร่ในขณะนี้'} <button onclick={() => {scheduleNotice = false; activityNotice = false;}}>ปิด</button></div>{/if}
       </div>
       <div class="follow-section"><h2>ติดตามเราได้ที่</h2><div class="socials">
