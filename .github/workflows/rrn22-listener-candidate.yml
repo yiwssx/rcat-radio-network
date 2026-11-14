@@ -79,6 +79,12 @@ jobs:
           CHECK_THAI_HEAD
           curl --fail --silent --show-error http://127.0.0.1:4173/images/RCAT.png -o /tmp/rrn22-logo.png
           cmp public/images/RCAT.png /tmp/rrn22-logo.png
+          # The player badge is the exact uploaded artwork; no redraw or generated logo.
+          test -s dist/images/RCAT_Radio_Network_512x512.png
+          cmp public/images/RCAT_Radio_Network_512x512.png dist/images/RCAT_Radio_Network_512x512.png
+          curl --fail --silent --show-error http://127.0.0.1:4173/images/RCAT_Radio_Network_512x512.png -o /tmp/rrn22-radio-logo.png
+          cmp public/images/RCAT_Radio_Network_512x512.png /tmp/rrn22-radio-logo.png
+          echo 'PASS: exact owner-uploaded 512x512 player artwork served unchanged'
           # Make sure the browser can load the actual self-hosted Thai font.
           curl --fail --silent --show-error http://127.0.0.1:4173/fonts/NotoSansThai-VF.ttf -o /tmp/rrn22-thai-font.ttf
           cmp public/fonts/NotoSansThai-VF.ttf /tmp/rrn22-thai-font.ttf

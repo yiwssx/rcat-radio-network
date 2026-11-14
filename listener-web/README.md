@@ -55,6 +55,10 @@ The **hero uses the newly supplied RCAT campus image** (`public/images/rcat-camp
 
 Playback state starts neutral and changes only on audio events. The optional song timeline reads just **previous/current/next** playout metadata when a verified public LibreTime API URL is configured; full song history, music schedules and social feeds are not implemented.
 
+## Owner-supplied Radio player mark (2026-11-14)
+
+The small player mark beside the LIVE status now uses the owner-uploaded **unmodified 512×512 PNG** at `public/images/RCAT_Radio_Network_512x512.png`. SHA-256: `ad47210cae7c0e24e2b8ce8b1deee5e7f6d7d783c2e49b7e8261abde2367d11c`. The old headphone icon and RCAT/RADIO text inside that square were removed. The image remains square at 82px on desktop and 67px on mobile. The independently approved college crest `RCAT.png` remains the header emblem and favicon; the Icecast stream/player logic, Hero artwork and external destinations are unchanged.
+
 ## Design System v1 — shadcn-svelte manual integration (2026-11-14)
 
 Following owner feedback that repeated custom CSS overrides produced inconsistent layouts, this Listener now uses **actual upstream MIT-licensed shadcn-svelte Button/Card/Badge source components** under `src/lib/components/ui/` (source and hashes in `SHADCN-SOURCES.md`).

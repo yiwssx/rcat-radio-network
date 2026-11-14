@@ -206,21 +206,8 @@
     <section class="player-wrap" id="listen" aria-label="เครื่องเล่นวิทยุออนไลน์">
       <Card class="player-panel">
         <div class="player-station-icon" aria-hidden="true">
-          <svg class="cover-icon" aria-hidden="true" focusable="false"
-  xmlns="http://www.w3.org/2000/svg"
-  width="24"
-  height="24"
-  viewBox="0 0 24 24"
-  fill="none"
-  stroke="currentColor"
-  stroke-width="2"
-  stroke-linecap="round"
-  stroke-linejoin="round"
->
-  <path d="M3 14h3a2 2 0 0 1 2 2v3a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-7a9 9 0 0 1 18 0v7a2 2 0 0 1-2 2h-1a2 2 0 0 1-2-2v-3a2 2 0 0 1 2-2h3" />
-</svg>
-
-          <strong>RCAT</strong><span>RADIO</span>
+          <!-- Exact PNG supplied by the owner; replaces the old headphone/RCAT block only. -->
+          <img class="player-station-logo" src="/images/RCAT_Radio_Network_512x512.png" alt="" width="512" height="512" decoding="async" />
         </div>
         <div class="player-description">
           <Badge variant="secondary" class="radio-chip"><svg class="chip-broadcast" aria-hidden="true" focusable="false"
