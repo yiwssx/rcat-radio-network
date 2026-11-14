@@ -3,9 +3,9 @@ name: RRN-22 Listener release candidate
 # This workflow is explicitly authorized for Issue #22. It is intentionally
 # scoped to the existing frontend branch and never deploys to RCAT hosts.
 on:
-  push:
+  pull_request:
     branches:
-      - feat/issue-22-green-listener-svelte
+      - main
     paths:
       - 'listener-web/**'
       - '.github/workflows/rrn22-listener-candidate.yml'
