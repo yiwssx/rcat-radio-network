@@ -42,9 +42,16 @@ Only after operator results may this be marked mobile PASS. A passing curl on IO
 
 ## Rollback if mobile still stops at two seconds
 
-Use the EXACT path printed as ROLLBACK_COMPOSE_SNAPSHOT by the successful Host script; the timestamp here is intentionally illustrative:
+Use BOTH EXACT paths printed as `ROLLBACK_COMPOSE_SNAPSHOT` and `ROLLBACK_OVERRIDE_SNAPSHOT` by the successful Host script. They must be restored as a matched pair; the timestamps below are intentionally illustrative:
 
     sudo install -o root -g root -m 600 /var/backups/rcat-radio-network/icecast-compose-before-2.5.0-YYYYMMDDTHHMMSSZ.yml /opt/rcat-libretime-runtime/docker-compose.yml
+    sudo install -o root -g root -m 600 /var/backups/rcat-radio-network/icecast-override-before-2.5.0-YYYYMMDDTHHMMSSZ.yml /opt/rcat-libretime-runtime/radio.override.yml
     sudo docker compose --project-directory /opt/rcat-libretime-runtime --env-file /etc/rcat-radio-network/compose.env -p rcat_radio_network -f /opt/rcat-libretime-runtime/docker-compose.yml -f /opt/rcat-libretime-runtime/radio.override.yml up -d --no-deps --pull never --force-recreate icecast
 
 Never use docker compose down -v, prune or mass-upgrade the host. If the 2-second problem persists, collect a mobile HTTP/TLS trace before changing any more services.
+
+## Two-layer Compose bug fixed in the current upgrade script
+
+The first operator run stopped after a strict model mismatch, and the second stopped in `--plan` with the sole difference `model.services.icecast.image`. Repo evidence confirms the original `testing/compose.feasibility.override.yml` pins Icecast 2.4.4, and the installer copies it to the runtime `radio.override.yml`. The previous script changed only the upstream base file; the override won the merge and the effective image remained old. This was an **upgrade-script defect**, not evidence of Icecast/TLS failing. The corrected preflight renders TWO temporary updated Compose files before changes. On successful preflight, it backs up and updates BOTH image pins. No Icecast restart occurs when preflight fails.
+
+Use the current version from `main`; do not rerun the older script from a stale temporary checkout without `git pull --ff-only`. The running old Icecast image should remain active until `--apply` succeeds. Verify mobile listening separately after the Host reports TLS stream PASS.
