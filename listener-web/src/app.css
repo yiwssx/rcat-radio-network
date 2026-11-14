@@ -58,3 +58,14 @@
 /* Keep explanatory feedback near the cards that were actually clicked, including narrow mobile viewports. */
 .shortcut-grid > .schedule-notice{grid-column:1 / -1;width:100%;max-width:100%;margin:0;gap:12px;font-size:14px;line-height:1.45}
 .shortcut-grid > .schedule-notice button{flex:none;min-height:32px;padding:5px 12px}
+
+/* Issue #22 responsive acceptance: prevent the footer claim from collapsing to one word per line.
+   Override the desktop flex row and the late .footer-listen display rule only on phones. */
+@media (max-width: 750px) {
+  .footer-inner { width: calc(100% - 32px); min-height: 80px; flex-direction: column; flex-wrap: nowrap; align-items: center; justify-content: center; gap:5px; padding: 13px 0; text-align: center; }
+  .footer-station { width: 100%; justify-content: center; gap: 8px; white-space: normal; }
+  .footer-station svg { width: 28px; height: 28px; flex: none; }
+  .footer-station strong { font-size: 14px; line-height: 1.2; }
+  .footer-claim { width:100%; max-width:100%; padding-left:0; border-left:0; font-size:12px; font-weight:600; line-height:1.5; text-align:center; }
+  .footer-inner .footer-listen { display:none; }
+}
