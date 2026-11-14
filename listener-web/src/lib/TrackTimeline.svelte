@@ -12,7 +12,7 @@
   const slots: { key: Slot; label: string; index: string }[] = [
     { key: 'previous', label: 'เล่นไปแล้ว', index: '01' },
     { key: 'current', label: 'กำลังเล่น', index: '02' },
-    { key: 'next', label: 'เพลงถัดไป', index: '03' }
+    { key: 'next', label: 'ถัดไป', index: '03' }
   ];
   let feedState = $state<FeedState>(configuredUrl ? 'loading' : 'unconfigured');
   let tracks = $state<ReturnType<typeof normalizeLiveInfo>>(null);
@@ -103,7 +103,7 @@
       <Card class={slot.key === 'current' ? 'song-card song-card-current' : 'song-card'}>
         <div class="song-card-head">
           <span class="song-number">{slot.index}</span>
-          <Badge variant={slot.key === 'current' ? 'default' : 'outline'} class="song-role">{item?.kind === 'livestream' ? 'รายการสด' : slot.label}</Badge>
+          <Badge variant={slot.key === 'current' ? 'default' : 'outline'} class="song-role">{slot.label}</Badge>
         </div>
         <div class="song-information">
           {#if feedState === 'ready' && item}
