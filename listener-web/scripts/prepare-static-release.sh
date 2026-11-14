@@ -19,10 +19,12 @@ readonly LOGO_SHA='de9118f241788a81b3aa7eb5cd160e4462a0c933137632da4d86005f1ba57
 [[ -f "$LOGO" ]] || { echo "BLOCKED: missing owner-supplied $LOGO" >&2; exit 1; }
 printf '%s  %s\n' "$LOGO_SHA" "$LOGO" | sha256sum --check --status || { echo 'BLOCKED: original college-logo SHA-256 mismatch' >&2; exit 1; }
 
-if [[ -f package-lock.json ]]; then
+# A locally generated but uncommitted lockfile can be stale after a design-system dependency update.
+# Use npm ci only for a reviewed lockfile committed to this branch.
+if [[ -f package-lock.json ]] && git ls-files --error-unmatch package-lock.json >/dev/null 2>&1; then
   npm ci --no-audit --no-fund
 else
-  echo 'NOTE: no lockfile checked in; npm install generates package-lock.json for review.'
+  echo 'NOTE: package-lock.json is not tracked; npm install will refresh it for review and a future npm ci.'
   npm install --no-audit --no-fund
 fi
 npm run check
