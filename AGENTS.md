@@ -1,7 +1,7 @@
 # RCAT Radio Network — Agent Instructions
 
 ## Scope and authoritative state
-- Deliver **one** RCAT radio station using LibreTime 4.5.0 and its **bundled Icecast 2.4.4**. Reuse the vendor's media uploads, playlists, AutoDJ and Show Source (Live DJ); do not reinvent a radio panel, streaming server, operations platform or paid service.
+- Deliver **one** RCAT radio station using LibreTime 4.5.0 and **Icecast 2.5.0** in the current IOT runtime (owner-reported upgrade completed 2026-11-14; original LibreTime bundle and initial installer pinned Icecast 2.4.4). Reuse the vendor's media uploads, playlists, AutoDJ and Show Source (Live DJ); do not reinvent a radio panel, streaming server, operations platform or paid service.
 - Before acting, read the **current** [master tracker #1](https://github.com/yiwssx/rcat-radio-network/issues/1), the relevant existing RRN-00–RRN-06 issue (#2–#8), current branch/PRs, and the applicable `docs/RRN-00-STACK-DECISION.md` and `docs/RRN-01-HOST-BOUNDARIES.md`. Current GitHub issue evidence and operator-confirmed results supersede dated planning statements.
 - Repo-local skills in `.github/skills/` are reference instructions, not running agents or evidence of host execution. Choose only the relevant skill for the requested task.
 
