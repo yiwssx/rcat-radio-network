@@ -7,11 +7,28 @@
     "strict": true,
     "isolatedModules": true,
     "verbatimModuleSyntax": true,
-    "types": ["svelte", "vite/client"],
+    "types": [
+      "svelte",
+      "vite/client"
+    ],
     "resolveJsonModule": true,
     "allowJs": true,
     "checkJs": true,
-    "skipLibCheck": true
+    "skipLibCheck": true,
+    "baseUrl": ".",
+    "paths": {
+      "$lib": [
+        "./src/lib"
+      ],
+      "$lib/*": [
+        "./src/lib/*"
+      ]
+    }
   },
-  "include": ["src/**/*.ts", "src/**/*.svelte", "src/**/*.js", "vite.config.ts"]
+  "include": [
+    "src/**/*.ts",
+    "src/**/*.svelte",
+    "src/**/*.js",
+    "vite.config.ts"
+  ]
 }
