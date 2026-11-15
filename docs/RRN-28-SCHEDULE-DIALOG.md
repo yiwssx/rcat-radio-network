@@ -72,6 +72,12 @@ script, and remove `radio-schedule.json` only after confirming its
 `rcat_public_schedule.schema=1` marker. Preserve the functioning RRN-27 track
 metadata feed and its minute cron, Apache TLS, Icecast, all Docker services.
 
-**Current state:** source candidate / CI evaluation; RMS schedule probe, publication
-and Listener cutover require operator-side command execution. Do not claim Host or
-visual UAT passed before the operator supplies output.
+**Current state:** Candidate GitHub Actions [#43690669765](https://github.com/yiwssx/rcat-radio-network/actions/runs/43690669765) **SUCCESS** on source commit `b80aa73e659c01eaae1047a27e4bee2152c6b7ed` (afterwards only documentation changed). Artifact `rrn22-listener-candidate-e8be14889c833b23ee4982097950d8ad9d97c084` (artifact ID `14151739921`), contains static tar.gz + matching SHA256 and browser screenshots.
+
+Checksum-pinned RMS schedule source:
+- `scripts/rrn28-public-schedule-rms.py` at commit `b80aa73e659c01eaae1047a27e4bee2152c6b7ed`
+- `SHA256=d04e17036664e72ee5cadf270bbc5679656d73a2035ec6d63992543e54528c3c`
+
+All code/CI preparation is complete. Actual RMS schedule API probe, publication,
+and Listener cutover still require the operator command and browser UAT; do not
+claim Host or visual UAT passed before that evidence.
