@@ -3,6 +3,7 @@
   import { Card } from "$lib/components/ui/card";
   import { Badge } from "$lib/components/ui/badge";
   import TrackTimeline from "$lib/TrackTimeline.svelte";
+  import ScheduleDialog from "$lib/ScheduleDialog.svelte";
   type PlaybackStatus = 'idle' | 'connecting' | 'playing' | 'paused' | 'error';
   const STREAM_URL = 'https://radio.rcat.ac.th:8600/main.mp3';
   const COLLEGE_URL = 'https://www.rcat.ac.th/';
@@ -20,8 +21,7 @@
   let status = $state<PlaybackStatus>('idle');
   let volume = $state(75);
   let menuOpen = $state(false);
-  let scheduleNotice = $state(false);
-  let activityNotice = $state(false);
+  let scheduleOpen = $state(false);
   const isPlaying = $derived(status === 'playing');
   const isConnecting = $derived(status === 'connecting');
   const statusText = $derived(
@@ -54,14 +54,8 @@
   }
 
   function openSchedule() {
-    scheduleNotice = !scheduleNotice;
-    activityNotice = false;
+    scheduleOpen = true;
     menuOpen = false;
-  }
-
-  function openActivity() {
-    activityNotice = !activityNotice;
-    scheduleNotice = false;
   }
 </script>
 
@@ -314,7 +308,7 @@
 
     <section class="short-links" aria-label="ลิงก์สำคัญ">
       <div class="shortcut-grid">
-        <Button variant="outline" class="short-link" onclick={openSchedule} title="ตารางรายการ — เร็ว ๆ นี้">
+        <Button variant="outline" class="short-link" onclick={openSchedule} title="ดูผังรายการจาก LibreTime">
           <svg class="shortcut-icon radio-icon" aria-hidden="true" focusable="false"
   xmlns="http://www.w3.org/2000/svg"
   width="24"
@@ -332,7 +326,7 @@
   <path d="M18 12h.01" />
 </svg>
 
-          <strong>ตารางรายการ</strong><Badge variant="outline" class="short-link-status">เร็ว ๆ นี้</Badge>
+          <strong>ตารางรายการ</strong>
         </Button>
         <Button variant="outline" class="short-link" href={NEWS_URL} target="_blank" rel="noopener noreferrer">
           <svg class="shortcut-icon megaphone-icon" aria-hidden="true" focusable="false"
@@ -351,25 +345,6 @@
 </svg>
 
           <strong>ข่าวประชาสัมพันธ์</strong>
-        </Button>
-        <Button variant="outline" class="short-link" onclick={openActivity} title="กิจกรรมสถานี — เร็ว ๆ นี้">
-          <svg class="shortcut-icon note-icon" aria-hidden="true" focusable="false"
-  xmlns="http://www.w3.org/2000/svg"
-  width="24"
-  height="24"
-  viewBox="0 0 24 24"
-  fill="none"
-  stroke="currentColor"
-  stroke-width="2"
-  stroke-linecap="round"
-  stroke-linejoin="round"
->
-  <path d="M9 18V5l12-2v13" />
-  <circle cx="6" cy="18" r="3" />
-  <circle cx="18" cy="16" r="3" />
-</svg>
-
-          <strong>กิจกรรมสถานี</strong><Badge variant="outline" class="short-link-status">เร็ว ๆ นี้</Badge>
         </Button>
         <Button variant="outline" class="short-link" href={CONTACT_URL} target="_blank" rel="noopener noreferrer">
           <svg class="shortcut-icon team-icon" aria-hidden="true" focusable="false"
@@ -390,7 +365,7 @@
 
           <strong>ติดต่อเรา</strong>
         </Button>
-        {#if scheduleNotice || activityNotice}<div class="schedule-notice" role="status">{scheduleNotice ? 'ยังไม่มีตารางรายการเผยแพร่ในขณะนี้' : 'ยังไม่มีข้อมูลกิจกรรมสถานีเผยแพร่ในขณะนี้'} <button onclick={() => {scheduleNotice = false; activityNotice = false;}}>ปิด</button></div>{/if}
+        
       </div>
       <div class="follow-section"><h2>ติดตามเราได้ที่</h2><div class="socials">
         <a class="facebook" aria-label="Facebook วิทยาลัย" target="_blank" rel="noopener noreferrer" href={SOCIAL_URLS.facebook} title="Facebook"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="social-brand-icon bootstrap-facebook" aria-hidden="true" focusable="false" viewBox="0 0 16 16">
@@ -451,3 +426,7 @@
     </div>
   </footer>
 </div>
+
+{#if scheduleOpen}
+  <ScheduleDialog onClose={() => scheduleOpen = false} />
+{/if}

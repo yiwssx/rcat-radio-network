@@ -18,4 +18,16 @@ assert.equal(normalizeLiveInfo('<html>login</html>'), null);
 assert.equal(normalizeTrack({type:'track',name: 3}), null);
 assert.equal(normalizeTrack({type:'track',name: 'A'.repeat(1000)})?.title.length, 240);
 assert.equal(normalizeTrack({type:'webstream',name:'Community program',metadata:{artist_name:'unsafe name'}})?.artist, null);
-console.log('PASS: 10 focused LibreTime live-info-v2 normalization checks');
+const now = Math.floor(Date.now() / 1000);
+const snapshot = {
+  rcat_public_feed: { schema: 1, generated_at: now, expires_at: now + 180 },
+  tracks: {
+    previous: { type: 'track', metadata: { track_title: 'Thai song', artist_name: 'Artist' } },
+    current: null, next: null
+  }
+};
+assert.equal(normalizeLiveInfo(snapshot)?.previous?.title, 'Thai song');
+assert.equal(normalizeLiveInfo({ ...snapshot, rcat_public_feed: { schema: 1, generated_at: now - 200, expires_at: now - 20 } }), null);
+assert.equal(normalizeLiveInfo({ ...snapshot, rcat_public_feed: { schema: 1, generated_at: now, expires_at: now + 3600 } }), null);
+assert.equal(normalizeLiveInfo({ ...snapshot, rcat_public_feed: { schema: 1, generated_at: now + 400, expires_at: now + 580 } }), null);
+console.log('PASS: 14 focused LibreTime / expiring RRN-27 metadata normalization checks');

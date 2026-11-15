@@ -29,6 +29,7 @@ else
 fi
 npm run check
 npm run test:live-info
+npm run test:schedule
 npm run build
 
 [[ -s dist/index.html ]] || { echo 'BLOCKED: Vite did not generate dist/index.html' >&2; exit 1; }
