@@ -1,6 +1,7 @@
 /**
  * Public LibreTime 4.5 live-info-v2 response normalizer.
  * This module deliberately accepts unknown JSON, never HTML or private API fields.
+ * RRN-27 static snapshots carry expiry metadata; stale song titles fail closed.
  * @typedef {{ title: string, artist: string | null, kind: 'track' | 'webstream' | 'livestream' | 'unknown' }} Track
  * @typedef {{ previous: Track | null, current: Track | null, next: Track | null }} LiveTracks
  */
@@ -36,6 +37,17 @@ export function normalizeTrack(value) {
  */
 export function normalizeLiveInfo(value) {
   if (!isObject(value) || !isObject(value.tracks)) return null;
+  if ('rcat_public_feed' in value) {
+    const feed = value.rcat_public_feed;
+    const now = Date.now() / 1000;
+    if (!isObject(feed) || feed.schema !== 1 ||
+        !Number.isSafeInteger(feed.generated_at) ||
+        !Number.isSafeInteger(feed.expires_at) ||
+        feed.generated_at > now + 60 ||
+        feed.expires_at <= now ||
+        feed.expires_at - feed.generated_at > 180 ||
+        feed.expires_at <= feed.generated_at) return null;
+  }
   return {
     previous: normalizeTrack(value.tracks.previous),
     current: normalizeTrack(value.tracks.current),
