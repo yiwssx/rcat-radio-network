@@ -39,6 +39,14 @@ class MetadataTests(unittest.TestCase):
                                                        'metadata': {'track_title': 'DJ Live'}})
         self.assertIsNone(out['tracks']['next'])
 
+    def test_unicode_from_python_two_json_is_preserved_and_ascii_encoded(self):
+        raw = {'tracks': {'current': {'type': 'track', 'metadata': {
+            'track_title': 'เพลงไทย', 'artist_name': 'ศิลปิน'}}}}
+        snapshot = module.project(raw, now=1000)
+        serialized = json.dumps(snapshot, ensure_ascii=True).encode('ascii')
+        self.assertIn(b'\\u', serialized)
+        self.assertEqual(json.loads(serialized.decode('ascii'))['tracks']['current']['metadata']['track_title'], 'เพลงไทย')
+
     def test_bad_schema_rejected(self):
         for payload in ({}, None, {'tracks': []}, '<html>error</html>'):
             with self.assertRaises(module.Blocked):
@@ -52,6 +60,7 @@ class MetadataTests(unittest.TestCase):
                 data = module.project({'tracks': {}}, now=1000)
                 module.publish(data)
                 self.assertEqual(json.loads(target.read_text())['tracks']['current'], None)
+                self.assertTrue(target.read_bytes().endswith(b'\n'))
                 self.assertFalse(any(root.glob('.rrn27-*.tmp')))
                 target.write_text('{"unrelated":"document"}')
                 with self.assertRaises(module.Blocked):
