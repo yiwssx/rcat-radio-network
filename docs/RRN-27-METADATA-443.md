@@ -1,6 +1,6 @@
 # RRN-27 — Read-only Listener metadata over existing HTTPS 443
 
-**Status:** source-only candidate, owner authorized investigation/preparation on 2026-11-15. Radio host recovered by operator and RMS full JSON validated. Metadata exporter not installed/deployed. Keep RRN-00–06 and UI #22 closed.
+**Status:** RMS public metadata file and minute cron installed and operator-accepted 2026-11-15. New CI-built Listener candidate prepared; listener HTML cutover and real-browser UAT not yet completed. Keep RRN-00–06 and UI #22 closed.
 
 ## Operator observations (2026-11-15 11:30 Asia/Bangkok)
 
@@ -30,20 +30,20 @@
 
 The RMS static exporter exposes *only* sanitized, expiring `/radio-metadata.json` through the existing HTTPS 443 listener origin, avoiding cross-origin/CORS and exposure of private LibreTime fields. Successful IOT/RMS LAN validation does **not** prove the public 443 static file exists until the operator performs the controlled adoption below.
 
-## Gate B — Approved operator-only RMS adoption (NOT EXECUTED)
+## Gate B — RMS metadata adoption: PASS (operator-accepted 2026-11-15)
 
-1. **Already passed:** RMS has a working `/usr/bin/python` and parsed the full upstream JSON. Confirm that Apache's actual radio Listener DocumentRoot is `/var/www/radio-listener` before applying; this script intentionally refuses to create an unknown webroot. Confirm that `/radio-metadata.json` does not already belong to another application.
-2. Fetch the **reviewed exact PR commit** of the Python 2.7/3-compatible script, verify its checksum, and install it root-owned at `/usr/local/sbin/rrn27-static-metadata-rms.py` mode 0755. Do not alter `/usr/bin/python` or install packages.
-3. Probe (no write): sudo /usr/bin/python /usr/local/sbin/rrn27-static-metadata-rms.py --probe. If BLOCKED, STOP.
-4. One apply (writes only the sanitized file): sudo /usr/bin/python /usr/local/sbin/rrn27-static-metadata-rms.py --apply.
-5. Verify public HTTPS 443 /radio-metadata.json returns HTTP 200, application/json, only whitelisted fields and unexpired timestamps, before scheduling.
-6. After checking no duplicate job, install ONE root-owned /etc/cron.d/rrn27-radio-metadata file (0644) with this single line:
+1. **PASS:** Apache's actual radio 443 listener DocumentRoot was confirmed as `/var/www/radio-listener`; public metadata target was free.
+2. **PASS:** Operator installed SHA-256 verified script at `/usr/local/sbin/rrn27-static-metadata-rms.py` from commit `e9b71f69361cfbfeab3aa4ebe6897dbd56b9ad5e`; file hash `5e4980473772808068f4ee9df95a9a6935009184452b7229c3ddd2dec13eb194`. No runtime/package changes.
+3. **PASS:** `/usr/bin/python` exporter `--probe` succeeded, no write.
+4. **PASS:** One `--apply` published only sanitized, expiring `radio-metadata.json`.
+5. **PASS:** Operator observed `RRN27_PUBLIC_443=PASS`, `RRN27_SANITIZATION=PASS`, `RRN27_EXPIRY=PASS` through live Apache 443.
+6. **PASS:** Operator's guarded installation checked duplicate jobs, installed one root-owned `/etc/cron.d/rrn27-radio-metadata` file (0644) with this line:
 
 ```cron
 * * * * * root /usr/bin/python /usr/local/sbin/rrn27-static-metadata-rms.py --apply >/dev/null 2>&1
 ```
 
-7. Rebuild accepted Svelte source with VITE_LIBRETIME_LIVE_INFO_URL=/radio-metadata.json at Vite build time; reuse existing CI candidate workflow. Verify the candidate source/version matches the intended deployment.
+7. **CI PASS:** Existing `RRN-22 Listener release candidate` workflow now builds with `VITE_LIBRETIME_LIVE_INFO_URL=/radio-metadata.json` and checks the built JS includes the path. [Run #43689080202](https://github.com/yiwssx/rcat-radio-network/actions/runs/43689080202), PR head `9e7202d6588b6e3c9975591b058da568a1ff281d`, run-tested merge SHA `b807c385632a0f1dd51a6ebdc89b8a684283fcc9`, artifact `rrn22-listener-candidate-b807c385632a0f1dd51a6ebdc89b8a684283fcc9`. Svelte check, metadata tests, Vite build, local smoke, Chromium screenshots, artifact upload all succeeded. This does not imply a deployment.
 8. With scoped cutover approval, back up RMS static files, deploy only Listener assets, PRESERVE radio-metadata.json (no blind rsync --delete), and test once in real browser including null current/next and playing audio unaffected.
 
 ## Rollback
@@ -60,7 +60,9 @@ The RMS static exporter exposes *only* sanitized, expiring `/radio-metadata.json
 - [x] Radio host recovered: 10/10 existing Containers Up; IOT API 200/application/json
 - [x] RMS confirmed full strict HTTP 200 JSON parsing and `tracks.previous/current/next` via existing Python interpreter
 - [x] Draft exporter adapted for Python 2.7/3 without new packages (pending focused candidate CI)
-- [ ] RMS one-pass probe / static file proof and scheduled freshness
-- [ ] Approved exact frontend build, rollback backup and one real browser UAT
+- [x] RMS exact-SHA exporter `--probe`, `--apply`, public 443 sanitization/expiry and single minute Cron: PASS
+- [x] Environment-configured Svelte CI build and candidate artifact: PASS
+- [ ] Operator deploys exact CI artifact to RMS static listener after backup, preserving `radio-metadata.json`
+- [ ] One real-browser UAT for Previous/Now/Next and unaffected player; then PR review/merge and Issue closure
 
-**Disposition:** IOT and RMS upstream validation PASS; exporter/source candidate prepared. RMS publish and Listener cutover NOT EXECUTED. Issue #27 remains open.
+**Disposition:** IOT and RMS metadata production feed PASS; Listener artifact CI PASS. Only Listener static deployment and browser acceptance remain; Issue #27 stays open.
