@@ -41,6 +41,8 @@ export function normalizeLiveInfo(value) {
     const feed = value.rcat_public_feed;
     const now = Date.now() / 1000;
     if (!isObject(feed) || feed.schema !== 1 ||
+        typeof feed.generated_at !== 'number' ||
+        typeof feed.expires_at !== 'number' ||
         !Number.isSafeInteger(feed.generated_at) ||
         !Number.isSafeInteger(feed.expires_at) ||
         feed.generated_at > now + 60 ||
