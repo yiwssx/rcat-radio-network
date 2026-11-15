@@ -4,7 +4,7 @@
 
   let { onClose }: { onClose: () => void } = $props();
   let dialog: HTMLDialogElement;
-  let state = $state<'loading' | 'ready' | 'error'>('loading');
+  let feedState = $state<'loading' | 'ready' | 'error'>('loading');
   let mode = $state<'day' | 'week'>('day');
   const days = scheduleDays();
   let selectedDate = $state(days[0].date);
