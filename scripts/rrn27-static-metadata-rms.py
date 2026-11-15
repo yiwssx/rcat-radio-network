@@ -135,7 +135,7 @@ def publish(data):
             # ASCII escapes preserve Thai on legacy Apache/Python 2.
             encoded = json.dumps(data, ensure_ascii=True,
                                  separators=(",", ":"), allow_nan=False).encode("ascii")
-            output.write(encoded + b"\\n")
+            output.write(encoded + b"\n")
             output.flush()
             os.fsync(output.fileno())
         os.chmod(tmp, 0o644)
