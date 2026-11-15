@@ -35,7 +35,17 @@ jobs:
 
       - name: Validate source and create candidate
         working-directory: listener-web
-        run: bash scripts/prepare-static-release.sh
+        # RRN-27: the sanitized, expiring JSON feed is already live on the
+        # existing listener origin's HTTPS 443. Never build in a private IOT
+        # host, public :8700 admin URL, or credentials.
+        env:
+          VITE_LIBRETIME_LIVE_INFO_URL: /radio-metadata.json
+        run: |
+          bash scripts/prepare-static-release.sh
+          # Vite embeds VITE_* at BUILD time: verify the emitted assets contain
+          # the approved relative path before any artifact can be published.
+          grep -Fql '/radio-metadata.json' dist/assets/*.js ||
+            { echo 'BLOCKED: missing public metadata feed in built JS' >&2; exit 1; }
 
       - name: Local HTTP smoke and headless Chromium screenshots (no public requests)
         working-directory: listener-web
