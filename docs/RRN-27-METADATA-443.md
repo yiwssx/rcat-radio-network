@@ -19,21 +19,31 @@
 - A stopped scheduler can leave the last snapshot for at most 180 seconds; frontend validates optional rcat_public_feed timestamps and then shows unavailable state.
 - Existing Vite client uses build-time VITE_LIBRETIME_LIVE_INFO_URL=/radio-metadata.json after the operator verifies the same-origin file. An old Vite build with blank env remains disconnected.
 
-## Gate A — Diagnose existing 500 on IOT; read-only operator commands
+## Gate A — IOT LAN API: transport PASSED; verify JSON validity once (read-only)
+
+**Operator evidence, 2026-11-15:** `ss` shows `docker-proxy` listening on **10.10.1.100:8700**. `docker ps` confirms the existing Nginx container's `10.10.1.100:8700 -> 8080/tcp` binding. Both direct IOT LAN request and the same URL with `Host: radio.rcat.ac.th:8700` / `X-Forwarded-Proto: https` returned **HTTP 200, application/json**. `127.0.0.1:8700` connection refusal was an **incorrect target interface**, not evidence of outage. Last legacy log filter returned no matching output (not proof that server errors never occurred).
+
+The earlier public HTTPS :8700 **500 with JSON followed by HTML** is a distinct observation. Treat it as not reproduced by these IOT LAN probes, **not proven fixed**; private logs may be needed only if the issue recurs. Do not restart containers or change headers just to chase a historical transient.
+
+The command below checks the single remaining unknown: **full JSON-body validity and expected slots**, without printing any track metadata or secret values. Run once on **IOT**:
 
 ```bash
-curl --noproxy '*' -sS --max-time 8 -o /dev/null \
-  -w 'IOT_API_HTTP=%{http_code} CONTENT_TYPE=%{content_type}\n' \
-  -H 'Accept: application/json' http://127.0.0.1:8700/api/live-info-v2/
-sudo docker logs --since 5m --tail 80 rcat_radio_network-legacy-1 2>&1 | grep -Ei 'error|fatal|exception|trace|500' | tail -n 30
-sudo docker logs --since 5m --tail 80 rcat_radio_network-nginx-1 2>&1 | grep -Ei 'error|fatal|exception|500' | tail -n 30
+set -o pipefail
+curl --noproxy '*' --fail --silent --show-error --max-time 8 \
+  --max-filesize 262144 -H 'Accept: application/json' \
+  'http://10.10.1.100:8700/api/live-info-v2/' |
+python3 -c 'import json,sys; x=json.load(sys.stdin); t=x.get("tracks") if isinstance(x,dict) else None; assert isinstance(t,dict) and all(k in t for k in ("previous","current","next")), "unexpected tracks schema"; print("RRN27_IOT_JSON=PASS SLOTS=previous,current,next")'
 ```
 
-Review legacy error logs privately if these do not show the cause (LibreTime official troubleshooting). Share only redacted error category; never dump credentials, filenames or full stack traces to public GitHub. No restart, upgrades, playout or config changes without a diagnosed fault and radio-only backup. API 200 with a *single* valid JSON body is a hard prerequisite.
+If this fails, stop and inspect only targeted private LibreTime legacy/nginx errors; avoid copying raw body, internal filepaths, song names, cookie values or stack traces into public GitHub. A **valid full body** is a hard prerequisite before RMS adoption. Operator approval is required for any actual IOT repair if 500 recurs.
+
+### Public-edge distinction
+
+A valid IOT 200 response proves the private upstream is suitable for the sanitized RMS snapshot. It does **not** prove public HTTPS :8700 returns 200, nor does it mean public 8700 should be used by browser JavaScript. RRN-27 intentionally bypasses its cross-origin/CORS and raw-metadata problems by publishing a minimized static file on the existing public 443 listener origin.
 
 ## Gate B — Approved operator-only RMS adoption (NOT EXECUTED)
 
-1. Verify upstream fixed and python3 already installed on RMS. Do not install packages in this scope. Confirm existing radio webroot and absence of unrelated radio-metadata.json.
+1. After full IOT JSON validation, verify python3 already installed on RMS and that RMS can reach the existing IOT LAN IP. Do not install packages in this scope. Confirm existing radio webroot and absence of unrelated radio-metadata.json.
 2. Install the **reviewed exact PR SHA** script root-owned at /usr/local/sbin/rrn27-static-metadata-rms.py mode 0755; validate downloaded checksum.
 3. Probe (no write): sudo /usr/bin/python3 /usr/local/sbin/rrn27-static-metadata-rms.py --probe. If BLOCKED, STOP.
 4. One apply (writes only the sanitized file): sudo /usr/bin/python3 /usr/local/sbin/rrn27-static-metadata-rms.py --apply.
@@ -57,7 +67,8 @@ Review legacy error logs privately if these do not show the cause (LibreTime off
 
 - [x] External operator HTTP responses and schema evidence
 - [x] Minimal code-only candidate and focused isolated checks
-- [ ] Private IOT logs identify root cause and operator fixes 500; prove upstream 200 JSON
+- [x] Operator confirmed IOT 10.10.1.100:8700 binding and HTTP 200/application/json on both private-LAN header variants (earlier public 500 root cause unproven; no unjustified service restart)
+- [ ] Verify one complete valid JSON body with all three expected slots from IOT
 - [ ] RMS one-pass probe / static file proof and scheduled freshness
 - [ ] Approved exact frontend build, rollback backup and one real browser UAT
 
