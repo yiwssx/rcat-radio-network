@@ -31,10 +31,10 @@
         if (!parsed) throw new Error('Schedule stale or invalid');
         if (!controller.signal.aborted) {
           shows = parsed.shows;
-          state = 'ready';
+          feedState = 'ready';
         }
       } catch {
-        if (!controller.signal.aborted) state = 'error';
+        if (!controller.signal.aborted) feedState = 'error';
       } finally {
         window.clearTimeout(timeout);
       }
@@ -76,9 +76,9 @@
     {/if}
 
     <div class="schedule-content" role="status" aria-live="polite">
-      {#if state === 'loading'}
+      {#if feedState === 'loading'}
         <p class="schedule-empty">กำลังโหลดผังรายการจากสถานี…</p>
-      {:else if state === 'error'}
+      {:else if feedState === 'error'}
         <p class="schedule-empty">ยังไม่สามารถแสดงผังรายการได้ในขณะนี้</p>
       {:else if mode === 'day'}
         {#if selectedShows.length === 0}
