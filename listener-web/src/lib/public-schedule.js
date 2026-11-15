@@ -44,6 +44,7 @@ export function scheduleDays(now = Date.now()) {
   const parts = new Intl.DateTimeFormat('en-US', {
     timeZone: ZONE, year: 'numeric', month: '2-digit', day: '2-digit'
   }).formatToParts(now);
+  /** @param {string} type */
   const n = (type) => Number(parts.find(part => part.type === type)?.value);
   const utcMidnight = Date.UTC(n('year'), n('month') - 1, n('day'));
   return Array.from({ length: 7 }, (_, index) => {
