@@ -1,10 +1,11 @@
 #!/usr/bin/env python3
 """Record registry-verified Radio image manifests; never infer Host identity.
 
-Validate the historical RRN-02 installer map unchanged, then apply only the
-owner-accepted Icecast 2.5.0 runtime override. This does not reconcile the
-running PostgreSQL image with a mutable upstream postgres:15 tag.
-Public registry inspection is read-only; no images are pulled and no RCAT Host/private config is accessed. The PostgreSQL reference is immutable to avoid moving-tag drift.
+Validate the historical RRN-02 installer map unchanged. For this release
+receipt only, apply the accepted Icecast 2.5.0 override and resolve the
+operator-observed Postgres 15.19 OCI index by its immutable registry digest.
+The historical installer's postgres:15 and Icecast 2.4.4 tags stay intact.
+Registry inspection is read-only; no pull or RCAT Host/private access.
 """
 import ast
 import hashlib
