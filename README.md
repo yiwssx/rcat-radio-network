@@ -69,7 +69,7 @@ A consumer must verify the downloaded checksum and independently run:
 gh attestation verify <archive> --repo yiwssx/rcat-radio-network
 ```
 
-The attestation covers repository source, not upstream container image bytes, private runtime settings, media rights, backup recovery or a live station. This manual workflow performs no Host deployment, SSH, DNS change, GHCR push or GitHub Release publication.
+The manual workflow attests **two separate subjects**: the exact committed source archive and a registry-byte-verified vendor-image-set receipt (10 services, 9 distinct image tags). The receipt keeps the original RRN-02 installer pin unchanged, but uses the **owner-accepted Icecast 2.5.0 runtime override** instead of the installer's historical 2.4.4. A signed registry receipt does **not** establish the upstream image publisher's signature or that the signed tags match images already running on RCAT IOT. In particular, the operator-observed PostgreSQL image configuration digest did **not** match the prior signed `postgres:15` linux/amd64 manifest. Treat Host identity as unverified until proven separately; never restart/downgrade a live service merely to match a receipt. No Host deployment, SSH, DNS change, GHCR push, GitHub Release publication, private config, media rights or backup recovery is authorized or proven by this workflow.
 
 ## License
 
