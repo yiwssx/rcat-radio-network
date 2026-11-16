@@ -1,8 +1,10 @@
 #!/usr/bin/env python3
-"""Record registry-verified LibreTime vendor image manifests, never Host identity.
+"""Record registry-verified Radio image manifests; never infer Host identity.
 
-Source of service/image names: the reviewed RRN-02 installer in this repository.
-This script neither pulls images nor contacts any RCAT Host or private config.
+Validate the historical RRN-02 installer map unchanged, then apply only the
+owner-accepted Icecast 2.5.0 runtime override. This does not reconcile the
+running PostgreSQL image with a mutable upstream postgres:15 tag.
+No images are pulled and no RCAT Host/private config is accessed.
 """
 import ast
 import hashlib
@@ -26,6 +28,12 @@ EXPECTED_IMAGES = {
     "legacy": "ghcr.io/libretime/libretime-legacy:4.5.0",
     "nginx": "ghcr.io/libretime/libretime-nginx:4.5.0",
     "icecast": "ghcr.io/libretime/icecast:2.4.4",
+}
+# Keep the original LibreTime 4.5.0 installer pin (Icecast 2.4.4) intact.
+# RCAT approved Icecast 2.5.0 on 2026-11-14 after a mobile-stream fix.
+# This receipt reflects accepted runtime tags, not new installer behavior.
+REVIEWED_RUNTIME_OVERRIDES = {
+    "icecast": "ghcr.io/libretime/icecast:2.5.0",
 }
 DIGEST = re.compile(r"^sha256:[0-9a-f]{64}$")
 SHA = re.compile(r"^[0-9a-f]{40}$")
@@ -54,7 +62,7 @@ def source_images():
     images = ast.literal_eval(definitions[0])
     if images != EXPECTED_IMAGES:
         raise VerificationError("Installer images differ from reviewed vendor stack")
-    return images
+    return {**images, **REVIEWED_RUNTIME_OVERRIDES}
 
 
 def checked_command(*argv):
@@ -115,7 +123,8 @@ def collect(source_sha, probe=verify_manifest):
         "kind": "rcat.radio.vendor-image-set",
         "source_repository": "yiwssx/rcat-radio-network",
         "source_commit": source_sha,
-        "scope": "public upstream registry manifests for reviewed installer tags; NOT host image identity or upstream publisher signature",
+        "scope": "public registry manifests for validated historical installer tags plus approved Icecast 2.5.0 runtime override; NOT Host image identity or upstream publisher signature",
+        "reviewed_runtime_overrides": REVIEWED_RUNTIME_OVERRIDES,
         "services": [
             {"service": service, "tag": images[service], **records[images[service]]}
             for service in sorted(images)
