@@ -4,7 +4,7 @@
 Validate the historical RRN-02 installer map unchanged, then apply only the
 owner-accepted Icecast 2.5.0 runtime override. This does not reconcile the
 running PostgreSQL image with a mutable upstream postgres:15 tag.
-No images are pulled and no RCAT Host/private config is accessed.
+Public registry inspection is read-only; no images are pulled and no RCAT Host/private config is accessed. The PostgreSQL reference is immutable to avoid moving-tag drift.
 """
 import ast
 import hashlib
@@ -34,6 +34,13 @@ EXPECTED_IMAGES = {
 # This receipt reflects accepted runtime tags, not new installer behavior.
 REVIEWED_RUNTIME_OVERRIDES = {
     "icecast": "ghcr.io/libretime/icecast:2.5.0",
+}
+# The actual previously accepted Radio Host reported postgres@sha256:1aac5b...
+# Docker Hub's official 15.19 registry metadata identifies this *index*
+# (linux/amd64 child sha256:61a5b377...), while moving postgres:15 now
+# denotes a newer index. Keep the historical installer tag unchanged.
+IMMUTABLE_REGISTRY_REFERENCES = {
+    "postgres:15": "postgres@sha256:1aac5b49cefd627f02816141ca4ad012d6cc19460dfe02a9b5168a105be3fc53",
 }
 DIGEST = re.compile(r"^sha256:[0-9a-f]{64}$")
 SHA = re.compile(r"^[0-9a-f]{40}$")
@@ -110,7 +117,10 @@ def collect(source_sha, probe=verify_manifest):
     images = source_images()
     records = {}
     for image in sorted(set(images.values())):
-        records[image] = probe(image)
+        # Pin the historical installed Postgres OCI index instead of querying
+        # the mutable postgres:15 tag at release/signing time.
+        registry_reference = IMMUTABLE_REGISTRY_REFERENCES.get(image, image)
+        records[image] = probe(registry_reference)
         receipt = records[image]
         if (not isinstance(receipt, dict)
                 or receipt.get("manifest_bytes_sha256_verified") is not True
@@ -118,15 +128,22 @@ def collect(source_sha, probe=verify_manifest):
                 or not DIGEST.fullmatch(receipt["digest"])
                 or receipt.get("media_type") not in MEDIA):
             raise VerificationError("Unverified vendor manifest receipt")
+        if image in IMMUTABLE_REGISTRY_REFERENCES:
+            pinned_digest = IMMUTABLE_REGISTRY_REFERENCES[image].split("@", 1)[1]
+            if receipt["digest"] != pinned_digest:
+                raise VerificationError("Pinned registry digest differs from verified bytes")
     return {
         "schema_version": 1,
         "kind": "rcat.radio.vendor-image-set",
         "source_repository": "yiwssx/rcat-radio-network",
         "source_commit": source_sha,
-        "scope": "public registry manifests for validated historical installer tags plus approved Icecast 2.5.0 runtime override; NOT Host image identity or upstream publisher signature",
+        "scope": "registry-byte-verified immutable Postgres 15.19 index plus validated historic installer tags and accepted Icecast 2.5.0 runtime override; NOT live Host image attestation or upstream publisher signature",
         "reviewed_runtime_overrides": REVIEWED_RUNTIME_OVERRIDES,
+        "immutable_registry_references": IMMUTABLE_REGISTRY_REFERENCES,
         "services": [
-            {"service": service, "tag": images[service], **records[images[service]]}
+            {"service": service, "tag": images[service],
+             "registry_reference": IMMUTABLE_REGISTRY_REFERENCES.get(images[service], images[service]),
+             **records[images[service]]}
             for service in sorted(images)
         ],
     }
